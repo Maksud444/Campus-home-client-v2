@@ -1,0 +1,12 @@
+[
+  {
+    "id": "1765484977107",
+    "name": "Ahmed Hassan",
+    "email": "student@test.com",
+    "password": "$2a$12$p3BGkIyLZRYTgJQMMN1Z9efSbEI78F2.3.zv44egNJWjhz/DHL7mK",
+    "role": "student",
+    "provider": "credentials",
+    "image": "https://ui-avatars.com/api/?name=Ahmed+Hassan&background=219ebc&color=fff",
+    "createdAt": "2025-12-11T20:29:37.107Z"
+  }
+]
