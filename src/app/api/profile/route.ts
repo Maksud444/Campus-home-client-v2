@@ -177,3 +177,5 @@ export async function PUT(request: NextRequest) {
     )
   }
 }
+
+export const dynamic = 'force-dynamic'
