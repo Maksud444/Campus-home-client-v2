@@ -46,7 +46,7 @@ export default function PropertiesPage() {
     try {
       setLoading(true)
       const url = filter === 'all' 
-        ? 'http://localhost:5000/api/properties' 
+        ? `${process.env.NEXT_PUBLIC_API_URL}/api/properties` 
         : `http://localhost:5000/api/properties?type=${filter}`
       
       const response = await fetch(url)
