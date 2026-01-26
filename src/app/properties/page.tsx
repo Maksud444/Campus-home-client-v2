@@ -1,316 +1,361 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import Link from 'next/link'
-import { properties, locations, propertyTypes } from '@/data/properties'
-import { Search, SlidersHorizontal, MapPin, Bed, Bath, Maximize, X } from 'lucide-react'
+import Image from 'next/image'
+
+interface Property {
+  _id: string
+  userId: string
+  userName: string
+  userImage: string
+  userRole: string
+  title: string
+  description: string
+  type: string
+  price: number | null
+  location: string
+  bedrooms: number | null
+  bathrooms: number | null
+  area: number | null
+  amenities: string[]
+  images: string[]
+  propertyType: string
+  furnished: boolean
+  likes: any[]
+  views: number
+  status: string
+  createdAt: string
+  updatedAt: string
+  targetAudience?: string
+}
 
 export default function PropertiesPage() {
-  const searchParams = useSearchParams()
-  const locationParam = searchParams.get('location')
+  const { data: session } = useSession()
+  const [properties, setProperties] = useState<Property[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('all')
+  const [audienceFilter, setAudienceFilter] = useState('all')
 
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedLocation, setSelectedLocation] = useState<string>(locationParam || 'all')
-  const [selectedType, setSelectedType] = useState<string>('all')
-  const [minPrice, setMinPrice] = useState<string>('')
-  const [maxPrice, setMaxPrice] = useState<string>('')
-  const [bedrooms, setBedrooms] = useState<string>('all')
-  const [furnished, setFurnished] = useState<string>('all')
-  const [showFilters, setShowFilters] = useState(false)
-
-  // Update selected location when URL param changes
   useEffect(() => {
-    if (locationParam) {
-      // Convert slug to location name
-      const locationName = locationParam
-        .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ')
-      setSelectedLocation(locationName)
-    }
-  }, [locationParam])
+    fetchProperties()
+  }, [filter, audienceFilter])
 
-  const filteredProperties = properties.filter(property => {
-    if (searchQuery && !property.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !property.location.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !property.area.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false
-    }
+  const fetchProperties = async () => {
+    try {
+      setLoading(true)
+      const url = filter === 'all' 
+        ? 'http://localhost:5000/api/properties' 
+        : `http://localhost:5000/api/properties?type=${filter}`
+      
+      const response = await fetch(url)
+      const data = await response.json()
 
-    if (selectedLocation !== 'all' && property.location !== selectedLocation) {
-      return false
+      if (data.success) {
+        let filteredProps = data.properties
+        
+        if (audienceFilter !== 'all' && filter === 'property') {
+          filteredProps = filteredProps.filter((prop: any) => 
+            prop.targetAudience === audienceFilter
+          )
+        }
+        
+        setProperties(filteredProps)
+      }
+    } catch (error) {
+      console.error('Error fetching properties:', error)
+    } finally {
+      setLoading(false)
     }
-
-    if (selectedType !== 'all' && property.type !== selectedType) {
-      return false
-    }
-
-    if (minPrice && property.price < parseInt(minPrice)) {
-      return false
-    }
-    if (maxPrice && property.price > parseInt(maxPrice)) {
-      return false
-    }
-
-    if (bedrooms !== 'all' && property.bedrooms !== parseInt(bedrooms)) {
-      return false
-    }
-
-    if (furnished !== 'all' && property.furnished !== (furnished === 'yes')) {
-      return false
-    }
-
-    return true
-  })
-
-  const clearFilters = () => {
-    setSearchQuery('')
-    setSelectedLocation('all')
-    setSelectedType('all')
-    setMinPrice('')
-    setMaxPrice('')
-    setBedrooms('all')
-    setFurnished('all')
   }
 
-  const activeFiltersCount = [
-    selectedLocation !== 'all',
-    selectedType !== 'all',
-    minPrice !== '',
-    maxPrice !== '',
-    bedrooms !== 'all',
-    furnished !== 'all'
-  ].filter(Boolean).length
+  const handleLike = async (propId: string) => {
+    if (!session) {
+      alert('Please login to like properties')
+      return
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/properties/${propId}/like`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: (session?.user as any)?._id || session.user.email?.split('@')[0],
+          userName: session.user?.name || 'Anonymous'
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setProperties(properties.map(prop => 
+          prop._id === propId ? { ...prop, likes: data.property.likes } : prop
+        ))
+      }
+    } catch (error) {
+      console.error('Error liking property:', error)
+    }
+  }
+
+  const isLiked = (property: Property) => {
+    if (!session?.user) return false
+    const userId = (session.user as any)._id || session.user.email?.split('@')[0]
+    return property.likes?.some((like: any) => like.userId === userId)
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
-      <div className="bg-gradient-to-r from-primary to-primary-dark text-white py-12">
-        <div className="container mx-auto px-6">
-          <h1 className="text-4xl font-bold mb-2">
-            {selectedLocation !== 'all' ? `Properties in ${selectedLocation}` : 'Browse Properties'}
+    <div className="min-h-screen bg-gray-50 py-8 pt-28">
+      <div className="max-w-7xl mx-auto px-4">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
+            Browse Properties
           </h1>
-          <p className="text-xl text-white/90">
-            {selectedLocation !== 'all' 
-              ? `Showing ${filteredProperties.length} properties in ${selectedLocation}`
-              : 'Find your perfect student accommodation'
-            }
+          <p className="text-gray-600 text-lg">
+            Find your perfect home or roommate
           </p>
         </div>
-      </div>
 
-      <div className="container mx-auto px-6 py-8">
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-              <input
-                type="text"
-                placeholder="Search by title, location, or area..."
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-
+        {/* Filters */}
+        <div className="mb-8">
+          <div className="flex flex-wrap gap-3 mb-4">
             <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="btn btn-outline flex items-center justify-center gap-2 relative"
+              onClick={() => setFilter('all')}
+              className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+                filter === 'all'
+                  ? 'bg-primary text-white shadow-lg'
+                  : 'bg-white text-gray-700 hover:bg-gray-100'
+              }`}
             >
-              <SlidersHorizontal size={20} />
-              <span>Filters</span>
-              {activeFiltersCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-primary text-white w-6 h-6 rounded-full text-sm flex items-center justify-center">
-                  {activeFiltersCount}
-                </span>
-              )}
+              🏠 All Posts
+            </button>
+            <button
+              onClick={() => setFilter('property')}
+              className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+                filter === 'property'
+                  ? 'bg-primary text-white shadow-lg'
+                  : 'bg-white text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              🏢 Properties
+            </button>
+            <button
+              onClick={() => setFilter('roommate')}
+              className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+                filter === 'roommate'
+                  ? 'bg-primary text-white shadow-lg'
+                  : 'bg-white text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              👥 Roommates
+            </button>
+            <button
+              onClick={() => setFilter('room')}
+              className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+                filter === 'room'
+                  ? 'bg-primary text-white shadow-lg'
+                  : 'bg-white text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              🔍 Looking for Room
             </button>
           </div>
 
-          {showFilters && (
-            <div className="mt-6 pt-6 border-t grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Location</label>
-                <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  value={selectedLocation}
-                  onChange={(e) => setSelectedLocation(e.target.value)}
-                >
-                  <option value="all">All Locations</option>
-                  <option value="Nasr City">Nasr City</option>
-                  <option value="Maadi">Maadi</option>
-                  <option value="Heliopolis">Heliopolis</option>
-                  <option value="New Cairo">New Cairo</option>
-                  <option value="Giza">Giza</option>
-                  <option value="Zamalek">Zamalek</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Property Type</label>
-                <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value)}
-                >
-                  <option value="all">All Types</option>
-                  {propertyTypes.map(type => (
-                    <option key={type.value} value={type.value}>{type.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Bedrooms</label>
-                <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  value={bedrooms}
-                  onChange={(e) => setBedrooms(e.target.value)}
-                >
-                  <option value="all">Any</option>
-                  <option value="1">1 Bedroom</option>
-                  <option value="2">2 Bedrooms</option>
-                  <option value="3">3 Bedrooms</option>
-                  <option value="4">4+ Bedrooms</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Min Price (EGP)</label>
-                <input
-                  type="number"
-                  placeholder="0"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  value={minPrice}
-                  onChange={(e) => setMinPrice(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Max Price (EGP)</label>
-                <input
-                  type="number"
-                  placeholder="Any"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Furnished</label>
-                <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  value={furnished}
-                  onChange={(e) => setFurnished(e.target.value)}
-                >
-                  <option value="all">Any</option>
-                  <option value="yes">Furnished</option>
-                  <option value="no">Unfurnished</option>
-                </select>
-              </div>
-
-              <div className="flex items-end">
-                <button
-                  onClick={clearFilters}
-                  className="w-full btn btn-outline flex items-center justify-center gap-2"
-                >
-                  <X size={18} />
-                  <span>Clear All</span>
-                </button>
-              </div>
+          {/* Audience Filters */}
+          {filter === 'property' && (
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => setAudienceFilter('all')}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+                  audienceFilter === 'all'
+                    ? 'bg-primary text-white shadow-lg'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                All Audiences
+              </button>
+              <button
+                onClick={() => setAudienceFilter('students')}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+                  audienceFilter === 'students'
+                    ? 'bg-green-500 text-white shadow-lg'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                🎓 For Students
+              </button>
+              <button
+                onClick={() => setAudienceFilter('family')}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+                  audienceFilter === 'family'
+                    ? 'bg-orange-500 text-white shadow-lg'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                👨‍👩‍👧‍👦 For Family
+              </button>
             </div>
           )}
         </div>
 
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-800">
-            {filteredProperties.length} Properties Found
-          </h2>
-          <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-            <option>Sort by: Newest</option>
-            <option>Price: Low to High</option>
-            <option>Price: High to Low</option>
-            <option>Most Viewed</option>
-          </select>
-        </div>
+        {/* Add Post Button */}
+        {session && (
+          <div className="mb-8">
+            <Link href="/post" className="btn btn-primary inline-block">
+              ➕ Create New Post
+            </Link>
+          </div>
+        )}
 
-        {filteredProperties.length > 0 ? (
+        {/* Loading */}
+        {loading && (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="text-gray-600 mt-4">Loading properties...</p>
+          </div>
+        )}
+
+        {/* No Properties */}
+        {!loading && properties.length === 0 && (
+          <div className="text-center py-12 bg-white rounded-2xl">
+            <div className="text-6xl mb-4">🏠</div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">No properties found</h3>
+            <p className="text-gray-600 mb-6">Be the first to create a post!</p>
+            {session && (
+              <Link href="/post" className="btn btn-primary">
+                Create Post
+              </Link>
+            )}
+          </div>
+        )}
+
+        {/* Properties Grid */}
+        {!loading && properties.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProperties.map((property) => (
-              <Link
-                key={property.id}
-                href={`/properties/${property.id}`}
-                className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all border-2 border-transparent hover:border-primary"
-              >
-                <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={property.images[0]}
-                    alt={property.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                  />
-                  {property.verified && (
-                    <div className="absolute top-3 right-3 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                      ✓ Verified
+            {properties.map((property) => (
+              <div key={property._id} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all">
+                {/* Image */}
+                <Link href={`/properties/${property._id}`} className="block relative h-56 bg-gray-200">
+                  {property.images && property.images.length > 0 ? (
+                    <Image
+                      src={property.images[0]}
+                      alt={property.title || 'Property'}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-6xl">
+                      🏠
                     </div>
                   )}
-                  <div className="absolute bottom-3 left-3 bg-primary text-white px-4 py-1 rounded-full font-bold">
-                    {property.price} EGP/mo
-                  </div>
-                </div>
-
-                <div className="p-5">
-                  <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-primary transition-colors line-clamp-1">
-                    {property.title}
-                  </h3>
-
-                  <div className="flex items-center gap-2 text-gray-600 mb-3">
-                    <MapPin size={16} className="text-primary" />
-                    <span className="text-sm">{property.area}, {property.location}</span>
-                  </div>
-
-                  <div className="flex items-center gap-4 mb-4 text-gray-600">
-                    <div className="flex items-center gap-1">
-                      <Bed size={16} />
-                      <span className="text-sm">{property.bedrooms}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Bath size={16} />
-                      <span className="text-sm">{property.bathrooms}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Maximize size={16} />
-                      <span className="text-sm">{property.size} sqm</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs capitalize">
-                      {property.type}
+                  
+                  {/* Type Badge */}
+                  <div className="absolute top-3 left-3 flex gap-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                      property.type === 'property' ? 'bg-blue-500 text-white' :
+                      property.type === 'roommate' ? 'bg-green-500 text-white' :
+                      'bg-purple-500 text-white'
+                    }`}>
+                      {property.type === 'property' ? '🏢 Property' :
+                       property.type === 'roommate' ? '👥 Roommate' :
+                       '🔍 Looking'}
                     </span>
-                    {property.furnished && (
-                      <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs">
-                        Furnished
+                    
+                    {property.targetAudience && property.type === 'property' && (
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                        property.targetAudience === 'family' 
+                          ? 'bg-orange-500 text-white' 
+                          : 'bg-green-500 text-white'
+                      }`}>
+                        {property.targetAudience === 'family' ? '👨‍👩‍👧‍👦' : '🎓'}
                       </span>
                     )}
                   </div>
+
+                  {/* Like Button */}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      handleLike(property._id)
+                    }}
+                    className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors"
+                  >
+                    <span className="text-xl">
+                      {isLiked(property) ? '❤️' : '🤍'}
+                    </span>
+                  </button>
+                </Link>
+
+                {/* Content */}
+                <div className="p-5">
+                  {/* User Info */}
+                  <div className="flex items-center gap-2 mb-3">
+                    {property.userImage ? (
+                      <Image
+                        src={property.userImage}
+                        alt={property.userName || 'User'}
+                        width={32}
+                        height={32}
+                        className="rounded-full"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-bold">
+                        {property.userName?.charAt(0) || 'U'}
+                      </div>
+                    )}
+                    <div>
+                      <div className="font-semibold text-sm text-gray-900">
+                        {property.userName || 'Anonymous'}
+                      </div>
+                      <div className="text-xs text-gray-600 capitalize">
+                        {property.userRole || 'user'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Title */}
+                  <Link href={`/properties/${property._id}`}>
+                    <h3 className="font-bold text-lg mb-2 hover:text-primary transition-colors line-clamp-2">
+                      {property.title || 'Untitled Property'}
+                    </h3>
+                  </Link>
+
+                  {/* Location */}
+                  <p className="text-gray-600 text-sm mb-3 flex items-center gap-1">
+                    📍 {property.location || 'Location not specified'}
+                  </p>
+
+                  {/* Details */}
+                  {property.type === 'property' && (
+                    <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                      {property.bedrooms && <span>🛏️ {property.bedrooms} BD</span>}
+                      {property.bathrooms && <span>🚿 {property.bathrooms} BA</span>}
+                      {property.area && <span>📐 {property.area} sqm</span>}
+                    </div>
+                  )}
+
+                  {/* Price & Stats */}
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                    {property.price ? (
+                      <div className="text-primary font-bold text-xl">
+                        {property.price.toLocaleString()} EGP
+                        <span className="text-sm text-gray-600">/mo</span>
+                      </div>
+                    ) : (
+                      <div className="text-gray-600 text-sm">Price negotiable</div>
+                    )}
+                    
+                    <div className="flex items-center gap-3 text-sm text-gray-600">
+                      <span>👁️ {property.views || 0}</span>
+                      <span>❤️ {property.likes?.length || 0}</span>
+                    </div>
+                  </div>
                 </div>
-              </Link>
+              </div>
             ))}
-          </div>
-        ) : (
-          <div className="text-center py-20 bg-white rounded-2xl shadow-lg">
-            <div className="text-6xl mb-4">🏠</div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">No properties found</h3>
-            <p className="text-gray-600 mb-6">
-              {selectedLocation !== 'all' 
-                ? `No properties available in ${selectedLocation} matching your criteria`
-                : 'Try adjusting your filters'
-              }
-            </p>
-            <button onClick={clearFilters} className="btn btn-primary">
-              Clear Filters
-            </button>
           </div>
         )}
       </div>

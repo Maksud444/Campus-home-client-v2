@@ -1,0 +1,40 @@
+[
+  {
+    "id": "1769251020301",
+    "userId": "nazmul",
+    "userEmail": "nazmul@gmail.com",
+    "userName": "nazmul ehsan",
+    "userImage": "/uploads/profiles/1769207817576-Tony-(1)---Edited.jpg",
+    "userRole": "agent",
+    "title": "dwcsa",
+    "description": "dfcdacdasc",
+    "type": "property",
+    "price": 4000,
+    "location": "Cairo, nasr city,tababh",
+    "city": "Cairo",
+    "addressDetails": "nasr city,tababh",
+    "whatsappNumber": "+201066843871",
+    "bedrooms": 3,
+    "bathrooms": 1,
+    "area": 300,
+    "amenities": [
+      "WiFi",
+      "AC"
+    ],
+    "images": [
+      "/uploads/images/1769250990612_Courtecy_plumbing_sevice_banner__1_.png",
+      "/uploads/images/1769250990663_Courtecy_plumbing_sevice_banner.png",
+      "/uploads/images/1769250990704_Courtecy_plumbing_sevice_banner.jpg"
+    ],
+    "videos": [],
+    "propertyType": "apartment",
+    "furnished": true,
+    "preferences": "",
+    "targetAudience": "students",
+    "likes": [],
+    "views": 32,
+    "status": "active",
+    "createdAt": "2026-01-24T10:37:00.302Z",
+    "updatedAt": "2026-01-24T10:44:20.969Z"
+  }
+]

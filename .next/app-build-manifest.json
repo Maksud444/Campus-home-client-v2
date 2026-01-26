@@ -1,9 +1,9 @@
 {
   "pages": {
-    "/login/page": [
+    "/properties/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/login/page.js"
+      "static/chunks/app/properties/page.js"
     ],
     "/layout": [
       "static/chunks/webpack.js",
@@ -16,25 +16,45 @@
       "static/chunks/main-app.js",
       "static/chunks/app/page.js"
     ],
+    "/post/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/post/page.js"
+    ],
+    "/dashboard/agent/[id]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/agent/[id]/page.js"
+    ],
+    "/dashboard/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/layout.js"
+    ],
     "/properties/[id]/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/properties/[id]/page.js"
     ],
-    "/properties/page": [
+    "/login/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/properties/page.js"
+      "static/chunks/app/login/page.js"
     ],
-    "/services/[service]/page": [
+    "/dashboard/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/services/[service]/page.js"
+      "static/chunks/app/dashboard/page.js"
     ],
-    "/services/[service]/[location]/page": [
+    "/dashboard/student/[id]/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/services/[service]/[location]/page.js"
+      "static/chunks/app/dashboard/student/[id]/page.js"
+    ],
+    "/_not-found/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/_not-found/page.js"
     ]
   }
 }

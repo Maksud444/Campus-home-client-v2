@@ -1,17 +1,17 @@
 import HeroSection from '@/components/home/HeroSection'
-import ServicesSection from '@/components/home/ServicesSection'
 import PropertiesSection from '@/components/home/PropertiesSection'
-import LocationsSection from '@/components/home/LocationsSection'
-import HowItWorksSection from '@/components/home/HowItWorksSection'
+import NewProjectsSection from '@/components/home/NewProjectsSection'  // ← NEW
+import ServicesSection from '@/components/home/ServicesSection'
+import WhyChooseUsAndHowItWorks from '@/components/home/HowItWorksSection'
 
 export default function HomePage() {
   return (
-    <>
+    <main>
       <HeroSection />
-      <ServicesSection />
       <PropertiesSection />
-      <LocationsSection />
-      <HowItWorksSection />
-    </>
+      <NewProjectsSection />  {/* ← NEW: LocationsSection এর জায়গায় */}
+      <ServicesSection />     {/* ← Moved down */}
+      <WhyChooseUsAndHowItWorks />
+    </main>
   )
 }

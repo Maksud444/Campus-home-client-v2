@@ -11,11 +11,13 @@
     "create-user": "tsx scripts/create-test-user.ts"
   },
   "dependencies": {
+    "@google-cloud/translate": "^9.3.0",
     "bcryptjs": "^2.4.3",
+    "firebase": "^12.8.0",
     "gsap": "^3.14.1",
     "lucide-react": "^0.344.0",
     "next": "^14.2.0",
-    "next-auth": "^4.24.5",
+    "next-auth": "^4.24.13",
     "react": "^18.3.0",
     "react-dom": "^18.3.0"
   },

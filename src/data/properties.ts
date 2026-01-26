@@ -1,5 +1,5 @@
 export interface Property {
-  city: ReactNode
+  city: string
   id: string
   title: string
   description: string
@@ -36,6 +36,7 @@ export const properties: Property[] = [
     type: 'apartment',
     price: 4500,
     location: 'Nasr City',
+    city: 'Nasr City',
     area: 'Street 9',
     bedrooms: 2,
     bathrooms: 1,
@@ -69,6 +70,7 @@ export const properties: Property[] = [
     type: 'studio',
     price: 3200,
     location: 'Maadi',
+    city: 'Maadi',
     area: 'Degla',
     bedrooms: 1,
     bathrooms: 1,
@@ -100,6 +102,7 @@ export const properties: Property[] = [
     type: 'apartment',
     price: 6000,
     location: 'Heliopolis',
+    city: 'Heliopolis',
     area: 'Korba',
     bedrooms: 3,
     bathrooms: 2,
@@ -132,6 +135,7 @@ export const properties: Property[] = [
     type: 'villa',
     price: 15000,
     location: 'New Cairo',
+    city: 'New Cairo',
     area: 'Katameya',
     bedrooms: 4,
     bathrooms: 3,
@@ -164,6 +168,7 @@ export const properties: Property[] = [
     type: 'room',
     price: 1500,
     location: 'Giza',
+    city: 'Giza',
     area: 'Dokki',
     bedrooms: 1,
     bathrooms: 1,
@@ -195,6 +200,7 @@ export const properties: Property[] = [
     type: 'apartment',
     price: 7000,
     location: 'Zamalek',
+    city: 'Zamalek',
     area: 'Zamalek Center',
     bedrooms: 2,
     bathrooms: 1,

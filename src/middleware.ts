@@ -5,6 +5,7 @@ export const config = {
     '/dashboard/:path*',
     '/post/:path*',
     '/messages/:path*',
-    '/profile/:path*'
+    '/profile/:path*',
+    '/settings/:path*'
   ]
 }

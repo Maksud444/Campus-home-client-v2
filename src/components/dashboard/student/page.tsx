@@ -1,15 +1,104 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
+import { useSession, signOut } from 'next-auth/react'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export default function StudentDashboard() {
+  const router = useRouter()
+  const { data: session, status } = useSession()
+  const [dashboardData, setDashboardData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Check authentication
+    if (status === 'loading') return
+    
+    if (status === 'unauthenticated') {
+      router.push('/login')
+      return
+    }
+
+    // Check if user is student
+    if (session?.user?.role !== 'student') {
+      router.push(`/dashboard/${session?.user?.role}`)
+      return
+    }
+
+    // Load dashboard data
+    loadDashboard()
+  }, [session, status, router])
+
+  const loadDashboard = async () => {
+    if (!session?.accessToken) {
+      console.log('⚠️ No access token found')
+      setLoading(false)
+      return
+    }
+
+    try {
+      console.log('📊 Loading student dashboard...')
+      const response = await fetch(`${API_URL}/api/dashboard/student`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      const data = await response.json()
+      console.log('✅ Dashboard data:', data)
+
+      if (response.ok && data.success) {
+        setDashboardData(data.data)
+      } else {
+        console.error('❌ Failed to load dashboard:', data.message)
+      }
+    } catch (error) {
+      console.error('❌ Dashboard error:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: '/' })
+  }
+
+  if (status === 'loading' || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!session || !session.user) {
+    return null
+  }
+
+  const stats = dashboardData?.stats || {
+    totalBookings: 0,
+    activeBookings: 0,
+    savedProperties: 0,
+    pendingBookings: 0
+  }
+
+  const savedProperties = dashboardData?.savedProperties || []
+  const recentBookings = dashboardData?.recentBookings || []
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar */}
       <aside className="w-72 bg-white border-r border-gray-200 fixed h-screen overflow-y-auto">
         <div className="p-6">
-          {/* Logo */}
           <Link href="/" className="flex items-center gap-3 mb-8">
             <div className="w-11 h-11 bg-primary rounded-xl flex items-center justify-center text-white font-extrabold text-2xl">
               C
@@ -20,12 +109,22 @@ export default function StudentDashboard() {
           {/* User Info */}
           <div className="mb-8 p-4 bg-bg-light rounded-xl">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold text-xl">
-                A
-              </div>
+              {session.user.image ? (
+                <Image 
+                  src={session.user.image} 
+                  alt={session.user.name}
+                  width={48}
+                  height={48}
+                  className="rounded-full"
+                />
+              ) : (
+                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold text-xl">
+                  {session.user.name.charAt(0).toUpperCase()}
+                </div>
+              )}
               <div>
-                <div className="font-bold text-gray-900">Ahmed Hassan</div>
-                <div className="text-sm text-gray-600">Student</div>
+                <div className="font-bold text-gray-900">{session.user.name}</div>
+                <div className="text-sm text-gray-600 capitalize">{session.user.role}</div>
               </div>
             </div>
           </div>
@@ -42,7 +141,7 @@ export default function StudentDashboard() {
             </Link>
             <Link href="#" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl font-semibold transition-colors">
               <span className="text-xl">📝</span>
-              <span>My Posts</span>
+              <span>My Bookings</span>
             </Link>
             <Link href="#" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl font-semibold transition-colors">
               <span className="text-xl">❤️</span>
@@ -52,14 +151,13 @@ export default function StudentDashboard() {
               <span className="text-xl">💬</span>
               <span>Messages</span>
             </Link>
-            <Link href="#" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl font-semibold transition-colors">
-              <span className="text-xl">👤</span>
-              <span>Profile</span>
-            </Link>
-            <Link href="/" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl font-semibold transition-colors">
+            <button 
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl font-semibold transition-colors text-left"
+            >
               <span className="text-xl">🚪</span>
               <span>Logout</span>
-            </Link>
+            </button>
           </nav>
         </div>
       </aside>
@@ -68,7 +166,9 @@ export default function StudentDashboard() {
       <main className="ml-72 flex-1 p-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-extrabold text-gray-900 mb-2">Welcome Back, Ahmed! 👋</h1>
+          <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
+            Welcome Back, {session.user.name}! 👋
+          </h1>
           <p className="text-gray-600 text-lg">Here's your student dashboard overview</p>
         </div>
 
@@ -76,23 +176,23 @@ export default function StudentDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
             <div className="text-primary text-2xl mb-2">📝</div>
-            <div className="text-3xl font-extrabold text-gray-900 mb-1">2</div>
-            <div className="text-gray-600">Active Posts</div>
+            <div className="text-3xl font-extrabold text-gray-900 mb-1">{stats.totalBookings}</div>
+            <div className="text-gray-600">Total Bookings</div>
+          </div>
+          <div className="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
+            <div className="text-primary text-2xl mb-2">✅</div>
+            <div className="text-3xl font-extrabold text-gray-900 mb-1">{stats.activeBookings}</div>
+            <div className="text-gray-600">Active Bookings</div>
           </div>
           <div className="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
             <div className="text-primary text-2xl mb-2">❤️</div>
-            <div className="text-3xl font-extrabold text-gray-900 mb-1">12</div>
+            <div className="text-3xl font-extrabold text-gray-900 mb-1">{stats.savedProperties}</div>
             <div className="text-gray-600">Saved Properties</div>
           </div>
           <div className="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
-            <div className="text-primary text-2xl mb-2">💬</div>
-            <div className="text-3xl font-extrabold text-gray-900 mb-1">8</div>
-            <div className="text-gray-600">Messages</div>
-          </div>
-          <div className="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
-            <div className="text-primary text-2xl mb-2">👁️</div>
-            <div className="text-3xl font-extrabold text-gray-900 mb-1">45</div>
-            <div className="text-gray-600">Profile Views</div>
+            <div className="text-primary text-2xl mb-2">⏳</div>
+            <div className="text-3xl font-extrabold text-gray-900 mb-1">{stats.pendingBookings}</div>
+            <div className="text-gray-600">Pending</div>
           </div>
         </div>
 
@@ -107,14 +207,14 @@ export default function StudentDashboard() {
                 <div className="text-sm text-white/80">Find roommate or room</div>
               </div>
             </Link>
-            <Link href="/search" className="bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-xl p-4 transition-all flex items-center gap-3">
+            <Link href="/properties" className="bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-xl p-4 transition-all flex items-center gap-3">
               <span className="text-3xl">🔍</span>
               <div>
                 <div className="font-bold">Browse Properties</div>
                 <div className="text-sm text-white/80">Find your perfect home</div>
               </div>
             </Link>
-            <Link href="#" className="bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-xl p-4 transition-all flex items-center gap-3">
+            <Link href="/services/plumbing" className="bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-xl p-4 transition-all flex items-center gap-3">
               <span className="text-3xl">🔧</span>
               <div>
                 <div className="font-bold">Book Service</div>
@@ -124,104 +224,88 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        {/* My Active Posts */}
-        <div className="bg-white rounded-2xl p-6 shadow-md mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">My Active Posts</h2>
-            <Link href="/post" className="btn btn-primary">
-              + Create New
+        {/* Recent Bookings */}
+        {recentBookings.length > 0 ? (
+          <div className="bg-white rounded-2xl p-6 shadow-md mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Recent Bookings</h2>
+            <div className="space-y-4">
+              {recentBookings.map((booking: any) => (
+                <div key={booking._id} className="border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                          booking.status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                          booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                          booking.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {booking.status.toUpperCase()}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          {new Date(booking.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-lg mb-2">
+                        {booking.property?.title || booking.service?.name || 'Booking'}
+                      </h3>
+                      <p className="text-gray-600 mb-3">
+                        📍 {booking.property?.location?.city || 'N/A'}
+                      </p>
+                      <div className="text-sm text-gray-600">
+                        Price: <span className="font-bold text-primary">{booking.price} EGP</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl p-12 shadow-md mb-8 text-center">
+            <div className="text-6xl mb-4">📝</div>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">No bookings yet</h3>
+            <p className="text-gray-600 mb-6">Start by browsing properties or services</p>
+            <Link href="/properties" className="btn btn-primary">
+              Browse Properties
             </Link>
           </div>
-          
-          <div className="space-y-4">
-            {/* Post 1 */}
-            <div className="border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-semibold">
-                      Looking for Roommate
-                    </span>
-                    <span className="text-sm text-gray-500">Posted 2 days ago</span>
-                  </div>
-                  <h3 className="font-bold text-lg mb-2">Looking for roommate in Nasr City</h3>
-                  <p className="text-gray-600 mb-3">2BR apartment, 1,500 EGP/month, Near Cairo University</p>
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <span>👁️ 23 views</span>
-                    <span>💬 5 messages</span>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button className="text-primary hover:bg-bg-light px-3 py-2 rounded-lg font-semibold">
-                    Edit
-                  </button>
-                  <button className="text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg font-semibold">
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Post 2 */}
-            <div className="border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
-                      Looking for Room
-                    </span>
-                    <span className="text-sm text-gray-500">Posted 5 days ago</span>
-                  </div>
-                  <h3 className="font-bold text-lg mb-2">Student looking for room in Maadi</h3>
-                  <p className="text-gray-600 mb-3">Budget: 2,000 EGP/month, Prefer quiet area</p>
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <span>👁️ 45 views</span>
-                    <span>💬 12 messages</span>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button className="text-primary hover:bg-bg-light px-3 py-2 rounded-lg font-semibold">
-                    Edit
-                  </button>
-                  <button className="text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg font-semibold">
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Saved Properties */}
-        <div className="bg-white rounded-2xl p-6 shadow-md">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Saved Properties</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="relative h-48 bg-gray-200">
-                  <Image 
-                    src={`https://images.unsplash.com/photo-${i === 1 ? '1522708323590' : i === 2 ? '1560448204' : '1502672260'}-d24dbb6b0267?w=400&h=300&fit=crop`}
-                    alt="Property"
-                    fill
-                    className="object-cover"
-                  />
-                  <button className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white">
-                    <span className="text-red-500 text-xl">❤️</span>
-                  </button>
-                </div>
-                <div className="p-4">
-                  <h3 className="font-bold mb-2">Studio in Nasr City</h3>
-                  <p className="text-gray-600 text-sm mb-3">📍 Nasr City, Cairo</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-primary font-bold text-xl">2,500 EGP</span>
-                    <button className="btn btn-primary text-sm">View</button>
+        {savedProperties.length > 0 && (
+          <div className="bg-white rounded-2xl p-6 shadow-md">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Saved Properties</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {savedProperties.slice(0, 3).map((property: any) => (
+                <div key={property._id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="relative h-48 bg-gray-200">
+                    {property.images && property.images[0] && (
+                      <Image 
+                        src={property.images[0].url}
+                        alt={property.title}
+                        fill
+                        className="object-cover"
+                      />
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-bold mb-2 line-clamp-1">{property.title}</h3>
+                    <p className="text-gray-600 text-sm mb-3">
+                      📍 {property.location?.city || 'N/A'}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-primary font-bold text-xl">{property.price} EGP</span>
+                      <Link href={`/properties/${property._id}`} className="btn btn-primary text-sm">
+                        View
+                      </Link>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </main>
     </div>
   )
