@@ -4,6 +4,7 @@ import NewProjectsSection from '@/components/home/NewProjectsSection'  // ← NE
 import ServicesSection from '@/components/home/ServicesSection'
 import WhyChooseUsAndHowItWorks from '@/components/home/HowItWorksSection'
 
+
 export default function HomePage() {
   return (
     <main>

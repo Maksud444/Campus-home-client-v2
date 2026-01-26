@@ -26,12 +26,20 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'firebasestorage.googleapis.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'ui-avatars.com', // ← ADD THIS
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
     ],
   },
   reactStrictMode: true,
   swcMinify: true,
   typescript: {
-    ignoreBuildErrors: true, // ADD THIS
+    ignoreBuildErrors: true,
   },
   eslint: {
     ignoreDuringBuilds: true,

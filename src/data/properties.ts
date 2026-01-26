@@ -1,3 +1,4 @@
+// Simple interface - no default export
 export interface Property {
   _id: string
   id?: string
@@ -14,5 +15,5 @@ export interface Property {
   featured?: boolean
 }
 
-// Empty array - Backend থেকে data আসবে
+// Named export only
 export const properties: Property[] = []
