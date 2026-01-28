@@ -47,62 +47,78 @@ class ApiService {
   }
 
   // Auth APIs
-  async register(data: RegisterData): Promise<ApiResponse<any>> {
-    try {
-      const response = await fetch(`${API_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify(data),
-      })
-
-      const result = await response.json()
-      
-      if (!response.ok) {
-        throw new Error(result.message || 'Registration failed')
-      }
-
-      // Store token if provided
-      if (result.token) {
-        this.setToken(result.token)
-        if (result.user) {
-          this.setUser(result.user)
-        }
-      }
-
-      return result
-    } catch (error: any) {
-      throw new Error(error.message || 'Network error')
-    }
-  }
-
   async login(credentials: LoginCredentials): Promise<ApiResponse<any>> {
-    try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify(credentials),
-      })
+  try {
+    console.log('🔐 Logging in user:', credentials.email)
+    
+    const response = await fetch(`${API_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(credentials),
+    })
 
-      const result = await response.json()
-      
-      if (!response.ok) {
-        throw new Error(result.message || 'Login failed')
-      }
+    const result = await response.json()
+    
+    console.log('📥 Login result:', result)
+    
+    if (!response.ok) {
+      console.error('❌ Login failed:', result.message)
+      throw new Error(result.message || 'Invalid credentials')
+    }
 
-      // Store token and user
-      if (result.token) {
-        this.setToken(result.token)
-      }
+    // Store token and user
+    if (result.success && result.token) {
+      this.setToken(result.token)
       if (result.user) {
         this.setUser(result.user)
       }
-
-      return result
-    } catch (error: any) {
-      throw new Error(error.message || 'Network error')
+    } else {
+      throw new Error('Invalid response format')
     }
-  }
 
+    return result
+  } catch (error: any) {
+    console.error('❌ Login error:', error)
+    throw new Error(error.message || 'Network error')
+  }
+}
+
+async register(data: RegisterData): Promise<ApiResponse<any>> {
+  try {
+    console.log('📝 Registering user:', data.email)
+    console.log('🌐 Calling backend:', `${API_URL}/api/auth/register`)
+    
+    const response = await fetch(`${API_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(data),
+    })
+
+    const result = await response.json()
+    
+    console.log('📥 Backend register response:', result)
+    
+    if (!response.ok) {
+      console.error('❌ Registration failed:', result.message)
+      throw new Error(result.message || 'Registration failed')
+    }
+
+    // Store token if provided
+    if (result.success && result.token) {
+      this.setToken(result.token)
+      if (result.user) {
+        this.setUser(result.user)
+      }
+    } else {
+      throw new Error('Invalid response format')
+    }
+
+    return result
+  } catch (error: any) {
+    console.error('❌ Register error:', error)
+    throw new Error(error.message || 'Network error')
+  }
+}
   async getProfile(token?: string): Promise<ApiResponse<any>> {
     try {
       const authToken = token || this.getToken()
