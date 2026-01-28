@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/lib/api'
 
-export default function AuthCallback() {
+// Separate component that uses useSearchParams
+function CallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -60,11 +61,32 @@ export default function AuthCallback() {
   }, [searchParams, router])
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Completing authentication...</p>
+        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto"></div>
+        <h2 className="mt-6 text-xl font-semibold text-gray-900">
+          Completing authentication...
+        </h2>
+        <p className="mt-2 text-gray-600">Please wait a moment</p>
       </div>
     </div>
+  )
+}
+
+// Main component wrapped in Suspense
+export default function AuthCallback() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto"></div>
+          <h2 className="mt-6 text-xl font-semibold text-gray-900">
+            Loading...
+          </h2>
+        </div>
+      </div>
+    }>
+      <CallbackContent />
+    </Suspense>
   )
 }
