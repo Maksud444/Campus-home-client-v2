@@ -1,29 +1,35 @@
-'use client'
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
-import fs from 'fs'
+import { readFile, writeFile } from 'fs/promises'
 import path from 'path'
+
+/**
+ * IMPORTANT:
+ * fs ব্যবহার করলে Node.js runtime দরকার
+ */
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 const DATA_FILE = path.join(process.cwd(), 'data', 'users.json')
 
-function readUsers() {
+async function readUsers() {
   try {
-    const data = fs.readFileSync(DATA_FILE, 'utf-8')
+    const data = await readFile(DATA_FILE, 'utf-8')
     return JSON.parse(data)
-  } catch (error) {
+  } catch {
     return []
   }
 }
 
-function writeUsers(users: any[]) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(users, null, 2))
+async function writeUsers(users: any[]) {
+  await writeFile(DATA_FILE, JSON.stringify(users, null, 2), 'utf-8')
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.email) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized' },
@@ -31,7 +37,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const users = readUsers()
+    const users = await readUsers()
     const user = users.find((u: any) => u.email === session.user.email)
 
     if (!user) {
@@ -54,7 +60,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.email) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized' },
@@ -65,8 +71,10 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const { name, phone, bio, university, location, image } = body
 
-    const users = readUsers()
-    const userIndex = users.findIndex((u: any) => u.email === session.user.email)
+    const users = await readUsers()
+    const userIndex = users.findIndex(
+      (u: any) => u.email === session.user.email
+    )
 
     if (userIndex === -1) {
       return NextResponse.json(
@@ -75,7 +83,6 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    // Update user
     users[userIndex] = {
       ...users[userIndex],
       name,
@@ -87,7 +94,7 @@ export async function PUT(request: NextRequest) {
       updatedAt: new Date().toISOString()
     }
 
-    writeUsers(users)
+    await writeUsers(users)
 
     return NextResponse.json({
       success: true,

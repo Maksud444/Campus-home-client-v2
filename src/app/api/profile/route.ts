@@ -1,93 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
-import fs from 'fs'
-import path from 'path'
 
-const DATA_FILE = path.join(process.cwd(), 'data', 'users.json')
-
-function readUsers() {
-  try {
-    if (!fs.existsSync(DATA_FILE)) {
-      console.log('❌ users.json file not found, creating...')
-      const dataDir = path.join(process.cwd(), 'data')
-      if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true })
-      }
-      fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2))
-      return []
-    }
-    const data = fs.readFileSync(DATA_FILE, 'utf-8')
-    return JSON.parse(data)
-  } catch (error) {
-    console.error('❌ Error reading users:', error)
-    return []
-  }
-}
-
-function writeUsers(users: any[]) {
-  try {
-    const dataDir = path.join(process.cwd(), 'data')
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true })
-    }
-    fs.writeFileSync(DATA_FILE, JSON.stringify(users, null, 2))
-    console.log('✅ Users written successfully')
-  } catch (error) {
-    console.error('❌ Error writing users:', error)
-  }
-}
+// Mark as dynamic
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    console.log('📊 Profile GET - Session:', session?.user?.email)
-    
     if (!session?.user?.email) {
       return NextResponse.json(
-        { success: false, message: 'Unauthorized - No session' },
+        { success: false, message: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    const users = readUsers()
-    console.log('📊 Total users in database:', users.length)
-    console.log('📊 Looking for user:', session.user.email)
-    
-    const user = users.find((u: any) => u.email === session.user.email)
+    // Call backend API
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+    const response = await fetch(`${API_URL}/api/users/profile`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email: session.user.email })
+    })
 
-    if (!user) {
-      console.log('❌ User not found in database')
-      console.log('📊 Available users:', users.map((u: any) => u.email))
-      
-      // Create user if not exists
-      const newUser = {
-        id: session.user.email.split('@')[0],
-        name: session.user.name || 'User',
-        email: session.user.email,
-        role: (session.user as any).role || 'student',
-        image: session.user.image || '',
-        phone: '',
-        bio: '',
-        university: '',
-        location: '',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-      
-      users.push(newUser)
-      writeUsers(users)
-      
-      console.log('✅ User created:', newUser.email)
-      
-      return NextResponse.json({ success: true, user: newUser })
+    const data = await response.json()
+
+    if (!data.success) {
+      return NextResponse.json(
+        { success: false, message: 'User not found' },
+        { status: 404 }
+      )
     }
 
-    console.log('✅ User found:', user.email)
-    return NextResponse.json({ success: true, user })
+    return NextResponse.json({ success: true, user: data.user })
   } catch (error) {
-    console.error('❌ Profile GET error:', error)
+    console.error('Profile GET error:', error)
     return NextResponse.json(
       { success: false, message: 'Internal server error' },
       { status: 500 }
@@ -99,83 +48,47 @@ export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    console.log('📊 Profile PUT - Session:', session?.user?.email)
-    
     if (!session?.user?.email) {
       return NextResponse.json(
-        { success: false, message: 'Unauthorized - No session' },
+        { success: false, message: 'Unauthorized' },
         { status: 401 }
       )
     }
 
     const body = await request.json()
-    console.log('📊 Update data:', body)
     
-    const { name, phone, bio, university, location, image } = body
-
-    const users = readUsers()
-    console.log('📊 Total users:', users.length)
-    
-    let userIndex = users.findIndex((u: any) => u.email === session.user.email)
-
-    if (userIndex === -1) {
-      console.log('❌ User not found, creating new user')
-      
-      // Create user if not exists
-      const newUser = {
-        id: session.user.email.split('@')[0],
+    // Call backend API
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+    const response = await fetch(`${API_URL}/api/users/profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         email: session.user.email,
-        role: (session.user as any).role || 'student',
-        name,
-        phone,
-        bio,
-        university,
-        location,
-        image,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-      
-      users.push(newUser)
-      writeUsers(users)
-      
-      console.log('✅ User created and updated')
-      
-      return NextResponse.json({
-        success: true,
-        message: 'Profile updated successfully',
-        user: newUser
+        ...body
       })
-    }
+    })
 
-    // Update user
-    users[userIndex] = {
-      ...users[userIndex],
-      name,
-      phone,
-      bio,
-      university,
-      location,
-      image,
-      updatedAt: new Date().toISOString()
-    }
+    const data = await response.json()
 
-    writeUsers(users)
-    
-    console.log('✅ User updated:', users[userIndex].email)
+    if (!data.success) {
+      return NextResponse.json(
+        { success: false, message: data.message },
+        { status: 400 }
+      )
+    }
 
     return NextResponse.json({
       success: true,
       message: 'Profile updated successfully',
-      user: users[userIndex]
+      user: data.user
     })
   } catch (error) {
-    console.error('❌ Profile PUT error:', error)
+    console.error('Profile PUT error:', error)
     return NextResponse.json(
       { success: false, message: 'Internal server error' },
       { status: 500 }
     )
   }
 }
-
-export const dynamic = 'force-dynamic'
