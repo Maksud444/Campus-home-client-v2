@@ -143,30 +143,41 @@ async register(data: RegisterData): Promise<ApiResponse<any>> {
     }
   }
 
-  async updateProfile(data: any, token?: string): Promise<ApiResponse<any>> {
-    try {
-      const authToken = token || this.getToken()
-      if (!authToken) {
-        throw new Error('No authentication token found')
-      }
-
-      const response = await fetch(`${API_URL}/api/auth/profile`, {
-        method: 'PUT',
-        headers: this.getHeaders(authToken),
-        body: JSON.stringify(data),
-      })
-
-      const result = await response.json()
-      
-      if (!response.ok) {
-        throw new Error(result.message || 'Failed to update profile')
-      }
-
-      return result
-    } catch (error: any) {
-      throw new Error(error.message || 'Network error')
+ async updateProfile(data: any, token?: string): Promise<ApiResponse<any>> {
+  try {
+    const authToken = token || this.getToken()
+    
+    if (!authToken) {
+      throw new Error('No authentication token found. Please login again.')
     }
+
+    console.log('🔄 Updating profile...')
+    console.log('🔑 Token:', authToken.substring(0, 20) + '...')
+
+    const response = await fetch(`${API_URL}/api/auth/profile`, {
+      method: 'PUT',
+      headers: this.getHeaders(authToken),
+      body: JSON.stringify(data),
+    })
+
+    const result = await response.json()
+    
+    if (!response.ok) {
+      console.error('❌ Update failed:', result.message)
+      throw new Error(result.message || 'Failed to update profile')
+    }
+
+    // Update stored user
+    if (result.user) {
+      this.setUser(result.user)
+    }
+
+    return result
+  } catch (error: any) {
+    console.error('❌ Update error:', error)
+    throw error
   }
+}
 
   // Dashboard APIs
   async getStudentDashboard(token?: string): Promise<ApiResponse<any>> {
@@ -518,6 +529,83 @@ async register(data: RegisterData): Promise<ApiResponse<any>> {
     }
   }
 
+  // ============================================
+// UPLOAD APIs
+// ============================================
+async uploadImage(file: File): Promise<ApiResponse<any>> {
+  try {
+    const authToken = this.getToken()
+    
+    if (!authToken) {
+      throw new Error('No authentication token found. Please login first.')
+    }
+
+    const formData = new FormData()
+    formData.append('image', file)
+
+    console.log('📤 Uploading image...')
+
+    const response = await fetch(`${API_URL}/api/upload/image`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+        // Don't set Content-Type for FormData - browser will set it automatically
+      },
+      body: formData,
+    })
+
+    const result = await response.json()
+
+    if (!response.ok) {
+      throw new Error(result.message || 'Upload failed')
+    }
+
+    console.log('✅ Image uploaded:', result.data?.url)
+
+    return result
+  } catch (error: any) {
+    console.error('❌ Upload error:', error)
+    throw error
+  }
+}
+
+async uploadImages(files: File[]): Promise<ApiResponse<any>> {
+  try {
+    const authToken = this.getToken()
+    
+    if (!authToken) {
+      throw new Error('No authentication token found')
+    }
+
+    const formData = new FormData()
+    files.forEach(file => {
+      formData.append('images', file)
+    })
+
+    console.log('📤 Uploading', files.length, 'images...')
+
+    const response = await fetch(`${API_URL}/api/upload/images`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      },
+      body: formData,
+    })
+
+    const result = await response.json()
+
+    if (!response.ok) {
+      throw new Error(result.message || 'Upload failed')
+    }
+
+    console.log('✅ Images uploaded')
+
+    return result
+  } catch (error: any) {
+    console.error('❌ Upload error:', error)
+    throw error
+  }
+}
   // Utility methods
   setToken(token: string) {
     if (typeof window !== 'undefined') {
