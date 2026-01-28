@@ -5,6 +5,9 @@ import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
+// ✅ FIXED: Always use backend URL
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
+
 export default function LoginPage() {
   const router = useRouter()
   const [isSignup, setIsSignup] = useState(false)
@@ -45,10 +48,11 @@ export default function LoginPage() {
 
     try {
       if (isSignup) {
-        // ========== REGISTRATION ==========
+        // ========== REGISTRATION - FIXED TO USE BACKEND ==========
         console.log('📝 Registering user:', {
           email: formData.email,
-          role: role
+          role: role,
+          API_URL: API_URL
         })
 
         // Validation
@@ -65,9 +69,8 @@ export default function LoginPage() {
           throw new Error('Password must be at least 6 characters')
         }
 
-        // Call backend register API
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
-        console.log('🌐 Calling:', `${API_URL}/api/auth/register`)
+        // ✅ FIXED: Call BACKEND register API (not local /api)
+        console.log('🌐 Calling backend:', `${API_URL}/api/auth/register`)
 
         const registerRes = await fetch(`${API_URL}/api/auth/register`, {
           method: 'POST',
@@ -83,9 +86,9 @@ export default function LoginPage() {
         })
 
         const registerData = await registerRes.json()
-        console.log('📥 Register response:', registerData)
+        console.log('📥 Backend register response:', registerData)
 
-        if (!registerRes.ok || !registerData.success) {
+        if (!registerRes.ok) {
           throw new Error(registerData.message || 'Registration failed')
         }
 
@@ -95,7 +98,7 @@ export default function LoginPage() {
         // Wait a bit for backend
         await new Promise(resolve => setTimeout(resolve, 1000))
 
-        // Auto login with NextAuth
+        // ✅ FIXED: Now login with credentials using NextAuth
         console.log('🔐 Auto-login attempt...')
         const loginResult = await signIn('credentials', {
           email: formData.email.trim().toLowerCase(),
@@ -123,7 +126,7 @@ export default function LoginPage() {
         }
 
       } else {
-        // ========== LOGIN ==========
+        // ========== LOGIN - Already using NextAuth which calls backend ==========
         console.log('🔐 Logging in user:', formData.email)
 
         // Validation
@@ -145,7 +148,6 @@ export default function LoginPage() {
         if (result?.error) {
           console.error('❌ Login failed:', result.error)
           
-          // Check if it's an OAuth user error
           if (result.error.includes('Google') || result.error.includes('Facebook')) {
             setError(result.error)
           } else {
@@ -202,6 +204,11 @@ export default function LoginPage() {
             {error}
           </div>
         )}
+
+        {/* Debug Info - Shows current API URL */}
+        <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
+          🌐 API: {API_URL}
+        </div>
 
         {/* OAuth Buttons */}
         <div className="space-y-3 mb-6">
