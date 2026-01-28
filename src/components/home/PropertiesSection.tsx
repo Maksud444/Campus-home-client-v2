@@ -32,7 +32,7 @@ export default function PropertiesSection() {
   const fetchProperties = async () => {
     try {
       setLoading(true)
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
       const url = filter === 'all' 
         ? `${API_URL}/api/properties?limit=6` 
         : `${API_URL}/api/properties?type=${filter}&limit=6`

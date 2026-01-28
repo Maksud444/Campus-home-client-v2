@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
 
 export default function StudentDashboard() {
   const router = useRouter()

@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Call backend API
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
     const response = await fetch(`${API_URL}/api/users/profile`, {
       headers: {
         'Content-Type': 'application/json',
@@ -58,7 +58,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     
     // Call backend API
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
     const response = await fetch(`${API_URL}/api/users/profile`, {
       method: 'PUT',
       headers: {

@@ -74,7 +74,7 @@ export default function SettingsPage() {
       const uploadFormData = new FormData()
       uploadFormData.append('image', imageFile)
 
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
       const token = (session as any)?.accessToken
 
       const response = await fetch(`${API_URL}/api/upload`, {
@@ -121,7 +121,7 @@ export default function SettingsPage() {
       }
 
       // Update profile via backend
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
       const token = (session as any)?.accessToken
 
       const response = await fetch(`${API_URL}/api/auth/profile`, {

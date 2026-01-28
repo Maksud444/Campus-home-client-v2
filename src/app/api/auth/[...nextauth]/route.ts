@@ -25,7 +25,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
           
           const res = await fetch(`${API_URL}/api/auth/login`, {
             method: 'POST',

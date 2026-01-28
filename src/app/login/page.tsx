@@ -206,9 +206,9 @@ export default function LoginPage() {
         )}
 
         {/* Debug Info - Shows current API URL */}
-        <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
+        {/* <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
           🌐 API: {API_URL}
-        </div>
+        </div> */}
 
         {/* OAuth Buttons */}
         <div className="space-y-3 mb-6">

@@ -23,7 +23,7 @@ export default function NewProjectsSection() {
     const fetchProperties = async () => {
       try {
         setLoading(true)
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
         
         console.log('📥 Fetching properties from backend...')
         
