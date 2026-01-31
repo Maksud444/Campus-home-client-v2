@@ -47,7 +47,7 @@ export default function PropertiesPage() {
       setLoading(true)
       const url = filter === 'all' 
         ? `${process.env.NEXT_PUBLIC_API_URL}/api/properties` 
-        : `http://localhost:5000/api/properties?type=${filter}`
+        : `https://student-housing-backend.vercel.app/api/properties?type=${filter}`
       
       const response = await fetch(url)
       const data = await response.json()
@@ -77,7 +77,7 @@ export default function PropertiesPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/properties/${propId}/like`, {
+      const response = await fetch(`https://student-housing-backend.vercel.app/api/properties/${propId}/like`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

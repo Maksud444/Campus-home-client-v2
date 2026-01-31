@@ -1,30 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
-import { readFile, writeFile } from 'fs/promises'
-import path from 'path'
 
-/**
- * IMPORTANT:
- * fs ব্যবহার করলে Node.js runtime দরকার
- */
 export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 
-const DATA_FILE = path.join(process.cwd(), 'data', 'users.json')
-
-async function readUsers() {
-  try {
-    const data = await readFile(DATA_FILE, 'utf-8')
-    return JSON.parse(data)
-  } catch {
-    return []
-  }
-}
-
-async function writeUsers(users: any[]) {
-  await writeFile(DATA_FILE, JSON.stringify(users, null, 2), 'utf-8')
-}
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
 
 export async function GET() {
   try {
@@ -37,17 +17,25 @@ export async function GET() {
       )
     }
 
-    const users = await readUsers()
-    const user = users.find((u: any) => u.email === session.user.email)
+    const token = (session as any).accessToken
 
-    if (!user) {
+    const response = await fetch(`${API_URL}/api/users/profile?email=${session.user.email}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      }
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
       return NextResponse.json(
-        { success: false, message: 'User not found' },
-        { status: 404 }
+        { success: false, message: data.message || 'Failed to fetch profile' },
+        { status: response.status }
       )
     }
 
-    return NextResponse.json({ success: true, user })
+    return NextResponse.json(data)
   } catch (error) {
     console.error('Profile GET error:', error)
     return NextResponse.json(
@@ -69,38 +57,30 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, phone, bio, university, location, image } = body
+    const token = (session as any).accessToken
 
-    const users = await readUsers()
-    const userIndex = users.findIndex(
-      (u: any) => u.email === session.user.email
-    )
+    const response = await fetch(`${API_URL}/api/users/profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({
+        email: session.user.email,
+        ...body
+      })
+    })
 
-    if (userIndex === -1) {
+    const data = await response.json()
+
+    if (!response.ok) {
       return NextResponse.json(
-        { success: false, message: 'User not found' },
-        { status: 404 }
+        { success: false, message: data.message || 'Update failed' },
+        { status: response.status }
       )
     }
 
-    users[userIndex] = {
-      ...users[userIndex],
-      name,
-      phone,
-      bio,
-      university,
-      location,
-      image,
-      updatedAt: new Date().toISOString()
-    }
-
-    await writeUsers(users)
-
-    return NextResponse.json({
-      success: true,
-      message: 'Profile updated successfully',
-      user: users[userIndex]
-    })
+    return NextResponse.json(data)
   } catch (error) {
     console.error('Profile PUT error:', error)
     return NextResponse.json(

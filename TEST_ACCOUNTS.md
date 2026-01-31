@@ -54,6 +54,14 @@ Use these pre-created accounts to test the authentication system.
 🎯 Dashboard: /dashboard/agent
 ```
 
+#### Agent 3 - Amira Khan
+```
+📧 Email: agent2@test.com
+🔑 Password: agent2123
+👤 Role: Agent
+🎯 Dashboard: /dashboard/agent
+```
+
 ---
 
 ### 🏠 PROPERTY OWNERS (2 accounts)

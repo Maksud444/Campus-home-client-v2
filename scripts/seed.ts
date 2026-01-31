@@ -8,6 +8,7 @@ const users = [
   { name: 'Omar Ali', email: 'omar@test.com', password: 'omar123', role: 'student' },
   { name: 'Mohamed Ali', email: 'agent@test.com', password: 'agent123', role: 'agent' },
   { name: 'Fatima Ahmed', email: 'fatima@test.com', password: 'fatima123', role: 'agent' },
+  { name: 'Amira Khan', email: 'agent2@test.com', password: 'agent2123', role: 'agent' },
   { name: 'Youssef Ibrahim', email: 'owner@test.com', password: 'owner123', role: 'owner' },
   { name: 'Laila Khalil', email: 'laila@test.com', password: 'laila123', role: 'owner' },
 ]

@@ -69,10 +69,10 @@ export default function LoginPage() {
           throw new Error('Password must be at least 6 characters')
         }
 
-        // ✅ FIXED: Call BACKEND register API (not local /api)
-        console.log('🌐 Calling backend:', `${API_URL}/api/auth/register`)
+        // ✅ FIXED: Call FRONTEND register API (which forwards to backend with provider: 'credentials')
+        console.log('🌐 Calling frontend register endpoint')
 
-        const registerRes = await fetch(`${API_URL}/api/auth/register`, {
+        const registerRes = await fetch('/api/register', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -86,7 +86,7 @@ export default function LoginPage() {
         })
 
         const registerData = await registerRes.json()
-        console.log('📥 Backend register response:', registerData)
+        console.log('📥 Register response:', registerData)
 
         if (!registerRes.ok) {
           throw new Error(registerData.message || 'Registration failed')

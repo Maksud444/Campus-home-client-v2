@@ -5,24 +5,80 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useSession, signOut } from 'next-auth/react'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { usePathname } from 'next/navigation'
 
 export default function Navbar() {
+  const pathname = usePathname()
+  const [displayName, setDisplayName] = useState('')
+  const [displayImage, setDisplayImage] = useState('')
   const { data: session } = useSession()
   const { t } = useLanguage()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+const [userName, setUserName] = useState('')
+  const [userImage, setUserImage] = useState('')
 
-  // ✅ Debug: Log session to check role
+  // Force refresh on every render
+  // Refresh session data on route change or session update
   useEffect(() => {
-    if (session) {
-      console.log('👤 Current Session:', session)
-      console.log('👤 User Role:', session.user?.role)
-      console.log('👤 User Data:', session.user)
+    const refreshSessionData = async () => {
+      if (session?.user) {
+        console.log('🔄 Navbar: Refreshing session data')
+        
+        try {
+          // Fetch fresh session
+          const res = await fetch('/api/auth/session', {
+            cache: 'no-store',
+            headers: {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
+          })
+          const freshSession = await res.json()
+          
+          if (freshSession?.user) {
+            console.log('✅ Fresh session loaded:', freshSession.user.name)
+            setDisplayName(freshSession.user.name || '')
+            setDisplayImage(freshSession.user.image || '')
+          } else {
+            setDisplayName(session.user.name || '')
+            setDisplayImage(session.user.image || '')
+          }
+        } catch (error) {
+          console.error('❌ Session refresh failed:', error)
+          setDisplayName(session.user.name || '')
+          setDisplayImage(session.user.image || '')
+        }
+      }
     }
-  }, [session])
 
+    refreshSessionData()
+  }, [session?.user?.name, session?.user?.image, pathname])
+
+  // Force refresh user data on mount and route changes
+  useEffect(() => {
+    const refreshUserData = async () => {
+      if (session?.user) {
+        try {
+          const res = await fetch('/api/auth/session', {
+            headers: {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
+          })
+          const freshSession = await res.json()
+          if (freshSession?.user) {
+            console.log('🔄 Navbar refreshed session:', freshSession.user.name)
+          }
+        } catch (error) {
+          console.error('Failed to refresh session:', error)
+        }
+      }
+    }
+    refreshUserData()
+  }, [session?.user?.name, session?.user?.image])
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50)
@@ -38,7 +94,8 @@ export default function Navbar() {
         setIsProfileOpen(false)
       }
     }
-
+ const finalName = displayName || session?.user?.name || 'User'
+  const finalImage = displayImage || session?.user?.image || 'https://via.placeholder.com/150'
     if (isProfileOpen) {
       document.addEventListener('mousedown', handleClickOutside)
     }

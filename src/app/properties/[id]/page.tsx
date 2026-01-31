@@ -56,7 +56,7 @@ export default function PropertyDetailPage() {
   async function fetchProperty() {
     try {
       setLoading(true)
-      const response = await fetch(`http://localhost:5000/api/properties/${propertyId}`)
+      const response = await fetch(`https://student-housing-backend.vercel.app/api/properties/${propertyId}`)
       const data = await response.json()
 
       if (data.success) {
@@ -80,7 +80,7 @@ export default function PropertyDetailPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/properties/${propertyId}/like`, {
+      const response = await fetch(`https://student-housing-backend.vercel.app/api/properties/${propertyId}/like`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -106,7 +106,7 @@ export default function PropertyDetailPage() {
 
     try {
       setDeleting(true)
-      const response = await fetch(`http://localhost:5000/api/properties/${propertyId}`, {
+      const response = await fetch(`https://student-housing-backend.vercel.app/api/properties/${propertyId}`, {
         method: 'DELETE'
       })
 

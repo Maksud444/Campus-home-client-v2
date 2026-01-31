@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    unoptimized: true, // Disable image optimization for external images
     remotePatterns: [
       {
         protocol: 'https',
@@ -20,15 +21,19 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'via.placeholder.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ui-avatars.com',
+      },
+      {
+        protocol: 'https',
         hostname: 'avatars.githubusercontent.com',
       },
       {
         protocol: 'https',
         hostname: 'firebasestorage.googleapis.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'ui-avatars.com', // ← ADD THIS
       },
       {
         protocol: 'http',

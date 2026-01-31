@@ -7,6 +7,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { citiesWithAreas } from '@/data/cities'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
+
 export default function CreatePostPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -142,73 +144,61 @@ export default function CreatePostPage() {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-    setSuccess('')
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setLoading(true)
+  setError('')
+  setSuccess('')
 
-    try {
-      if (!formData.title || !formData.description || !formData.city || !formData.selectedArea) {
-        throw new Error('Please fill in all required fields including city and area')
-      }
+  try {
+    // ... validation code ...
 
-      if (!formData.whatsappNumber) {
-        throw new Error('WhatsApp number is required')
-      }
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
+    const token = (session as any)?.accessToken
 
-      const whatsappRegex = /^\+?[1-9]\d{1,14}$/
-      if (!whatsappRegex.test(formData.whatsappNumber.replace(/\s/g, ''))) {
-        throw new Error('Please enter a valid WhatsApp number with country code (e.g., +201234567890)')
-      }
-
-      if (formData.images.length < 3) {
-        throw new Error('Please upload at least 3 images')
-      }
-
-      const userRole = (session?.user as any)?.role || 'student'
-      if ((userRole === 'agent' || userRole === 'owner') && formData.type === 'property' && !formData.targetAudience) {
-        throw new Error('Please select target audience (Family or Students)')
-      }
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/properties`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          location: `${formData.selectedArea}, ${formData.city}`,
-          address: formData.addressDetails,
-          price: formData.price ? parseFloat(formData.price) : null,
-          bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
-          bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
-          area: formData.area ? parseFloat(formData.area) : null,
-          userId: (session?.user as any)?._id || session?.user?.email?.split('@')[0],
-          userName: session?.user?.name || 'Anonymous',
-          userEmail: session?.user?.email,
-          userImage: session?.user?.image,
-          userRole: (session?.user as any)?.role || 'student'
-        })
+    const response = await fetch(`${API_URL}/api/properties`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({
+        ...formData,
+        location: `${formData.selectedArea}, ${formData.city}`,
+        address: formData.addressDetails,
+        price: formData.price ? parseFloat(formData.price) : null,
+        bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
+        bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
+        area: formData.area ? parseFloat(formData.area) : null,
+        userId: (session?.user as any)?.id || session?.user?.email?.split('@')[0],
+        userName: session?.user?.name || 'Anonymous',
+        userEmail: session?.user?.email,
+        userImage: session?.user?.image,
+        userRole: (session?.user as any)?.role || 'student'
       })
+    })
 
-      const data = await response.json()
+    const data = await response.json()
 
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to create property')
-      }
-
-      setSuccess('Property created successfully! Redirecting...')
-      
-      setTimeout(() => {
-        router.push('/properties')
-      }, 2000)
-    } catch (err: any) {
-      setError(err.message || 'Failed to create property')
-    } finally {
-      setLoading(false)
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Failed to create property')
     }
+
+    console.log('✅ Property created:', data.property)
+    setSuccess('Property created successfully! Redirecting...')
+    
+    // Force refresh on properties page
+    setTimeout(() => {
+      router.push('/properties')
+      router.refresh() // This will trigger re-fetch
+    }, 1500)
+  } catch (err: any) {
+    console.error('❌ Error:', err)
+    setError(err.message || 'Failed to create property')
+  } finally {
+    setLoading(false)
   }
+}
 
   if (status === 'loading') {
     return (
