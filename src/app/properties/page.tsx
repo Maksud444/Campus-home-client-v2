@@ -385,16 +385,16 @@ export default function PropertiesPage() {
                         </Link>
                       )}
 
-                      {whatsappLink && (
-                        
-                          href={whatsappLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn btn-outline flex-1 text-sm"
-                        >
-                          💬 WhatsApp
-                        </a>
-                      )}
+                     {whatsappLink && (
+  <a
+    href={whatsappLink}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="btn btn-outline flex-1 text-sm"
+  >
+    💬 WhatsApp
+  </a>
+)}
                     </div>
                   </div>
                 </div>
