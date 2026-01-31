@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { FaBed, FaBath, FaRulerCombined, FaMapMarkerAlt } from 'react-icons/fa'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 interface Property {
   _id: string

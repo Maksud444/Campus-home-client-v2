@@ -7,83 +7,76 @@ import { useSession, signOut } from 'next-auth/react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { usePathname } from 'next/navigation'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+
 export default function Navbar() {
   const pathname = usePathname()
-  const [displayName, setDisplayName] = useState('')
-  const [displayImage, setDisplayImage] = useState('')
   const { data: session } = useSession()
   const { t } = useLanguage()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-const [userName, setUserName] = useState('')
+  
+  // Fresh user data
+  const [userName, setUserName] = useState('')
   const [userImage, setUserImage] = useState('')
 
-  // Force refresh on every render
-  // Refresh session data on route change or session update
+  // Load fresh user data from backend
   useEffect(() => {
-    const refreshSessionData = async () => {
-      if (session?.user) {
-        console.log('🔄 Navbar: Refreshing session data')
+    const loadFreshUserData = async () => {
+      // Check localStorage first for immediate updates
+      const wasUpdated = localStorage.getItem('profile_updated')
+      if (wasUpdated === 'true') {
+        const updatedName = localStorage.getItem('updated_name')
+        const updatedImage = localStorage.getItem('updated_image')
         
+        if (updatedName) {
+          setUserName(updatedName)
+          setUserImage(updatedImage || '')
+        }
+        
+        // Clear flags after reading
+        localStorage.removeItem('profile_updated')
+        localStorage.removeItem('updated_name')
+        localStorage.removeItem('updated_image')
+        return
+      }
+
+      // Otherwise fetch from backend
+      if (session?.user?.email) {
         try {
-          // Fetch fresh session
-          const res = await fetch('/api/auth/session', {
+          const response = await fetch(`${API_URL}/api/auth/profile?email=${session.user.email}`, {
             cache: 'no-store',
             headers: {
               'Cache-Control': 'no-cache',
               'Pragma': 'no-cache'
             }
           })
-          const freshSession = await res.json()
           
-          if (freshSession?.user) {
-            console.log('✅ Fresh session loaded:', freshSession.user.name)
-            setDisplayName(freshSession.user.name || '')
-            setDisplayImage(freshSession.user.image || '')
+          const data = await response.json()
+          
+          if (data.success && data.user) {
+            setUserName(data.user.name)
+            setUserImage(data.user.avatar || '')
           } else {
-            setDisplayName(session.user.name || '')
-            setDisplayImage(session.user.image || '')
+            setUserName(session.user.name || '')
+            setUserImage(session.user.image || '')
           }
         } catch (error) {
-          console.error('❌ Session refresh failed:', error)
-          setDisplayName(session.user.name || '')
-          setDisplayImage(session.user.image || '')
+          setUserName(session.user.name || '')
+          setUserImage(session.user.image || '')
         }
       }
     }
 
-    refreshSessionData()
-  }, [session?.user?.name, session?.user?.image, pathname])
+    loadFreshUserData()
+  }, [session?.user?.email, pathname])
 
-  // Force refresh user data on mount and route changes
-  useEffect(() => {
-    const refreshUserData = async () => {
-      if (session?.user) {
-        try {
-          const res = await fetch('/api/auth/session', {
-            headers: {
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache'
-            }
-          })
-          const freshSession = await res.json()
-          if (freshSession?.user) {
-            console.log('🔄 Navbar refreshed session:', freshSession.user.name)
-          }
-        } catch (error) {
-          console.error('Failed to refresh session:', error)
-        }
-      }
-    }
-    refreshUserData()
-  }, [session?.user?.name, session?.user?.image])
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50)
     }
-
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
@@ -94,21 +87,16 @@ const [userName, setUserName] = useState('')
         setIsProfileOpen(false)
       }
     }
- const finalName = displayName || session?.user?.name || 'User'
-  const finalImage = displayImage || session?.user?.image || 'https://via.placeholder.com/150'
     if (isProfileOpen) {
       document.addEventListener('mousedown', handleClickOutside)
     }
-
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [isProfileOpen])
 
-  // ✅ Get role display text with proper mapping
   const getRoleDisplay = (role?: string) => {
     if (!role) return 'User'
-    
     const roleMap: Record<string, string> = {
       'student': 'Student',
       'agent': 'Agent',
@@ -116,7 +104,6 @@ const [userName, setUserName] = useState('')
       'service-provider': 'Service Provider',
       'admin': 'Admin'
     }
-    
     return roleMap[role] || 'User'
   }
 
@@ -127,8 +114,9 @@ const [userName, setUserName] = useState('')
     return `/dashboard/${role}/${userId}`
   }
 
-  // ✅ Get current user role
   const userRole = (session?.user as any)?.role || 'student'
+  const displayName = userName || session?.user?.name || 'User'
+  const displayImage = userImage || session?.user?.image || 'https://via.placeholder.com/150'
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -140,7 +128,7 @@ const [userName, setUserName] = useState('')
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xl transition-all bg-primary text-white`}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xl transition-all bg-primary text-white">
               C
             </div>
             <span className="text-2xl font-bold text-primary">
@@ -178,25 +166,24 @@ const [userName, setUserName] = useState('')
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                   className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 transition-colors"
                 >
-                  {session.user?.image ? (
+                  {displayImage ? (
                     <Image
-                      src={session.user.image}
-                      alt={session.user.name || 'User'}
+                      src={displayImage}
+                      alt={displayName}
                       width={36}
                       height={36}
                       className="rounded-full object-cover"
                     />
                   ) : (
                     <div className="w-9 h-9 bg-primary rounded-full flex items-center justify-center text-white font-bold">
-                      {session.user?.name?.charAt(0) || 'U'}
+                      {displayName.charAt(0)}
                     </div>
                   )}
                   <div className="text-left">
                     <div className="font-semibold text-gray-900 text-sm">
-                      {session.user?.name || 'User'}
+                      {displayName}
                     </div>
                     <div className="text-xs text-gray-600">
-                      {/* ✅ Use getRoleDisplay function */}
                       {getRoleDisplay(userRole)}
                     </div>
                   </div>
@@ -216,27 +203,26 @@ const [userName, setUserName] = useState('')
                   <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 py-2">
                     <div className="px-4 py-3 border-b border-gray-100">
                       <div className="flex items-center gap-3">
-                        {session.user?.image ? (
+                        {displayImage ? (
                           <Image
-                            src={session.user.image}
-                            alt={session.user.name || 'User'}
+                            src={displayImage}
+                            alt={displayName}
                             width={48}
                             height={48}
                             className="rounded-full object-cover"
                           />
                         ) : (
                           <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold text-lg">
-                            {session.user?.name?.charAt(0) || 'U'}
+                            {displayName.charAt(0)}
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="font-bold text-gray-900 truncate">
-                            {session.user?.name || 'User'}
+                            {displayName}
                           </div>
                           <div className="text-sm text-gray-600 truncate">
                             {session.user?.email}
                           </div>
-                          {/* ✅ Show role in dropdown */}
                           <div className="text-xs text-primary font-semibold mt-1">
                             {getRoleDisplay(userRole)}
                           </div>
@@ -270,14 +256,14 @@ const [userName, setUserName] = useState('')
                       </Link>
 
                       <Link
-                        href="/create-post"
+                        href="/post"
                         onClick={() => setIsProfileOpen(false)}
                         className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 transition-colors"
                       >
                         <span className="text-xl">➕</span>
                         <div>
-                          <div className="font-semibold text-gray-900">{t('nav.createPost')}</div>
-                          <div className="text-xs text-gray-600">Find roommate or room</div>
+                          <div className="font-semibold text-gray-900">Create Post</div>
+                          <div className="text-xs text-gray-600">Add property or post</div>
                         </div>
                       </Link>
                     </div>
@@ -368,25 +354,24 @@ const [userName, setUserName] = useState('')
                 {session ? (
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                      {session.user?.image ? (
+                      {displayImage ? (
                         <Image
-                          src={session.user.image}
-                          alt={session.user.name || 'User'}
+                          src={displayImage}
+                          alt={displayName}
                           width={48}
                           height={48}
                           className="rounded-full object-cover"
                         />
                       ) : (
                         <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold">
-                          {session.user?.name?.charAt(0) || 'U'}
+                          {displayName.charAt(0)}
                         </div>
                       )}
                       <div>
                         <div className="font-bold text-gray-900">
-                          {session.user?.name || 'User'}
+                          {displayName}
                         </div>
                         <div className="text-sm text-gray-600">
-                          {/* ✅ Use getRoleDisplay function */}
                           {getRoleDisplay(userRole)}
                         </div>
                       </div>
@@ -407,11 +392,11 @@ const [userName, setUserName] = useState('')
                       {t('nav.settings')}
                     </Link>
                     <Link 
-                      href="/create-post" 
+                      href="/post" 
                       className="btn btn-outline w-full"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      {t('nav.createPost')}
+                      Create Post
                     </Link>
                     <button 
                       onClick={() => {

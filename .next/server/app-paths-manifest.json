@@ -1,8 +1,12 @@
 {
+  "/settings/page": "app/settings/page.js",
+  "/post/page": "app/post/page.js",
   "/page": "app/page.js",
   "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
-  "/post/page": "app/post/page.js",
-  "/properties/page": "app/properties/page.js",
-  "/properties/[id]/page": "app/properties/[id]/page.js",
-  "/properties/[id]/edit/page": "app/properties/[id]/edit/page.js"
+  "/login/page": "app/login/page.js",
+  "/api/register/route": "app/api/register/route.js",
+  "/api/upload/route": "app/api/upload/route.js",
+  "/api/posts/route": "app/api/posts/route.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/agent/[id]/page": "app/dashboard/agent/[id]/page.js"
 }

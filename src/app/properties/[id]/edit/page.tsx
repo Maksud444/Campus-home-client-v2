@@ -47,7 +47,7 @@ export default function EditPropertyPage() {
   const fetchProperty = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`https://student-housing-backend.vercel.app/api/properties/${propertyId}`)
+      const response = await fetch(`http://localhost:5000/api/properties/${propertyId}`)
       const data = await response.json()
 
       if (data.success) {
@@ -171,7 +171,7 @@ export default function EditPropertyPage() {
         throw new Error('Please fill in all required fields')
       }
 
-      const response = await fetch(`https://student-housing-backend.vercel.app/api/properties/${propertyId}`, {
+      const response = await fetch(`http://localhost:5000/api/properties/${propertyId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

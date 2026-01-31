@@ -7,7 +7,21 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { citiesWithAreas } from '@/data/cities'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+
+// Country codes list
+const COUNTRY_CODES = [
+  { code: '+20', country: 'Egypt', flag: '🇪🇬' },
+  { code: '+880', country: 'Bangladesh', flag: '🇧🇩' },
+  { code: '+91', country: 'India', flag: '🇮🇳' },
+  { code: '+92', country: 'Pakistan', flag: '🇵🇰' },
+  { code: '+966', country: 'Saudi Arabia', flag: '🇸🇦' },
+  { code: '+971', country: 'UAE', flag: '🇦🇪' },
+  { code: '+1', country: 'USA', flag: '🇺🇸' },
+  { code: '+44', country: 'UK', flag: '🇬🇧' },
+  { code: '+33', country: 'France', flag: '🇫🇷' },
+  { code: '+49', country: 'Germany', flag: '🇩🇪' },
+]
 
 export default function CreatePostPage() {
   const { data: session, status } = useSession()
@@ -25,6 +39,7 @@ export default function CreatePostPage() {
     city: '',
     selectedArea: '',
     addressDetails: '',
+    whatsappCountryCode: '+20',
     whatsappNumber: '',
     bedrooms: '',
     bathrooms: '',
@@ -59,6 +74,14 @@ export default function CreatePostPage() {
         ? prev.amenities.filter(a => a !== amenity)
         : [...prev.amenities, amenity]
     }))
+  }
+
+  // Handle WhatsApp number input - only digits, max 11
+  const handleWhatsAppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '') // Only digits
+    if (value.length <= 11) {
+      setFormData({ ...formData, whatsappNumber: value })
+    }
   }
 
   const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video') => {
@@ -144,61 +167,87 @@ export default function CreatePostPage() {
     }
   }
 
- const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  setLoading(true)
-  setError('')
-  setSuccess('')
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    setSuccess('')
 
-  try {
-    // ... validation code ...
+    try {
+      // Validate WhatsApp number
+      if (!formData.whatsappNumber) {
+        throw new Error('WhatsApp number is required')
+      }
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
-    const token = (session as any)?.accessToken
+      if (formData.whatsappNumber.length < 10 || formData.whatsappNumber.length > 11) {
+        throw new Error('WhatsApp number must be 10-11 digits')
+      }
 
-    const response = await fetch(`${API_URL}/api/properties`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-      },
-      body: JSON.stringify({
-        ...formData,
-        location: `${formData.selectedArea}, ${formData.city}`,
-        address: formData.addressDetails,
-        price: formData.price ? parseFloat(formData.price) : null,
-        bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
-        bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
-        area: formData.area ? parseFloat(formData.area) : null,
-        userId: (session?.user as any)?.id || session?.user?.email?.split('@')[0],
-        userName: session?.user?.name || 'Anonymous',
-        userEmail: session?.user?.email,
-        userImage: session?.user?.image,
-        userRole: (session?.user as any)?.role || 'student'
+      // Validate minimum images
+      if (formData.images.length < 3) {
+        throw new Error('Please upload at least 3 images')
+      }
+
+      const token = (session as any)?.accessToken
+
+      const response = await fetch(`${API_URL}/api/properties`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          type: formData.type,
+          price: formData.price ? parseFloat(formData.price) : null,
+          location: {
+            city: formData.city,
+            area: formData.selectedArea,
+            address: formData.addressDetails
+          },
+          whatsapp: {
+            countryCode: formData.whatsappCountryCode,
+            number: formData.whatsappNumber
+          },
+          bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
+          bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
+          area: formData.area ? parseFloat(formData.area) : null,
+          propertyType: formData.propertyType,
+          furnished: formData.furnished,
+          amenities: formData.amenities,
+          images: formData.images.map(url => ({ url, public_id: '' })),
+          videos: formData.videos,
+          preferences: formData.preferences,
+          targetAudience: formData.targetAudience,
+          userId: (session?.user as any)?.id || session?.user?.email?.split('@')[0],
+          userName: session?.user?.name || 'Anonymous',
+          userEmail: session?.user?.email,
+          userImage: session?.user?.image,
+          userRole: (session?.user as any)?.role || 'student'
+        })
       })
-    })
 
-    const data = await response.json()
+      const data = await response.json()
 
-    if (!response.ok || !data.success) {
-      throw new Error(data.message || 'Failed to create property')
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to create property')
+      }
+
+      console.log('✅ Property created:', data.property)
+      setSuccess('Property created successfully! Redirecting...')
+      
+      setTimeout(() => {
+        router.push('/properties')
+        router.refresh()
+      }, 1500)
+    } catch (err: any) {
+      console.error('❌ Error:', err)
+      setError(err.message || 'Failed to create property')
+    } finally {
+      setLoading(false)
     }
-
-    console.log('✅ Property created:', data.property)
-    setSuccess('Property created successfully! Redirecting...')
-    
-    // Force refresh on properties page
-    setTimeout(() => {
-      router.push('/properties')
-      router.refresh() // This will trigger re-fetch
-    }, 1500)
-  } catch (err: any) {
-    console.error('❌ Error:', err)
-    setError(err.message || 'Failed to create property')
-  } finally {
-    setLoading(false)
   }
-}
 
   if (status === 'loading') {
     return (
@@ -413,20 +462,44 @@ export default function CreatePostPage() {
             />
           </div>
 
-          {/* WhatsApp Number */}
+          {/* WhatsApp Number with Country Code */}
           <div className="mb-6">
             <label className="block mb-2 font-semibold text-gray-700">
               WhatsApp Number <span className="text-red-500">*</span>
             </label>
-            <input
-              type="tel"
-              value={formData.whatsappNumber}
-              onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
-              className="input"
-              placeholder="+201234567890"
-              required
-              disabled={loading}
-            />
+            <div className="flex gap-2">
+              <select
+                value={formData.whatsappCountryCode}
+                onChange={(e) => setFormData({ ...formData, whatsappCountryCode: e.target.value })}
+                className="input w-40"
+                disabled={loading}
+              >
+                {COUNTRY_CODES.map((item) => (
+                  <option key={item.code} value={item.code}>
+                    {item.flag} {item.code}
+                  </option>
+                ))}
+              </select>
+              
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  value={formData.whatsappNumber}
+                  onChange={handleWhatsAppChange}
+                  className="input pr-16"
+                  placeholder="1234567890"
+                  maxLength={11}
+                  required
+                  disabled={loading}
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
+                  {formData.whatsappNumber.length}/11
+                </div>
+              </div>
+            </div>
+            <p className="mt-1 text-xs text-gray-500">
+              Enter 10-11 digits only. No spaces or special characters.
+            </p>
           </div>
 
           {/* Price */}

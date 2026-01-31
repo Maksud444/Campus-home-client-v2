@@ -1,166 +1,187 @@
-import 'server-only'
-
-import NextAuth, { NextAuthOptions } from 'next-auth'
+import { NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 import FacebookProvider from 'next-auth/providers/facebook'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import bcrypt from 'bcryptjs'
-import fs from 'fs'
-import path from 'path'
 
-const isProd = process.env.NODE_ENV === 'production'
-
-const DATA_DIR = path.join(process.cwd(), 'data')
-const DATA_FILE = path.join(DATA_DIR, 'users.json')
-
-/* ======================
-   FILE HELPERS (LOCAL ONLY)
-====================== */
-
-function readUsers() {
-  if (isProd) return []
-
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true })
-    }
-
-    if (!fs.existsSync(DATA_FILE)) {
-      fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2))
-      return []
-    }
-
-    const data = fs.readFileSync(DATA_FILE, 'utf-8')
-    return JSON.parse(data)
-  } catch (err) {
-    console.error('❌ readUsers error:', err)
-    return []
-  }
-}
-
-function writeUsers(users: any[]) {
-  if (isProd) return
-  fs.writeFileSync(DATA_FILE, JSON.stringify(users, null, 2))
-}
-
-/* ======================
-   NEXT AUTH CONFIG
-====================== */
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    // Google Provider
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code"
+        }
+      }
     }),
-
+    
+    // Facebook Provider
     FacebookProvider({
-      clientId: process.env.FACEBOOK_CLIENT_ID || 'dummy',
-      clientSecret: process.env.FACEBOOK_CLIENT_SECRET || 'dummy',
+      clientId: process.env.FACEBOOK_CLIENT_ID!,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET!
     }),
-
+    
+    // Credentials Provider
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" }
       },
-
       async authorize(credentials) {
-        if (isProd) {
-          throw new Error('Credentials login disabled in production')
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            throw new Error('Email and password required')
+          }
+
+          const response = await fetch(`${API_URL}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password
+            })
+          })
+
+          const data = await response.json()
+
+          if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Login failed')
+          }
+
+          return {
+            id: data.user._id,
+            email: data.user.email,
+            name: data.user.name,
+            image: data.user.avatar,
+            role: data.user.role,
+            phone: data.user.phone,
+            university: data.user.university,
+            bio: data.user.bio,
+            location: data.user.location,
+            accessToken: data.token
+          }
+        } catch (error: any) {
+          console.error('Auth error:', error)
+          throw new Error(error.message || 'Authentication failed')
         }
-
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Email and password required')
-        }
-
-        const users = readUsers()
-
-        const user = users.find(
-          (u: any) =>
-            u.email.toLowerCase() === credentials.email.toLowerCase()
-        )
-
-        if (!user || !user.password) {
-          throw new Error('Invalid email or password')
-        }
-
-        const isValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        )
-
-        if (!isValid) {
-          throw new Error('Invalid email or password')
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          image: user.image || null,
-        }
-      },
-    }),
+      }
+    })
   ],
 
   callbacks: {
-    async signIn({ user, account }) {
-      if (
-        !isProd &&
-        (account?.provider === 'google' ||
-          account?.provider === 'facebook')
-      ) {
-        const users = readUsers()
-        const existingUser = users.find(
-          (u: any) => u.email === user.email
-        )
-
-        if (!existingUser) {
-          users.push({
-            id: user.email?.split('@')[0] ?? Date.now().toString(),
-            email: user.email,
-            name: user.name || 'User',
-            role: 'student',
-            image: user.image,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+    async signIn({ user, account, profile }) {
+      try {
+        // Handle OAuth sign in
+        if (account?.provider === 'google' || account?.provider === 'facebook') {
+          const response = await fetch(`${API_URL}/api/auth/oauth`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: user.email,
+              name: user.name,
+              avatar: user.image,
+              provider: account.provider
+            })
           })
-          writeUsers(users)
-        }
-      }
 
-      return true
+          const data = await response.json()
+
+          if (data.success) {
+            user.id = data.user._id
+            user.role = data.user.role
+            ;(user as any).accessToken = data.token
+            return true
+          }
+          
+          return false
+        }
+
+        return true
+      } catch (error) {
+        console.error('SignIn error:', error)
+        return false
+      }
     },
 
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
+      // Initial sign in
       if (user) {
-        token.id = (user as any).id
-        token.role = (user as any).role || 'student'
+        token.id = user.id
+        token.role = (user as any).role
+        token.accessToken = (user as any).accessToken
+        token.phone = (user as any).phone
+        token.university = (user as any).university
+        token.bio = (user as any).bio
+        token.location = (user as any).location
       }
+
+      // Handle session update
+      if (trigger === 'update' && session) {
+        token.name = session.user.name
+        token.picture = session.user.image
+        token.phone = session.user.phone
+        token.university = session.user.university
+        token.bio = session.user.bio
+        token.location = session.user.location
+      }
+
       return token
     },
 
     async session({ session, token }) {
-      if (session.user) {
-        ;(session.user as any).id = token.id
-        ;(session.user as any).role = token.role
+      if (token && session.user) {
+        session.user.id = token.id as string
+        session.user.role = token.role as string
+        session.user.name = token.name as string
+        session.user.email = token.email as string
+        session.user.image = token.picture as string
+        ;(session as any).accessToken = token.accessToken
+        ;(session.user as any).phone = token.phone
+        ;(session.user as any).university = token.university
+        ;(session.user as any).bio = token.bio
+        ;(session.user as any).location = token.location
       }
+
       return session
     },
+
+    async redirect({ url, baseUrl }) {
+      // Handle OAuth redirects to always go to production URL
+      if (url.startsWith('/')) {
+        return `${baseUrl}${url}`
+      }
+      
+      // If redirecting to localhost from production, redirect to production instead
+      if (url.includes('localhost') && baseUrl.includes('vercel.app')) {
+        return baseUrl
+      }
+      
+      // Otherwise if it's a valid callback URL, use it
+      if (new URL(url).origin === baseUrl) {
+        return url
+      }
+      
+      return baseUrl
+    }
   },
 
   pages: {
     signIn: '/login',
+    error: '/login'
   },
 
   session: {
     strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60 // 30 days
   },
 
   secret: process.env.NEXTAUTH_SECRET,
+  
+  debug: process.env.NODE_ENV === 'development'
 }
-
-export default NextAuth(authOptions)

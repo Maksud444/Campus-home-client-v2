@@ -4,9 +4,9 @@ import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Eye, EyeOff } from 'lucide-react'
 
-// ✅ FIXED: Always use backend URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [role, setRole] = useState<'student' | 'agent' | 'owner' | 'service-provider'>('student')
+  const [showPassword, setShowPassword] = useState(false)
   
   const [formData, setFormData] = useState({
     name: '',
@@ -48,7 +49,7 @@ export default function LoginPage() {
 
     try {
       if (isSignup) {
-        // ========== REGISTRATION - FIXED TO USE BACKEND ==========
+        // ========== REGISTRATION ==========
         console.log('📝 Registering user:', {
           email: formData.email,
           role: role,
@@ -69,7 +70,6 @@ export default function LoginPage() {
           throw new Error('Password must be at least 6 characters')
         }
 
-        // ✅ FIXED: Call FRONTEND register API (which forwards to backend with provider: 'credentials')
         console.log('🌐 Calling frontend register endpoint')
 
         const registerRes = await fetch('/api/register', {
@@ -95,10 +95,8 @@ export default function LoginPage() {
         console.log('✅ Registration successful!')
         setSuccess('Account created! Logging you in...')
 
-        // Wait a bit for backend
         await new Promise(resolve => setTimeout(resolve, 1000))
 
-        // ✅ FIXED: Now login with credentials using NextAuth
         console.log('🔐 Auto-login attempt...')
         const loginResult = await signIn('credentials', {
           email: formData.email.trim().toLowerCase(),
@@ -126,10 +124,9 @@ export default function LoginPage() {
         }
 
       } else {
-        // ========== LOGIN - Already using NextAuth which calls backend ==========
+        // ========== LOGIN ==========
         console.log('🔐 Logging in user:', formData.email)
 
-        // Validation
         if (!formData.email.trim()) {
           throw new Error('Please enter your email')
         }
@@ -204,11 +201,6 @@ export default function LoginPage() {
             {error}
           </div>
         )}
-
-        {/* Debug Info - Shows current API URL */}
-        {/* <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
-          🌐 API: {API_URL}
-        </div> */}
 
         {/* OAuth Buttons */}
         <div className="space-y-3 mb-6">
@@ -309,21 +301,35 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Password */}
+          {/* Password with Show/Hide Toggle */}
           <div>
             <label className="block font-semibold text-gray-700 mb-2">
               Password <span className="text-red-500">*</span>
             </label>
-            <input
-              type="password"
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary"
-              placeholder="••••••••"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              required
-              minLength={6}
-              disabled={loading}
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                className="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary"
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                required
+                minLength={6}
+                disabled={loading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
+              </button>
+            </div>
             {isSignup && (
               <p className="text-sm text-gray-500 mt-1">Must be at least 6 characters</p>
             )}
@@ -347,6 +353,18 @@ export default function LoginPage() {
                 <option value="owner">🏠 Property Owner</option>
                 <option value="service-provider">🔧 Service Provider</option>
               </select>
+            </div>
+          )}
+
+          {/* Forgot Password Link - Only for Login */}
+          {!isSignup && (
+            <div className="flex justify-end">
+              <Link
+                href="/forgot-password"
+                className="text-sm font-semibold text-primary hover:text-primary-dark"
+              >
+                Forgot password?
+              </Link>
             </div>
           )}
 

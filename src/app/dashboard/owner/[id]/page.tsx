@@ -6,6 +6,8 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+
 interface Post {
   id: string
   title: string
@@ -28,33 +30,69 @@ export default function OwnerDashboard() {
   const [isVerifying, setIsVerifying] = useState(true)
   const [myProperties, setMyProperties] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
+  const [userName, setUserName] = useState('')
 
   useEffect(() => {
-    if (status === 'loading') return
+    const loadDashboardData = async () => {
+      if (status === 'loading') return
 
-    if (status === 'unauthenticated') {
-      router.replace('/login')
-      return
-    }
-
-    if (session?.user) {
-      const sessionUserId = (session.user as any).id || session.user.email?.split('@')[0]
-      const userRole = (session.user as any).role || 'student'
-
-      if (sessionUserId !== urlUserId) {
-        router.replace(`/dashboard/${userRole}/${sessionUserId}`)
+      if (status === 'unauthenticated') {
+        router.replace('/login')
         return
       }
 
-      if (userRole !== 'owner') {
-        router.replace(`/dashboard/${userRole}/${sessionUserId}`)
-        return
-      }
+      if (session?.user) {
+        const sessionUserId = (session.user as any).id || session.user.email?.split('@')[0]
+        const userRole = (session.user as any).role || 'student'
 
-      setIsVerifying(false)
-      fetchMyProperties(sessionUserId)
+        if (sessionUserId !== urlUserId) {
+          router.replace(`/dashboard/${userRole}/${sessionUserId}`)
+          return
+        }
+
+        if (userRole !== 'owner') {
+          router.replace(`/dashboard/${userRole}/${sessionUserId}`)
+          return
+        }
+
+        setIsVerifying(false)
+        
+        // Check localStorage for immediate update
+        const wasUpdated = localStorage.getItem('profile_updated')
+        if (wasUpdated === 'true') {
+          const updatedName = localStorage.getItem('updated_name')
+          if (updatedName) {
+            setUserName(updatedName)
+          }
+          localStorage.removeItem('profile_updated')
+          localStorage.removeItem('updated_name')
+          localStorage.removeItem('updated_image')
+        } else {
+          // Load from backend
+          await loadFreshUserName(session.user.email)
+        }
+        
+        fetchMyProperties(sessionUserId)
+      }
     }
+
+    loadDashboardData()
   }, [session, status, router, urlUserId])
+
+  const loadFreshUserName = async (email?: string) => {
+    if (!email) return
+    try {
+      const response = await fetch(`${API_URL}/api/auth/profile?email=${email}`, {
+        cache: 'no-store'
+      })
+      const data = await response.json()
+      if (data.success && data.user) {
+        setUserName(data.user.name)
+      }
+    } catch (error) {
+      console.error('Error loading user name:', error)
+    }
+  }
 
   const fetchMyProperties = async (userId: string) => {
     try {
@@ -106,7 +144,7 @@ export default function OwnerDashboard() {
     return null
   }
 
-  const userName = session.user?.name || 'Owner'
+  const displayName = userName || session.user?.name || 'Owner'
   const totalProperties = myProperties.length
   const totalRevenue = myProperties.reduce((sum, post) => sum + (post.price || 0), 0)
   const rentedProperties = myProperties.filter(p => p.likes && p.likes.length > 0).length
@@ -116,15 +154,13 @@ export default function OwnerDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 py-8 pt-28">
       <div className="max-w-7xl mx-auto px-4">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
-            Welcome back, {userName}! 🏡
+            Welcome back, {displayName}! 🏡
           </h1>
           <p className="text-gray-600 text-lg">Property Owner Dashboard</p>
         </div>
 
-        {/* Revenue Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-2xl shadow-md p-6">
             <div className="text-4xl mb-2">🏠</div>
@@ -154,7 +190,6 @@ export default function OwnerDashboard() {
           </div>
         </div>
 
-        {/* Property Revenue Breakdown */}
         <div className="bg-white rounded-2xl shadow-md p-8 mb-8">
           <h2 className="text-2xl font-extrabold text-gray-900 mb-6">Property Performance</h2>
           
@@ -200,7 +235,6 @@ export default function OwnerDashboard() {
           </div>
         </div>
 
-        {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Link
             href="/post"
@@ -230,7 +264,6 @@ export default function OwnerDashboard() {
           </Link>
         </div>
 
-        {/* My Properties */}
         <div className="bg-white rounded-2xl shadow-md p-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-extrabold text-gray-900">My Properties</h2>

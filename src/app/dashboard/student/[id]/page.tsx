@@ -6,6 +6,8 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+
 interface Post {
   id: string
   title: string
@@ -28,33 +30,69 @@ export default function StudentDashboard() {
   const [isVerifying, setIsVerifying] = useState(true)
   const [myPosts, setMyPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
+  const [userName, setUserName] = useState('')
 
   useEffect(() => {
-    if (status === 'loading') return
+    const loadDashboardData = async () => {
+      if (status === 'loading') return
 
-    if (status === 'unauthenticated') {
-      router.replace('/login')
-      return
-    }
-
-    if (session?.user) {
-      const sessionUserId = (session.user as any).id || session.user.email?.split('@')[0]
-      const userRole = (session.user as any).role || 'student'
-
-      if (sessionUserId !== urlUserId) {
-        router.replace(`/dashboard/${userRole}/${sessionUserId}`)
+      if (status === 'unauthenticated') {
+        router.replace('/login')
         return
       }
 
-      if (userRole !== 'student') {
-        router.replace(`/dashboard/${userRole}/${sessionUserId}`)
-        return
-      }
+      if (session?.user) {
+        const sessionUserId = (session.user as any).id || session.user.email?.split('@')[0]
+        const userRole = (session.user as any).role || 'student'
 
-      setIsVerifying(false)
-      fetchMyPosts(sessionUserId)
+        if (sessionUserId !== urlUserId) {
+          router.replace(`/dashboard/${userRole}/${sessionUserId}`)
+          return
+        }
+
+        if (userRole !== 'student') {
+          router.replace(`/dashboard/${userRole}/${sessionUserId}`)
+          return
+        }
+
+        setIsVerifying(false)
+        
+        // Check localStorage for immediate update
+        const wasUpdated = localStorage.getItem('profile_updated')
+        if (wasUpdated === 'true') {
+          const updatedName = localStorage.getItem('updated_name')
+          if (updatedName) {
+            setUserName(updatedName)
+          }
+          localStorage.removeItem('profile_updated')
+          localStorage.removeItem('updated_name')
+          localStorage.removeItem('updated_image')
+        } else {
+          // Load from backend
+          await loadFreshUserName(session.user.email)
+        }
+        
+        fetchMyPosts(sessionUserId)
+      }
     }
+
+    loadDashboardData()
   }, [session, status, router, urlUserId])
+
+  const loadFreshUserName = async (email?: string) => {
+    if (!email) return
+    try {
+      const response = await fetch(`${API_URL}/api/auth/profile?email=${email}`, {
+        cache: 'no-store'
+      })
+      const data = await response.json()
+      if (data.success && data.user) {
+        setUserName(data.user.name)
+      }
+    } catch (error) {
+      console.error('Error loading user name:', error)
+    }
+  }
 
   const fetchMyPosts = async (userId: string) => {
     try {
@@ -106,7 +144,7 @@ export default function StudentDashboard() {
     return null
   }
 
-  const userName = session.user?.name || 'Student'
+  const displayName = userName || session.user?.name || 'Student'
   const totalPosts = myPosts.length
   const totalViews = myPosts.reduce((sum, post) => sum + (post.views || 0), 0)
   const totalLikes = myPosts.reduce((sum, post) => sum + (post.likes?.length || 0), 0)
@@ -116,7 +154,7 @@ export default function StudentDashboard() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="mb-8">
           <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
-            Welcome back, {userName}! 👋
+            Welcome back, {displayName}! 👋
           </h1>
           <p className="text-gray-600 text-lg">Student Dashboard</p>
         </div>

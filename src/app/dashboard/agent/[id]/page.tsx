@@ -6,6 +6,8 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+
 interface Post {
   id: string
   title: string
@@ -28,33 +30,69 @@ export default function AgentDashboard() {
   const [isVerifying, setIsVerifying] = useState(true)
   const [myListings, setMyListings] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
+  const [userName, setUserName] = useState('')
 
   useEffect(() => {
-    if (status === 'loading') return
+    const loadDashboardData = async () => {
+      if (status === 'loading') return
 
-    if (status === 'unauthenticated') {
-      router.replace('/login')
-      return
-    }
-
-    if (session?.user) {
-      const sessionUserId = (session.user as any).id || session.user.email?.split('@')[0]
-      const userRole = (session.user as any).role || 'student'
-
-      if (sessionUserId !== urlUserId) {
-        router.replace(`/dashboard/${userRole}/${sessionUserId}`)
+      if (status === 'unauthenticated') {
+        router.replace('/login')
         return
       }
 
-      if (userRole !== 'agent') {
-        router.replace(`/dashboard/${userRole}/${sessionUserId}`)
-        return
-      }
+      if (session?.user) {
+        const sessionUserId = (session.user as any).id || session.user.email?.split('@')[0]
+        const userRole = (session.user as any).role || 'student'
 
-      setIsVerifying(false)
-      fetchMyListings(sessionUserId)
+        if (sessionUserId !== urlUserId) {
+          router.replace(`/dashboard/${userRole}/${sessionUserId}`)
+          return
+        }
+
+        if (userRole !== 'agent') {
+          router.replace(`/dashboard/${userRole}/${sessionUserId}`)
+          return
+        }
+
+        setIsVerifying(false)
+        
+        // Check localStorage for immediate update
+        const wasUpdated = localStorage.getItem('profile_updated')
+        if (wasUpdated === 'true') {
+          const updatedName = localStorage.getItem('updated_name')
+          if (updatedName) {
+            setUserName(updatedName)
+          }
+          localStorage.removeItem('profile_updated')
+          localStorage.removeItem('updated_name')
+          localStorage.removeItem('updated_image')
+        } else {
+          // Load from backend
+          await loadFreshUserName(session.user.email)
+        }
+        
+        fetchMyListings(sessionUserId)
+      }
     }
+
+    loadDashboardData()
   }, [session, status, router, urlUserId])
+
+  const loadFreshUserName = async (email?: string) => {
+    if (!email) return
+    try {
+      const response = await fetch(`${API_URL}/api/auth/profile?email=${email}`, {
+        cache: 'no-store'
+      })
+      const data = await response.json()
+      if (data.success && data.user) {
+        setUserName(data.user.name)
+      }
+    } catch (error) {
+      console.error('Error loading user name:', error)
+    }
+  }
 
   const fetchMyListings = async (userId: string) => {
     try {
@@ -106,24 +144,22 @@ export default function AgentDashboard() {
     return null
   }
 
-  const userName = session.user?.name || 'Agent'
+  const displayName = userName || session.user?.name || 'Agent'
   const totalListings = myListings.length
   const totalViews = myListings.reduce((sum, post) => sum + (post.views || 0), 0)
   const totalInquiries = myListings.reduce((sum, post) => sum + (post.likes?.length || 0), 0)
-  const avgRating = 4.8 // This can be calculated from reviews in future
+  const avgRating = 4.8
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 pt-28">
       <div className="max-w-7xl mx-auto px-4">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
-            Welcome back, {userName}! 🏢
+            Welcome back, {displayName}! 🏢
           </h1>
           <p className="text-gray-600 text-lg">Agent Dashboard</p>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-2xl shadow-md p-6">
             <div className="text-4xl mb-2">🏢</div>
@@ -150,7 +186,6 @@ export default function AgentDashboard() {
           </div>
         </div>
 
-        {/* Monthly Performance */}
         <div className="bg-white rounded-2xl shadow-md p-8 mb-8">
           <h2 className="text-2xl font-extrabold text-gray-900 mb-6">Monthly Performance</h2>
           
@@ -196,7 +231,6 @@ export default function AgentDashboard() {
           </div>
         </div>
 
-        {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Link
             href="/post"
@@ -226,7 +260,6 @@ export default function AgentDashboard() {
           </Link>
         </div>
 
-        {/* My Listings */}
         <div className="bg-white rounded-2xl shadow-md p-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-extrabold text-gray-900">My Property Listings</h2>

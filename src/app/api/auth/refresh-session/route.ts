@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   try {
     const { email } = await request.json()
     
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
     
     // Fetch fresh data from backend
     const response = await fetch(`${API_URL}/api/auth/profile?email=${email}`, {
