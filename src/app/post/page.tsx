@@ -7,7 +7,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { citiesWithAreas } from '@/data/cities'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
 
 // Country codes list
 const COUNTRY_CODES = [
