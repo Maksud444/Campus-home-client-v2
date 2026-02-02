@@ -85,73 +85,85 @@ export default function CreatePostPage() {
   }
 
   const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video') => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
+  const files = e.target.files
+  if (!files || files.length === 0) return
 
-    setUploadingMedia(true)
-    setError('')
+  setUploadingMedia(true)
+  setError('')
 
-    try {
-      const uploadedUrls: string[] = []
+  try {
+    console.log(`📤 Uploading ${files.length} ${type}(s)...`)
+    const uploadedUrls: string[] = []
 
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i]
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
 
-        if (type === 'image') {
-          if (file.size > 5 * 1024 * 1024) {
-            throw new Error('Image size must be less than 5MB')
-          }
-          if (!file.type.startsWith('image/')) {
-            throw new Error('Only images are allowed')
-          }
-        } else {
-          if (file.size > 50 * 1024 * 1024) {
-            throw new Error('Video size must be less than 50MB')
-          }
-          if (!file.type.startsWith('video/')) {
-            throw new Error('Only videos are allowed')
-          }
-        }
-
-        const uploadFormData = new FormData()
-        uploadFormData.append(type === 'image' ? 'image' : 'video', file)
-
-        const uploadResponse = await fetch('/api/upload', {
-          method: 'POST',
-          body: uploadFormData
-        })
-
-        const uploadResult = await uploadResponse.json()
-
-        if (!uploadResponse.ok) {
-          throw new Error(uploadResult.message || `Failed to upload ${type}`)
-        }
-
-        if (uploadResult.success && uploadResult.url) {
-          uploadedUrls.push(uploadResult.url)
-        }
-      }
-
+      // Validate file
       if (type === 'image') {
-        setFormData(prev => ({
-          ...prev,
-          images: [...prev.images, ...uploadedUrls]
-        }))
+        if (file.size > 5 * 1024 * 1024) {
+          throw new Error(`Image ${i + 1}: File size must be less than 5MB`)
+        }
+        if (!file.type.startsWith('image/')) {
+          throw new Error(`Image ${i + 1}: Only images are allowed`)
+        }
       } else {
-        setFormData(prev => ({
-          ...prev,
-          videos: [...prev.videos, ...uploadedUrls]
-        }))
+        if (file.size > 50 * 1024 * 1024) {
+          throw new Error(`Video ${i + 1}: File size must be less than 50MB`)
+        }
+        if (!file.type.startsWith('video/')) {
+          throw new Error(`Video ${i + 1}: Only videos are allowed`)
+        }
       }
 
-      setSuccess(`${uploadedUrls.length} ${type}(s) uploaded successfully!`)
-      setTimeout(() => setSuccess(''), 3000)
-    } catch (err: any) {
-      setError(err.message || `Failed to upload ${type}s`)
-    } finally {
-      setUploadingMedia(false)
+      console.log(`📤 Uploading ${type} ${i + 1}/${files.length}:`, file.name)
+
+      // Create FormData
+      const uploadFormData = new FormData()
+      uploadFormData.append('file', file) // IMPORTANT: Changed from 'image'/'video' to 'file'
+
+      // Upload to BACKEND (not frontend API route)
+      const uploadResponse = await fetch(`${API_URL}/api/upload`, {
+        method: 'POST',
+        body: uploadFormData
+      })
+
+      const uploadResult = await uploadResponse.json()
+      console.log(`📥 Upload response ${i + 1}:`, uploadResult)
+
+      if (!uploadResponse.ok || !uploadResult.success) {
+        throw new Error(uploadResult.message || `Failed to upload ${type} ${i + 1}`)
+      }
+
+      if (uploadResult.url) {
+        uploadedUrls.push(uploadResult.url)
+        console.log(`✅ ${type} ${i + 1} uploaded:`, uploadResult.url)
+      }
     }
+
+    // Update state with uploaded URLs
+    if (type === 'image') {
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, ...uploadedUrls]
+      }))
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        videos: [...prev.videos, ...uploadedUrls]
+      }))
+    }
+
+    console.log(`✅ All ${uploadedUrls.length} ${type}(s) uploaded successfully`)
+    setSuccess(`${uploadedUrls.length} ${type}(s) uploaded successfully!`)
+    setTimeout(() => setSuccess(''), 3000)
+
+  } catch (err: any) {
+    console.error(`❌ Upload error:`, err)
+    setError(err.message || `Failed to upload ${type}s`)
+  } finally {
+    setUploadingMedia(false)
   }
+}
 
   const removeMedia = (index: number, type: 'image' | 'video') => {
     if (type === 'image') {
