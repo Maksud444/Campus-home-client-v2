@@ -11,17 +11,73 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-back
 
 // Country codes list
 const COUNTRY_CODES = [
+  { code: '+1', country: 'United States', flag: '🇺🇸' },
+  { code: '+1', country: 'Canada', flag: '🇨🇦' },
+
   { code: '+20', country: 'Egypt', flag: '🇪🇬' },
+  { code: '+27', country: 'South Africa', flag: '🇿🇦' },
+  { code: '+212', country: 'Morocco', flag: '🇲🇦' },
+  { code: '+213', country: 'Algeria', flag: '🇩🇿' },
+  { code: '+216', country: 'Tunisia', flag: '🇹🇳' },
+  { code: '+234', country: 'Nigeria', flag: '🇳🇬' },
+  { code: '+251', country: 'Ethiopia', flag: '🇪🇹' },
+  { code: '+254', country: 'Kenya', flag: '🇰🇪' },
+  { code: '+233', country: 'Ghana', flag: '🇬🇭' },
+
   { code: '+880', country: 'Bangladesh', flag: '🇧🇩' },
   { code: '+91', country: 'India', flag: '🇮🇳' },
   { code: '+92', country: 'Pakistan', flag: '🇵🇰' },
+  { code: '+94', country: 'Sri Lanka', flag: '🇱🇰' },
+  { code: '+977', country: 'Nepal', flag: '🇳🇵' },
+  { code: '+975', country: 'Bhutan', flag: '🇧🇹' },
+  { code: '+95', country: 'Myanmar', flag: '🇲🇲' },
+
+  { code: '+86', country: 'China', flag: '🇨🇳' },
+  { code: '+81', country: 'Japan', flag: '🇯🇵' },
+  { code: '+82', country: 'South Korea', flag: '🇰🇷' },
+  { code: '+60', country: 'Malaysia', flag: '🇲🇾' },
+  { code: '+62', country: 'Indonesia', flag: '🇮🇩' },
+  { code: '+63', country: 'Philippines', flag: '🇵🇭' },
+  { code: '+66', country: 'Thailand', flag: '🇹🇭' },
+  { code: '+84', country: 'Vietnam', flag: '🇻🇳' },
+
+  { code: '+971', country: 'United Arab Emirates', flag: '🇦🇪' },
   { code: '+966', country: 'Saudi Arabia', flag: '🇸🇦' },
-  { code: '+971', country: 'UAE', flag: '🇦🇪' },
-  { code: '+1', country: 'USA', flag: '🇺🇸' },
-  { code: '+44', country: 'UK', flag: '🇬🇧' },
+  { code: '+974', country: 'Qatar', flag: '🇶🇦' },
+  { code: '+965', country: 'Kuwait', flag: '🇰🇼' },
+  { code: '+968', country: 'Oman', flag: '🇴🇲' },
+  { code: '+973', country: 'Bahrain', flag: '🇧🇭' },
+  { code: '+972', country: 'Israel', flag: '🇮🇱' },
+  { code: '+98', country: 'Iran', flag: '🇮🇷' },
+  { code: '+964', country: 'Iraq', flag: '🇮🇶' },
+  { code: '+962', country: 'Jordan', flag: '🇯🇴' },
+
+  { code: '+44', country: 'United Kingdom', flag: '🇬🇧' },
   { code: '+33', country: 'France', flag: '🇫🇷' },
   { code: '+49', country: 'Germany', flag: '🇩🇪' },
+  { code: '+39', country: 'Italy', flag: '🇮🇹' },
+  { code: '+34', country: 'Spain', flag: '🇪🇸' },
+  { code: '+31', country: 'Netherlands', flag: '🇳🇱' },
+  { code: '+46', country: 'Sweden', flag: '🇸🇪' },
+  { code: '+47', country: 'Norway', flag: '🇳🇴' },
+  { code: '+41', country: 'Switzerland', flag: '🇨🇭' },
+  { code: '+43', country: 'Austria', flag: '🇦🇹' },
+
+  { code: '+7', country: 'Russia', flag: '🇷🇺' },
+  { code: '+380', country: 'Ukraine', flag: '🇺🇦' },
+  { code: '+48', country: 'Poland', flag: '🇵🇱' },
+
+  { code: '+61', country: 'Australia', flag: '🇦🇺' },
+  { code: '+64', country: 'New Zealand', flag: '🇳🇿' },
+
+  { code: '+55', country: 'Brazil', flag: '🇧🇷' },
+  { code: '+54', country: 'Argentina', flag: '🇦🇷' },
+  { code: '+56', country: 'Chile', flag: '🇨🇱' },
+  { code: '+57', country: 'Colombia', flag: '🇨🇴' },
+  { code: '+52', country: 'Mexico', flag: '🇲🇽' },
+  { code: '+51', country: 'Peru', flag: '🇵🇪' },
 ]
+
 
 export default function CreatePostPage() {
   const { data: session, status } = useSession()
@@ -545,7 +601,6 @@ export default function CreatePostPage() {
                   <option value="apartment">Apartment</option>
                   <option value="villa">Villa</option>
                   <option value="studio">Studio</option>
-                  <option value="room">Room</option>
                   <option value="house">House</option>
                 </select>
               </div>
