@@ -140,7 +140,7 @@ export default function CreatePostPage() {
     }
   }
 
-  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video') => {
+ const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video') => {
   const files = e.target.files
   if (!files || files.length === 0) return
 
@@ -153,21 +153,35 @@ export default function CreatePostPage() {
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
+      
+      // Calculate file size
+      const fileSizeKB = file.size / 1024
+      const fileSizeMB = file.size / (1024 * 1024)
+      
+      console.log(`📊 File ${i + 1}: ${file.name}`)
+      console.log(`📏 Size: ${fileSizeKB.toFixed(0)} KB (${fileSizeMB.toFixed(2)} MB)`)
 
-      // Validate file
+      // Validate file type and size
       if (type === 'image') {
-        if (file.size > 5 * 1024 * 1024) {
-          throw new Error(`Image ${i + 1}: File size must be less than 5MB`)
-        }
         if (!file.type.startsWith('image/')) {
-          throw new Error(`Image ${i + 1}: Only images are allowed`)
+          throw new Error(`File ${i + 1} "${file.name}": Only image files are allowed`)
+        }
+        
+        // CRITICAL: 1MB = 1024 * 1024 bytes
+        if (file.size > 1024 * 1024) {
+          throw new Error(`❌ "${file.name}" is too large (${fileSizeMB.toFixed(2)} MB).\n\n📏 Maximum size: 1MB\n💡 Recommended: 400-600 KB\n\nPlease compress the image before uploading.`)
+        }
+        
+        // Warn if larger than recommended
+        if (file.size > 600 * 1024) {
+          console.warn(`⚠️ "${file.name}" is ${fileSizeKB.toFixed(0)} KB. Recommended: 400-600 KB for faster loading`)
         }
       } else {
+        if (!file.type.startsWith('video/')) {
+          throw new Error(`File ${i + 1} "${file.name}": Only video files are allowed`)
+        }
         if (file.size > 50 * 1024 * 1024) {
           throw new Error(`Video ${i + 1}: File size must be less than 50MB`)
-        }
-        if (!file.type.startsWith('video/')) {
-          throw new Error(`Video ${i + 1}: Only videos are allowed`)
         }
       }
 
@@ -175,9 +189,9 @@ export default function CreatePostPage() {
 
       // Create FormData
       const uploadFormData = new FormData()
-      uploadFormData.append('file', file) // IMPORTANT: Changed from 'image'/'video' to 'file'
+      uploadFormData.append('file', file)
 
-      // Upload to BACKEND (not frontend API route)
+      // Upload to BACKEND
       const uploadResponse = await fetch(`${API_URL}/api/upload`, {
         method: 'POST',
         body: uploadFormData
