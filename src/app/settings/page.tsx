@@ -135,23 +135,27 @@ export default function SettingsPage() {
       let avatarUrl = imagePreview
 
       // Upload image if changed
-      if (imageFile) {
-        const uploadFormData = new FormData()
-        uploadFormData.append('image', imageFile)
+     if (imageFile) {
+  console.log('📤 Uploading image...')
+  
+  const uploadFormData = new FormData()
+  uploadFormData.append('file', imageFile) // Changed from 'image' to 'file'
 
-        const uploadResponse = await fetch('/api/upload', {
-          method: 'POST',
-          body: uploadFormData
-        })
+  const uploadResponse = await fetch(`${API_URL}/api/upload`, { // Changed from '/api/upload'
+    method: 'POST',
+    body: uploadFormData
+  })
 
-        const uploadData = await uploadResponse.json()
+  const uploadData = await uploadResponse.json()
+  console.log('📥 Upload response:', uploadData)
 
-        if (uploadResponse.ok && uploadData.success) {
-          avatarUrl = uploadData.url
-        } else {
-          throw new Error(uploadData.message || 'Image upload failed')
-        }
-      }
+  if (uploadResponse.ok && uploadData.success) {
+    avatarUrl = uploadData.url
+    console.log('✅ Image uploaded:', avatarUrl)
+  } else {
+    throw new Error(uploadData.message || 'Image upload failed')
+  }
+}
 
       // Update profile
       console.log('📤 Updating profile for:', formData.email)
