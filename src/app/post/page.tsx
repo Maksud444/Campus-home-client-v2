@@ -406,7 +406,7 @@ export default function CreatePostPage() {
                 onChange={(e) => setFormData({ ...formData, preferences: e.target.value })}
                 className="input resize-none"
                 rows={3}
-                placeholder="e.g., Only Bangladeshi students, Non-smoker, Quiet environment, etc."
+                placeholder="e.g., Only Indonesian/Malaysia/Uzbekistan/Bangladeshi students, Quiet environment, etc."
                 disabled={loading}
               />
             </div>
