@@ -1,18 +1,30 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { services } from '@/data/services'
 import { useStaggerCards } from '@/hooks/useGsapAnimations'
 import { CheckCircle2, Star, ArrowRight, Users, Sparkles } from 'lucide-react'
 
 export default function ServicesSection() {
-  const cardsRef = useStaggerCards([services])
+  const [isMobile, setIsMobile] = useState(false)
+  
+  // চেক করছি ইউজার মোবাইলে আছে কি না
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // মোবাইলে অ্যানিমেশন ডিজেবল করার জন্য কন্ডিশনাল রেফারেন্স
+  const cardsRef = useStaggerCards(isMobile ? [] : [services])
 
   return (
     <section className="py-24 bg-slate-50">
       <div className="container mx-auto px-6">
         
-        {/* Header - Centered & Refined */}
+        {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest mb-4">
             <Sparkles size={14} />
@@ -22,28 +34,28 @@ export default function ServicesSection() {
             Premium <span className="text-primary">Home Services</span>
           </h2>
           <p className="text-lg text-slate-500 font-medium leading-relaxed">
-            Professional maintenance, cleaning, and support services to make your student life easier and worry-free.
+            Professional maintenance, cleaning, and support services to make your student life easier.
           </p>
         </div>
 
         {/* Services Grid */}
-        <div ref={cardsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+        <div 
+          ref={!isMobile ? cardsRef : null} 
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto"
+        >
           {services.map((service) => (
             <Link
               key={service.id}
               href={`/services/${service.id}`}
-              className="group bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm hover:shadow-[0_20px_50px_rgba(0,0,0,0.04)] transition-all duration-500 relative overflow-hidden"
+              className="group bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 relative overflow-hidden"
             >
-              {/* Animated Background Shape */}
-              <div className="absolute -top-10 -right-10 w-32 h-32 bg-slate-50 rounded-full group-hover:bg-primary/5 transition-colors duration-500 -z-0" />
-
               <div className="relative z-10">
                 {/* Icon Container */}
-                <div className="text-6xl mb-6 inline-block transform group-hover:scale-110 group-hover:-rotate-6 transition-all duration-500 grayscale-[0.5] group-hover:grayscale-0">
+                <div className="text-5xl md:text-6xl mb-6 inline-block transform md:group-hover:scale-110 md:group-hover:-rotate-6 transition-all duration-500">
                   {service.icon}
                 </div>
 
-                <h3 className="text-2xl font-bold text-slate-900 mb-4 group-hover:text-primary transition-colors">
+                <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-3 md:mb-4 group-hover:text-primary transition-colors">
                   {service.name}
                 </h3>
                 
@@ -51,7 +63,7 @@ export default function ServicesSection() {
                   {service.description}
                 </p>
 
-                {/* Feature List - Styled with CheckCircle */}
+                {/* Feature List */}
                 <div className="space-y-3 mb-8">
                   {service.features.slice(0, 3).map((feature, index) => (
                     <div key={index} className="flex items-center gap-3 text-sm font-semibold text-slate-600">
@@ -61,45 +73,32 @@ export default function ServicesSection() {
                   ))}
                 </div>
 
-                {/* Meta Info: Rating & Providers */}
-                <div className="flex items-center justify-between py-6 border-t border-slate-50 mb-6">
+                {/* Meta Info */}
+                <div className="flex items-center justify-between py-5 border-t border-slate-50 mb-6">
                   <div className="flex flex-col">
-                    <div className="flex items-center gap-1.5 text-slate-900 font-bold text-lg">
+                    <div className="text-slate-900 font-bold text-lg">
                       {service.priceRange}
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-slate-400 font-bold uppercase tracking-tighter">
+                    <div className="flex items-center gap-1 text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
                       <Users size={12} />
-                      {service.providers}+ Experts Available
+                      {service.providers}+ Experts
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5 bg-yellow-400/10 text-yellow-600 px-3 py-1.5 rounded-xl border border-yellow-400/20">
+                  <div className="flex items-center gap-1.5 bg-yellow-400/10 text-yellow-700 px-3 py-1.5 rounded-xl">
                     <Star size={14} fill="currentColor" />
                     <span className="font-black text-sm">{service.rating}</span>
                   </div>
                 </div>
 
-                {/* Action CTA */}
-                <div className="flex items-center gap-2 text-primary font-black text-sm uppercase tracking-widest group-hover:gap-4 transition-all">
-                  View All Providers
-                  <ArrowRight size={18} />
+                {/* CTA */}
+                <div className="flex items-center gap-2 text-primary font-black text-xs md:text-sm uppercase tracking-widest">
+                  View Providers
+                  <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
                 </div>
               </div>
             </Link>
           ))}
-        </div>
-
-        {/* Bottom Support CTA */}
-        <div className="mt-20 p-8 rounded-[2rem] bg-slate-900 text-white flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative">
-            <div className="relative z-10">
-                <h4 className="text-xl font-bold mb-2">Need a custom service?</h4>
-                <p className="text-slate-400">Our team can help you find specialized providers for your unique needs.</p>
-            </div>
-            <Link href="/contact" className="relative z-10 px-8 py-4 bg-primary hover:bg-white hover:text-primary text-white rounded-2xl font-bold transition-all whitespace-nowrap">
-                Contact Concierge
-            </Link>
-            {/* Background Decoration */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -z-0 translate-x-1/2 -translate-y-1/2" />
         </div>
       </div>
     </section>
