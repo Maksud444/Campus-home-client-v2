@@ -4,8 +4,8 @@ export default function WhyChooseUsAndHowItWorks() {
   const features = [
     {
       icon: (
-        <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
+        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
         </svg>
       ),
       title: 'Verified Properties',
@@ -13,8 +13,8 @@ export default function WhyChooseUsAndHowItWorks() {
     },
     {
       icon: (
-        <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
       ),
       title: 'Trusted Landlords',
@@ -22,8 +22,8 @@ export default function WhyChooseUsAndHowItWorks() {
     },
     {
       icon: (
-        <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
         </svg>
       ),
       title: 'Easy Communication',
@@ -31,8 +31,8 @@ export default function WhyChooseUsAndHowItWorks() {
     },
     {
       icon: (
-        <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
         </svg>
       ),
       title: 'Secure Payments',
@@ -41,150 +41,111 @@ export default function WhyChooseUsAndHowItWorks() {
   ]
 
   const steps = [
-    {
-      number: 1,
-      icon: '🔍',
-      title: 'Search & Browse',
-      description: 'Use our advanced search to find properties near your university'
-    },
-    {
-      number: 2,
-      icon: '💬',
-      title: 'View Details',
-      description: 'Check photos, amenities, and reviews. Compare options.'
-    },
-    {
-      number: 3,
-      icon: '📞',
-      title: 'Contact Owner',
-      description: 'Message owners directly. Schedule property visits.'
-    },
-    {
-      number: 4,
-      icon: '🏠',
-      title: 'Move In',
-      description: 'Complete booking and get your keys. Welcome home!'
-    },
-  ]
-
-  const stats = [
-    { value: '5,234', label: 'Properties Available' },
-    { value: '10,450', label: 'Happy Students' },
-    { value: '98%', label: 'Satisfaction Rate' },
+    { number: 1, icon: '🔍', title: 'Search', desc: 'Find properties near your university.' },
+    { number: 2, icon: '📄', title: 'Details', desc: 'Check photos, amenities, and reviews.' },
+    { number: 3, icon: '✉️', title: 'Contact', desc: 'Message owners and schedule visits.' },
+    { number: 4, icon: '🔑', title: 'Move In', desc: 'Complete booking and get your keys.' },
   ]
 
   return (
-    <>
-      {/* Why Choose Us Section */}
-      <section className="py-20 bg-gray-50">
+    <div className="bg-white">
+      {/* WHY CHOOSE US - MODERN SPLIT DESIGN */}
+      <section className="py-24 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
-          {/* Header */}
-          <div className="mb-16">
-            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              WHY CHOOSE US
-            </p>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900">
-              Because we care about your home search..
-            </h2>
-          </div>
-
-          {/* Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Left Side - Features */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-              {features.map((feature, index) => (
-                <div key={index} className="flex flex-col items-center text-center">
-                  <div style={{ color: '#219EBC' }} className="mb-4">
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">
-                    {feature.title}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    {feature.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            {/* Right Side - Image */}
-            <div className="relative">
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                <img 
-                  src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80" 
-                  alt="Modern apartment interior"
-                  className="w-full h-[400px] object-cover"
-                />
-                {/* Trust Badge Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 py-4" style={{ background: 'linear-gradient(to right, #219EBC, #1a7d96)' }}>
-                  <div className="flex items-center justify-center gap-3">
-                    <div className="bg-white rounded-full p-2">
-                      <svg className="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                      </svg>
+          <div className="flex flex-col lg:flex-row items-center gap-16">
+            
+            {/* Left Side: Text Content */}
+            <div className="lg:w-1/2 space-y-8">
+              <div>
+                <span className="text-primary font-bold tracking-widest uppercase text-sm bg-primary/10 px-4 py-2 rounded-full">
+                  Why Choose Us
+                </span>
+                <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900 mt-6 leading-tight">
+                  We care about your <span className="text-primary">home search</span> experience
+                </h2>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {features.map((feature, index) => (
+                  <div key={index} className="p-6 rounded-3xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 group">
+                    <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-primary mb-4 group-hover:scale-110 transition-transform">
+                      {feature.icon}
                     </div>
-                    <span className="text-white font-bold text-lg">VERIFIED & TRUSTED</span>
+                    <h3 className="font-bold text-slate-900 text-lg mb-2">{feature.title}</h3>
+                    <p className="text-slate-500 text-sm leading-relaxed">{feature.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right Side: Visual Image & Stats */}
+            <div className="lg:w-1/2 relative">
+              <div className="relative z-10 rounded-[2.5rem] overflow-hidden shadow-2xl">
+                <img 
+                  src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80" 
+                  className="w-full h-[600px] object-cover" 
+                  alt="Modern Luxury Real Estate" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
+                
+                {/* Floating Trust Badge */}
+                <div className="absolute bottom-8 left-8 right-8 bg-white/10 backdrop-blur-xl border border-white/20 p-6 rounded-2xl flex items-center gap-4">
+                  <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white">
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                  </div>
+                  <div>
+                    <p className="text-white font-bold text-lg leading-none">100% Verified</p>
+                    <p className="text-white/70 text-sm mt-1">Properties are manually inspected</p>
                   </div>
                 </div>
               </div>
+              {/* Decorative Circle */}
+              <div className="absolute -top-10 -right-10 w-64 h-64 bg-primary/10 rounded-full blur-3xl -z-10" />
             </div>
-          </div>
-
-          {/* Stats Section */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 pt-16 border-t border-gray-200">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-5xl md:text-6xl font-bold text-gray-900 mb-2">
-                  {stat.value} <span style={{ color: '#219EBC' }}>+</span>
-                </div>
-                <div className="text-lg text-gray-600 font-medium">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <section id="about" className="py-20 bg-gradient-to-b from-white to-gray-50">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-extrabold text-gray-900 mb-4">
-              🎯 How to Find Your Perfect Home
-            </h2>
-            <p className="text-xl text-gray-600">
-              Follow these simple steps
-            </p>
+      {/* HOW IT WORKS - TIMELINE DESIGN */}
+      <section className="py-24 bg-slate-900 text-white rounded-[3rem] mx-4 mb-10 overflow-hidden relative">
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="text-center max-w-2xl mx-auto mb-20">
+            <h2 className="text-4xl font-bold mb-4">How it Works?</h2>
+            <p className="text-slate-400">Follow these 4 simple steps to find and move into your perfect student home in Egypt.</p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-            {steps.map((step) => (
-              <div key={step.number} className="text-center relative">
-                <div 
-                  className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full flex items-center justify-center text-white font-extrabold text-xl shadow-lg"
-                  style={{ backgroundColor: '#219EBC' }}
-                >
-                  {step.number}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {steps.map((step, idx) => (
+              <div key={idx} className="relative group">
+                {/* Connector Line (Desktop Only) */}
+                {idx !== 3 && (
+                  <div className="hidden lg:block absolute top-10 left-full w-full h-[2px] bg-gradient-to-r from-primary/50 to-transparent z-0" />
+                )}
+                
+                <div className="relative z-10 bg-slate-800/50 p-8 rounded-3xl border border-slate-700 group-hover:border-primary/50 transition-all duration-300">
+                  <div className="text-sm font-black text-primary mb-4 opacity-50">STEP 0{step.number}</div>
+                  <div className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-300">{step.icon}</div>
+                  <h3 className="text-xl font-bold mb-3">{step.title}</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed">{step.desc}</p>
                 </div>
-                <div className="text-7xl mb-6 mt-8">{step.icon}</div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">{step.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{step.description}</p>
               </div>
             ))}
           </div>
-          
-          <div className="text-center mt-16">
-            <Link 
+
+          <div className="mt-20 text-center">
+             <Link 
               href="/properties" 
-              className="inline-block px-10 py-4 text-lg font-semibold text-white rounded-lg shadow-lg hover:shadow-xl transition-all"
-              style={{ backgroundColor: '#219EBC' }}
+              className="inline-flex items-center gap-3 bg-primary hover:bg-primary/90 text-white px-10 py-4 rounded-2xl font-bold transition-all shadow-xl shadow-primary/20"
             >
-              Start Searching Now →
+              Start Searching Now
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
             </Link>
           </div>
         </div>
+        
+        {/* Background Decorative Element */}
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-primary/5 skew-x-12 translate-x-1/2" />
       </section>
-    </>
+    </div>
   )
 }
