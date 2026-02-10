@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
 
@@ -43,9 +44,11 @@ interface Property {
   createdAt: string
 }
 
-export default function PropertiesPage() {
+function PropertiesPageContent() {
   const { data: session } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { t } = useLanguage()
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -56,6 +59,21 @@ export default function PropertiesPage() {
     maxPrice: '',
     bedrooms: ''
   })
+
+  // Read URL parameters and set initial filters
+  useEffect(() => {
+    const location = searchParams.get('location')
+    const type = searchParams.get('type')
+    const priceRange = searchParams.get('priceRange')
+
+    if (location || type || priceRange) {
+      setFilters(prev => ({
+        ...prev,
+        city: location || '',
+        propertyType: type || '',
+      }))
+    }
+  }, [searchParams])
 
   useEffect(() => {
     fetchProperties()
@@ -125,11 +143,11 @@ export default function PropertiesPage() {
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
-            Browse Properties 🏠
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2">
+            {t('propertiesPage.title')} 🏠
           </h1>
-          <p className="text-gray-600 text-lg">
-            Find your perfect home in Egypt
+          <p className="text-gray-600 text-base sm:text-lg">
+            {t('propertiesPage.subtitle')}
           </p>
         </div>
 
@@ -141,66 +159,70 @@ export default function PropertiesPage() {
         )}
 
         {/* Filters */}
-        <div className="bg-white rounded-2xl shadow-md p-6 mb-8">
-          <h3 className="text-xl font-bold mb-4">Filters</h3>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 mb-8">
+          <h3 className="text-lg sm:text-xl font-bold mb-4">{t('propertiesPage.filters')}</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
             <div>
-              <label className="block mb-2 text-sm font-semibold text-gray-700">City</label>
+              <label className="block mb-2 text-xs sm:text-sm font-semibold text-gray-700">{t('propertiesPage.city')}</label>
               <select
                 value={filters.city}
                 onChange={(e) => setFilters({ ...filters, city: e.target.value })}
-                className="input text-sm"
+                className="input text-xs sm:text-sm"
               >
                 <option value="">All Cities</option>
                 <option value="Cairo">Cairo</option>
                 <option value="Giza">Giza</option>
                 <option value="Alexandria">Alexandria</option>
+                <option value="Nasr City">Nasr City</option>
+                <option value="New Cairo">New Cairo</option>
+                <option value="Maadi">Maadi</option>
               </select>
             </div>
 
             <div>
-              <label className="block mb-2 text-sm font-semibold text-gray-700">Type</label>
+              <label className="block mb-2 text-xs sm:text-sm font-semibold text-gray-700">{t('propertiesPage.type')}</label>
               <select
                 value={filters.propertyType}
                 onChange={(e) => setFilters({ ...filters, propertyType: e.target.value })}
-                className="input text-sm"
+                className="input text-xs sm:text-sm"
               >
                 <option value="">All Types</option>
                 <option value="apartment">Apartment</option>
+                <option value="room">Room</option>
+                <option value="roommate">Roommate</option>
                 <option value="villa">Villa</option>
                 <option value="studio">Studio</option>
-                <option value="room">Room</option>
               </select>
             </div>
 
             <div>
-              <label className="block mb-2 text-sm font-semibold text-gray-700">Min Price</label>
+              <label className="block mb-2 text-xs sm:text-sm font-semibold text-gray-700">{t('propertiesPage.minPrice')}</label>
               <input
                 type="number"
                 value={filters.minPrice}
                 onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
-                className="input text-sm"
+                className="input text-xs sm:text-sm"
                 placeholder="Min"
               />
             </div>
 
             <div>
-              <label className="block mb-2 text-sm font-semibold text-gray-700">Max Price</label>
+              <label className="block mb-2 text-xs sm:text-sm font-semibold text-gray-700">{t('propertiesPage.maxPrice')}</label>
               <input
                 type="number"
                 value={filters.maxPrice}
                 onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
-                className="input text-sm"
+                className="input text-xs sm:text-sm"
                 placeholder="Max"
               />
             </div>
 
             <div>
-              <label className="block mb-2 text-sm font-semibold text-gray-700">Bedrooms</label>
+              <label className="block mb-2 text-xs sm:text-sm font-semibold text-gray-700">{t('properties.bedrooms')}</label>
               <select
                 value={filters.bedrooms}
                 onChange={(e) => setFilters({ ...filters, bedrooms: e.target.value })}
-                className="input text-sm"
+                className="input text-xs sm:text-sm"
               >
                 <option value="">Any</option>
                 <option value="1">1</option>
@@ -213,16 +235,16 @@ export default function PropertiesPage() {
 
           <button
             onClick={() => setFilters({ city: '', propertyType: '', minPrice: '', maxPrice: '', bedrooms: '' })}
-            className="btn btn-outline mt-4 text-sm"
+            className="btn btn-outline mt-4 text-xs sm:text-sm"
           >
-            Clear Filters
+            {t('propertiesPage.clearFilters')}
           </button>
         </div>
 
         {/* Results Count */}
         <div className="mb-6">
-          <p className="text-gray-600">
-            Found <span className="font-bold text-primary">{filteredProperties.length}</span> properties
+          <p className="text-sm sm:text-base text-gray-600">
+            {t('propertiesPage.found')} <span className="font-bold text-primary">{filteredProperties.length}</span> {t('stats.properties').toLowerCase()}
           </p>
         </div>
 
@@ -230,9 +252,9 @@ export default function PropertiesPage() {
         {filteredProperties.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-2xl shadow-md">
             <div className="text-6xl mb-4">🏠</div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">No properties found</h3>
-            <p className="text-gray-600 mb-6">Try adjusting your filters</p>
-            <Link href="/post" className="btn btn-primary">
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">{t('propertiesPage.noProperties')}</h3>
+            <p className="text-sm sm:text-base text-gray-600 mb-6">{t('propertiesPage.adjustFilters')}</p>
+            <Link href="/post" className="btn btn-primary text-sm sm:text-base">
               Add Property
             </Link>
           </div>
@@ -349,9 +371,9 @@ export default function PropertiesPage() {
                     )}
 
                     {/* Stats */}
-                    <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
-                      <span>👁️ {property.views || 0} views</span>
-                      <span>❤️ {property.likes?.length || 0} likes</span>
+                    <div className="flex items-center justify-between text-xs sm:text-sm text-gray-600 mb-4">
+                      <span>👁️ {property.views || 0} {t('propertiesPage.views')}</span>
+                      <span>❤️ {property.likes?.length || 0} {t('propertiesPage.likes')}</span>
                     </div>
 
                     {/* Actions */}
@@ -372,16 +394,16 @@ export default function PropertiesPage() {
                               console.error('Restore error:', error)
                             }
                           }}
-                          className="btn btn-primary flex-1 text-sm"
+                          className="btn btn-primary flex-1 text-xs sm:text-sm"
                         >
                           ♻️ Restore
                         </button>
                       ) : (
                         <Link
                           href={`/properties/${property._id}`}
-                          className="btn btn-primary flex-1 text-sm text-center"
+                          className="btn btn-primary flex-1 text-xs sm:text-sm text-center"
                         >
-                          View Details
+                          {t('propertiesPage.viewDetails')}
                         </Link>
                       )}
 
@@ -390,9 +412,9 @@ export default function PropertiesPage() {
     href={whatsappLink}
     target="_blank"
     rel="noopener noreferrer"
-    className="btn btn-outline flex-1 text-sm"
+    className="btn btn-outline flex-1 text-xs sm:text-sm"
   >
-    💬 WhatsApp
+    💬 {t('propertiesPage.whatsapp')}
   </a>
 )}
                     </div>
@@ -404,5 +426,22 @@ export default function PropertiesPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function PropertiesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 py-8 pt-28">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary mx-auto mb-4"></div>
+            <p className="text-gray-600 text-lg">Loading properties...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <PropertiesPageContent />
+    </Suspense>
   )
 }

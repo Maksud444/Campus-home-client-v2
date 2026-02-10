@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { FaBed, FaBath, FaRulerCombined, FaMapMarkerAlt, FaArrowRight, FaStar } from 'react-icons/fa'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
 
@@ -17,6 +18,7 @@ interface Property {
 }
 
 export default function PropertiesSection() {
+  const { t } = useLanguage()
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -69,14 +71,14 @@ export default function PropertiesSection() {
           <div className="max-w-xl">
             <span className="text-primary font-bold tracking-widest uppercase text-xs mb-3 block">Premium Listings</span>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
-              Featured <span className="text-primary">Living Spaces</span>
+              {t('properties.featured')}
             </h2>
             <p className="mt-4 text-slate-500 font-medium text-lg">
               Carefully curated student housing options designed for comfort and success.
             </p>
           </div>
           <Link href="/properties" className="group flex items-center gap-3 text-slate-900 font-black hover:text-primary transition-all">
-            See All Listings <FaArrowRight className="group-hover:translate-x-2 transition-transform" />
+            {t('properties.viewAll')} <FaArrowRight className="group-hover:translate-x-2 transition-transform" />
           </Link>
         </div>
 
@@ -140,14 +142,14 @@ export default function PropertiesSection() {
                       <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
                         <FaBed size={16} />
                       </div>
-                      <span className="text-[11px] font-bold uppercase tracking-tighter opacity-60">{property.bedrooms || 0} Beds</span>
+                      <span className="text-[11px] font-bold uppercase tracking-tighter opacity-60">{property.bedrooms || 0}</span>
                     </div>
-                    
+
                     <div className="flex flex-col items-center gap-1">
                       <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
                         <FaBath size={16} />
                       </div>
-                      <span className="text-[11px] font-bold uppercase tracking-tighter opacity-60">{property.bathrooms || 0} Baths</span>
+                      <span className="text-[11px] font-bold uppercase tracking-tighter opacity-60">{property.bathrooms || 0}</span>
                     </div>
 
                     <div className="flex flex-col items-center gap-1">
@@ -172,7 +174,7 @@ export default function PropertiesSection() {
         {/* View All Button - Footer */}
         <div className="mt-20 flex justify-center">
           <Link href="/properties" className="px-12 py-5 bg-slate-900 text-white rounded-full font-black hover:bg-primary transition-all shadow-2xl shadow-slate-200 flex items-center gap-4 group">
-            Explore All 500+ Properties
+            Explore All Properties
             <FaArrowRight className="group-hover:translate-x-2 transition-transform" />
           </Link>
         </div>

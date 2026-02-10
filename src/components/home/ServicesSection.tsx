@@ -5,8 +5,10 @@ import Link from 'next/link'
 import { services } from '@/data/services'
 import { useStaggerCards } from '@/hooks/useGsapAnimations'
 import { CheckCircle2, Star, ArrowRight, Users, Sparkles } from 'lucide-react'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function ServicesSection() {
+  const { t } = useLanguage()
   const [isMobile, setIsMobile] = useState(false)
   
   // চেক করছি ইউজার মোবাইলে আছে কি না
@@ -31,9 +33,9 @@ export default function ServicesSection() {
             Extra Comfort
           </div>
           <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">
-            Premium <span className="text-primary">Home Services</span>
+            {t('services.title')}
           </h2>
-          <p className="text-lg text-slate-500 font-medium leading-relaxed">
+          <p className="text-base sm:text-lg text-slate-500 font-medium leading-relaxed">
             Professional maintenance, cleaning, and support services to make your student life easier.
           </p>
         </div>
@@ -93,7 +95,7 @@ export default function ServicesSection() {
 
                 {/* CTA */}
                 <div className="flex items-center gap-2 text-primary font-black text-xs md:text-sm uppercase tracking-widest">
-                  View Providers
+                  {t('services.viewProviders')}
                   <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
                 </div>
               </div>
