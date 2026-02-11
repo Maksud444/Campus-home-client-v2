@@ -4,63 +4,47 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
 
-interface Property {
-  _id: string
-  title: string
-  description: string
-  type: string
-  price: number | null
-  location: {
-    city: string
-    area: string
-    address?: string
-  }
-  propertyType: string
-  bedrooms?: number
-  bathrooms?: number
-  area?: number
-  furnished: boolean
-  images: Array<{ url: string; public_id?: string }>
-  videos?: string[]
-  amenities: string[]
-  preferences?: string
-  targetAudience: string
-  whatsapp: {
-    countryCode: string
-    number: string
-  }
-  userId?: string
-  userName: string
-  userEmail: string
-  userImage?: string
-  userRole: string
-  status: string
-  views: number
-  likes: any[]
-  createdAt: string
-  updatedAt: string
-}
-
-export default function PropertyDetailPage() {
-  const { data: session } = useSession()
+export default function EditPropertyPage() {
+  const { data: session, status } = useSession()
   const router = useRouter()
   const params = useParams()
   const propertyId = params.id as string
 
-  const [property, setProperty] = useState<Property | null>(null)
   const [loading, setLoading] = useState(true)
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [deleting, setDeleting] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    type: 'apartment',
+    price: '',
+    city: '',
+    area: '',
+    address: '',
+    propertyType: 'apartment',
+    bedrooms: '',
+    bathrooms: '',
+    areaSize: '',
+    furnished: false,
+    amenities: [] as string[],
+    whatsappCountryCode: '+20',
+    whatsappNumber: '',
+    targetAudience: 'students'
+  })
+
+  const [newAmenity, setNewAmenity] = useState('')
 
   useEffect(() => {
-    if (propertyId) {
+    if (status === 'unauthenticated') {
+      router.push('/login')
+      return
+    }
+    if (propertyId && status === 'authenticated') {
       fetchProperty()
     }
-  }, [propertyId])
+  }, [propertyId, status])
 
   async function fetchProperty() {
     try {
@@ -69,304 +53,399 @@ export default function PropertyDetailPage() {
       const data = await response.json()
 
       if (data.success && data.property) {
-        setProperty(data.property)
+        const prop = data.property
+
+        // Check if user owns this property
+        if (session?.user?.email !== prop.userEmail) {
+          alert('You do not have permission to edit this property')
+          router.push(`/properties/${propertyId}`)
+          return
+        }
+
+        setFormData({
+          title: prop.title || '',
+          description: prop.description || '',
+          type: prop.type || 'apartment',
+          price: prop.price?.toString() || '',
+          city: prop.location?.city || '',
+          area: prop.location?.area || '',
+          address: prop.location?.address || '',
+          propertyType: prop.propertyType || 'apartment',
+          bedrooms: prop.bedrooms?.toString() || '',
+          bathrooms: prop.bathrooms?.toString() || '',
+          areaSize: prop.area?.toString() || '',
+          furnished: prop.furnished || false,
+          amenities: prop.amenities || [],
+          whatsappCountryCode: prop.whatsapp?.countryCode || '+20',
+          whatsappNumber: prop.whatsapp?.number || '',
+          targetAudience: prop.targetAudience || 'students'
+        })
       } else {
         alert('Property not found')
         router.push('/properties')
       }
     } catch (error) {
       console.error('Error fetching property:', error)
+      alert('Failed to load property')
       router.push('/properties')
     } finally {
       setLoading(false)
     }
   }
 
-  async function handleDelete() {
-    if (!confirm('Are you sure you want to delete this property?')) return
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+
+    if (!formData.title || !formData.description || !formData.city || !formData.area) {
+      alert('Please fill in all required fields')
+      return
+    }
 
     try {
-      setDeleting(true)
+      setSaving(true)
+
+      const updateData = {
+        title: formData.title,
+        description: formData.description,
+        type: formData.type,
+        price: formData.price ? parseInt(formData.price) : null,
+        location: {
+          city: formData.city,
+          area: formData.area,
+          address: formData.address
+        },
+        propertyType: formData.propertyType,
+        bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
+        bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
+        area: formData.areaSize ? parseInt(formData.areaSize) : null,
+        furnished: formData.furnished,
+        amenities: formData.amenities,
+        whatsapp: {
+          countryCode: formData.whatsappCountryCode,
+          number: formData.whatsappNumber
+        },
+        targetAudience: formData.targetAudience
+      }
+
       const response = await fetch(`${API_URL}/api/properties/${propertyId}`, {
-        method: 'DELETE'
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updateData)
       })
 
       const data = await response.json()
 
       if (data.success) {
-        alert('Property deleted successfully')
-        router.push('/properties')
+        alert('Property updated successfully!')
+        router.push(`/properties/${propertyId}`)
       } else {
-        alert(data.message || 'Failed to delete property')
+        alert(data.message || 'Failed to update property')
       }
     } catch (error) {
-      console.error('Error deleting property:', error)
-      alert('Failed to delete property')
+      console.error('Error updating property:', error)
+      alert('Failed to update property')
     } finally {
-      setDeleting(false)
+      setSaving(false)
     }
   }
 
-  function getWhatsAppLink() {
-    if (!property || !property.whatsapp) return '#'
-    
-    const { countryCode, number } = property.whatsapp
-    const fullNumber = `${countryCode}${number}`.replace(/\D/g, '')
-    const message = `Hi! I'm interested in your property:\n\n*${property.title}*\n\n📍 ${property.location.area}, ${property.location.city}\n💰 ${property.price ? property.price.toLocaleString() + ' EGP/mo' : 'Negotiable'}\n\nView: ${typeof window !== 'undefined' ? window.location.href : ''}`
-
-    return `https://wa.me/${fullNumber}?text=${encodeURIComponent(message)}`
+  function handleAddAmenity() {
+    if (newAmenity.trim() && !formData.amenities.includes(newAmenity.trim())) {
+      setFormData({ ...formData, amenities: [...formData.amenities, newAmenity.trim()] })
+      setNewAmenity('')
+    }
   }
 
-  function isOwner() {
-    if (!session?.user || !property) return false
-    return session.user.email === property.userEmail
+  function handleRemoveAmenity(amenity: string) {
+    setFormData({ ...formData, amenities: formData.amenities.filter(a => a !== amenity) })
   }
 
-  if (loading) {
+  if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-28">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading property...</p>
+          <p className="text-gray-600">Loading...</p>
         </div>
       </div>
     )
   }
-
-  if (!property) {
-    return (
-      <div className="min-h-screen flex items-center justify-center pt-28">
-        <div className="text-center">
-          <div className="text-6xl mb-4">😢</div>
-          <h2 className="text-2xl font-bold mb-4">Property not found</h2>
-          <Link href="/properties" className="btn btn-primary">
-            Back to Properties
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
-  const images = property.images || []
-  const imageUrls = images.map(img => typeof img === 'string' ? img : img.url)
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 pt-28">
-      <div className="max-w-6xl mx-auto px-4">
-        <Link 
-          href="/properties"
+      <div className="max-w-4xl mx-auto px-4">
+        <Link
+          href={`/properties/${propertyId}`}
           className="flex items-center gap-2 text-primary hover:text-primary-dark mb-6 font-semibold"
         >
-          ← Back to Properties
+          ← Back to Property
         </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            {/* Image Gallery */}
-            <div className="bg-white rounded-2xl overflow-hidden shadow-md mb-6">
-              {imageUrls.length > 0 ? (
-                <div>
-                  <div className="relative h-96 bg-gray-200">
-                    <Image
-                      src={imageUrls[currentImageIndex]}
-                      alt={property.title}
-                      fill
-                      className="object-cover"
-                    />
-                    
-                    {imageUrls.length > 1 && (
-                      <>
-                        <button
-                          onClick={() => setCurrentImageIndex(prev => prev === 0 ? imageUrls.length - 1 : prev - 1)}
-                          className="absolute left-4 top-1/2 -translate-y-1/2 bg-white p-2 rounded-full shadow-lg hover:bg-gray-100"
-                        >
-                          ←
-                        </button>
-                        <button
-                          onClick={() => setCurrentImageIndex(prev => prev === imageUrls.length - 1 ? 0 : prev + 1)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 bg-white p-2 rounded-full shadow-lg hover:bg-gray-100"
-                        >
-                          →
-                        </button>
-                        <div className="absolute bottom-4 right-4 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
-                          {currentImageIndex + 1} / {imageUrls.length}
-                        </div>
-                      </>
-                    )}
-                  </div>
+        <div className="bg-white rounded-2xl shadow-md p-8">
+          <h1 className="text-3xl font-extrabold mb-6">Edit Property</h1>
 
-                  {imageUrls.length > 1 && (
-                    <div className="flex gap-2 p-4 overflow-x-auto">
-                      {imageUrls.map((imageUrl, index) => (
-                        <button
-                          key={index}
-                          onClick={() => setCurrentImageIndex(index)}
-                          className={`relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 ${currentImageIndex === index ? 'ring-2 ring-primary' : ''}`}
-                        >
-                          <Image src={imageUrl} alt="Thumbnail" fill className="object-cover" />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="h-96 flex items-center justify-center bg-gray-200 text-8xl">🏠</div>
-              )}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Property Type */}
+            <div>
+              <label className="block mb-2 font-semibold">Property Type *</label>
+              <select
+                value={formData.type}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                className="input"
+                required
+              >
+                <option value="apartment">🏢 Apartment</option>
+                <option value="room">🛏️ Room</option>
+                <option value="roommate">👥 Roommate</option>
+              </select>
             </div>
 
-            {/* Videos */}
-            {property.videos && property.videos.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-                <h2 className="text-xl font-bold mb-4">Property Videos</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {property.videos.map((video, index) => (
-                    <video key={index} src={video} controls className="w-full rounded-lg" />
-                  ))}
-                </div>
+            {/* Title */}
+            <div>
+              <label className="block mb-2 font-semibold">Title *</label>
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="input"
+                required
+                placeholder="e.g., Spacious 2BR Apartment in Downtown"
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block mb-2 font-semibold">Description *</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="input min-h-[150px]"
+                required
+                placeholder="Describe your property in detail..."
+              />
+            </div>
+
+            {/* Location */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-2 font-semibold">City *</label>
+                <select
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  className="input"
+                  required
+                >
+                  <option value="">Select City</option>
+                  <option value="Cairo">Cairo</option>
+                  <option value="Giza">Giza</option>
+                  <option value="Alexandria">Alexandria</option>
+                  <option value="Nasr City">Nasr City</option>
+                  <option value="New Cairo">New Cairo</option>
+                  <option value="Maadi">Maadi</option>
+                </select>
               </div>
-            )}
-
-            {/* Property Details */}
-            <div className="bg-white rounded-2xl shadow-md p-8">
-              <div className="mb-4 flex flex-wrap gap-2">
-                <span className={`px-4 py-2 rounded-full text-sm font-bold ${
-                  property.type === 'property' ? 'bg-blue-500 text-white' :
-                  property.type === 'roommate' ? 'bg-green-500 text-white' :
-                  'bg-purple-500 text-white'
-                }`}>
-                  {property.type === 'property' ? '🏢 Property' :
-                   property.type === 'roommate' ? '👥 Looking for Roommate' :
-                   '🔍 Looking for Room'}
-                </span>
-                
-                {property.targetAudience && (
-                  <span className={`px-4 py-2 rounded-full text-sm font-bold ${
-                    property.targetAudience === 'family' 
-                      ? 'bg-orange-500 text-white' 
-                      : 'bg-green-500 text-white'
-                  }`}>
-                    {property.targetAudience === 'family' ? '👨‍👩‍👧‍👦 For Family' : '🎓 For Students'}
-                  </span>
-                )}
-              </div>
-
-              <h1 className="text-3xl font-extrabold mb-4">{property.title}</h1>
-              <p className="text-lg mb-6">📍 {property.location.area}, {property.location.city}</p>
-
-              <div className="flex gap-6 mb-6 pb-6 border-b">
-                <div>👁️ {property.views || 0} views</div>
-                <div>❤️ {property.likes?.length || 0} likes</div>
-                <div className="text-sm text-gray-600">
-                  Posted {new Date(property.createdAt).toLocaleDateString()}
-                </div>
-              </div>
-
-              {property.type === 'property' && (
-                <div className="mb-6 pb-6 border-b">
-                  <h2 className="text-xl font-bold mb-4">Property Details</h2>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {property.bedrooms && <div className="bg-gray-50 p-4 rounded-xl">🛏️ {property.bedrooms} BD</div>}
-                    {property.bathrooms && <div className="bg-gray-50 p-4 rounded-xl">🚿 {property.bathrooms} BA</div>}
-                    {property.area && <div className="bg-gray-50 p-4 rounded-xl">📐 {property.area} sqm</div>}
-                    {property.propertyType && <div className="bg-gray-50 p-4 rounded-xl capitalize">🏠 {property.propertyType}</div>}
-                    {property.furnished && <div className="bg-gray-50 p-4 rounded-xl">🛋️ Furnished</div>}
-                  </div>
-                </div>
-              )}
-
-              {property.amenities && property.amenities.length > 0 && (
-                <div className="mb-6 pb-6 border-b">
-                  <h2 className="text-xl font-bold mb-4">Amenities</h2>
-                  <div className="flex flex-wrap gap-2">
-                    {property.amenities.map((amenity, index) => (
-                      <span key={index} className="px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-semibold">
-                        ✓ {amenity}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {property.preferences && (
-                <div className="mb-6 pb-6 border-b">
-                  <h2 className="text-xl font-bold mb-4">Preferences</h2>
-                  <p className="text-gray-700 whitespace-pre-wrap">{property.preferences}</p>
-                </div>
-              )}
 
               <div>
-                <h2 className="text-xl font-bold mb-4">Description</h2>
-                <p className="whitespace-pre-wrap text-gray-700">{property.description}</p>
+                <label className="block mb-2 font-semibold">Area *</label>
+                <input
+                  type="text"
+                  value={formData.area}
+                  onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                  className="input"
+                  required
+                  placeholder="e.g., Downtown, Zamalek"
+                />
               </div>
             </div>
-          </div>
 
-          {/* Right Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-md p-6 mb-6 sticky top-28">
-              {property.price && (
-                <div className="mb-6">
-                  <div className="text-sm text-gray-600 mb-1">Monthly Rent</div>
-                  <div className="text-4xl font-bold text-primary">
-                    {property.price.toLocaleString()} <span className="text-lg text-gray-600">EGP</span>
+            <div>
+              <label className="block mb-2 font-semibold">Address Details</label>
+              <input
+                type="text"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                className="input"
+                placeholder="Street address, building number, etc."
+              />
+            </div>
+
+            {/* Price */}
+            <div>
+              <label className="block mb-2 font-semibold">Monthly Price (EGP)</label>
+              <input
+                type="number"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                className="input"
+                placeholder="e.g., 5000"
+              />
+            </div>
+
+            {/* Property Details (for apartment/room) */}
+            {(formData.type === 'apartment' || formData.type === 'room') && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block mb-2 font-semibold">Bedrooms</label>
+                    <input
+                      type="number"
+                      value={formData.bedrooms}
+                      onChange={(e) => setFormData({ ...formData, bedrooms: e.target.value })}
+                      className="input"
+                      min="0"
+                      placeholder="e.g., 2"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block mb-2 font-semibold">Bathrooms</label>
+                    <input
+                      type="number"
+                      value={formData.bathrooms}
+                      onChange={(e) => setFormData({ ...formData, bathrooms: e.target.value })}
+                      className="input"
+                      min="0"
+                      placeholder="e.g., 1"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block mb-2 font-semibold">Area (m²)</label>
+                    <input
+                      type="number"
+                      value={formData.areaSize}
+                      onChange={(e) => setFormData({ ...formData, areaSize: e.target.value })}
+                      className="input"
+                      min="0"
+                      placeholder="e.g., 100"
+                    />
                   </div>
                 </div>
-              )}
 
-              <div className="space-y-3">
-                {isOwner() ? (
-                  <>
-                    <Link href={`/properties/${property._id}/edit`} className="btn btn-primary w-full">
-                      ✏️ Edit
-                    </Link>
-                    <button 
-                      onClick={handleDelete} 
-                      disabled={deleting} 
-                      className="btn btn-outline w-full text-red-600 border-red-600 hover:bg-red-50"
-                    >
-                      {deleting ? 'Deleting...' : '🗑️ Delete'}
-                    </button>
-                  </>
-                ) : (
-                  <a 
-                    href={getWhatsAppLink()} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="btn bg-green-500 hover:bg-green-600 text-white w-full flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                    </svg>
-                    Contact on WhatsApp
-                  </a>
-                )}
-              </div>
-            </div>
-
-            {/* Posted By */}
-            <div className="bg-white rounded-2xl shadow-md p-6">
-              <h3 className="font-bold text-lg mb-4">Posted By</h3>
-              <div className="flex items-center gap-3">
-                {property.userImage ? (
-                  <Image 
-                    src={property.userImage} 
-                    alt={property.userName} 
-                    width={56} 
-                    height={56} 
-                    className="rounded-full" 
-                  />
-                ) : (
-                  <div className="w-14 h-14 bg-primary rounded-full flex items-center justify-center text-white font-bold text-xl">
-                    {property.userName?.charAt(0) || 'U'}
-                  </div>
-                )}
                 <div>
-                  <div className="font-bold">{property.userName || 'Anonymous'}</div>
-                  <div className="text-sm text-gray-600 capitalize">{property.userRole || 'user'}</div>
+                  <label className="block mb-2 font-semibold">Property Type</label>
+                  <select
+                    value={formData.propertyType}
+                    onChange={(e) => setFormData({ ...formData, propertyType: e.target.value })}
+                    className="input"
+                  >
+                    <option value="apartment">Apartment</option>
+                    <option value="villa">Villa</option>
+                    <option value="studio">Studio</option>
+                    <option value="house">House</option>
+                  </select>
                 </div>
+
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="furnished"
+                    checked={formData.furnished}
+                    onChange={(e) => setFormData({ ...formData, furnished: e.target.checked })}
+                    className="w-5 h-5 text-primary"
+                  />
+                  <label htmlFor="furnished" className="font-semibold">Furnished</label>
+                </div>
+              </>
+            )}
+
+            {/* Amenities */}
+            <div>
+              <label className="block mb-2 font-semibold">Amenities</label>
+              <div className="flex gap-2 mb-3">
+                <input
+                  type="text"
+                  value={newAmenity}
+                  onChange={(e) => setNewAmenity(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddAmenity())}
+                  className="input flex-1"
+                  placeholder="Add amenity (e.g., WiFi, AC, Parking)"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddAmenity}
+                  className="btn btn-outline"
+                >
+                  Add
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {formData.amenities.map((amenity, index) => (
+                  <span
+                    key={index}
+                    className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-2"
+                  >
+                    {amenity}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAmenity(amenity)}
+                      className="hover:text-red-600"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
               </div>
             </div>
-          </div>
+
+            {/* WhatsApp */}
+            <div>
+              <label className="block mb-2 font-semibold">WhatsApp Contact *</label>
+              <div className="grid grid-cols-3 gap-2">
+                <select
+                  value={formData.whatsappCountryCode}
+                  onChange={(e) => setFormData({ ...formData, whatsappCountryCode: e.target.value })}
+                  className="input"
+                  required
+                >
+                  <option value="+20">+20 (Egypt)</option>
+                  <option value="+966">+966 (Saudi Arabia)</option>
+                  <option value="+971">+971 (UAE)</option>
+                  <option value="+962">+962 (Jordan)</option>
+                </select>
+                <input
+                  type="tel"
+                  value={formData.whatsappNumber}
+                  onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
+                  className="input col-span-2"
+                  required
+                  placeholder="1234567890"
+                />
+              </div>
+            </div>
+
+            {/* Target Audience */}
+            <div>
+              <label className="block mb-2 font-semibold">Target Audience</label>
+              <select
+                value={formData.targetAudience}
+                onChange={(e) => setFormData({ ...formData, targetAudience: e.target.value })}
+                className="input"
+              >
+                <option value="students">🎓 Students</option>
+                <option value="family">👨‍👩‍👧‍👦 Family</option>
+              </select>
+            </div>
+
+            {/* Submit Buttons */}
+            <div className="flex gap-4 pt-4">
+              <button
+                type="submit"
+                disabled={saving}
+                className="btn btn-primary flex-1"
+              >
+                {saving ? 'Saving...' : '✓ Save Changes'}
+              </button>
+              <Link
+                href={`/properties/${propertyId}`}
+                className="btn btn-outline flex-1 text-center"
+              >
+                Cancel
+              </Link>
+            </div>
+          </form>
         </div>
       </div>
     </div>

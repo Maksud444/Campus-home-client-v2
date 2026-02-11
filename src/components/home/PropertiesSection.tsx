@@ -29,24 +29,15 @@ export default function PropertiesSection() {
       setLoading(true)
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 8000)
-      const response = await fetch(`${API_URL}/api/properties?limit=20`, {
+      const response = await fetch(`${API_URL}/api/properties?limit=6`, {
         signal: controller.signal,
         headers: { 'Content-Type': 'application/json' },
       })
       clearTimeout(timeoutId)
       const data = await response.json()
       if (data.success && data.properties) {
-        // Get a balanced mix of property types (apartment, room, roommate)
-        const allProps = data.properties
-        const apartments = allProps.filter((p: Property) => p.type === 'apartment' || p.propertyType === 'apartment').slice(0, 2)
-        const rooms = allProps.filter((p: Property) => p.type === 'room').slice(0, 2)
-        const roommates = allProps.filter((p: Property) => p.type === 'roommate').slice(0, 2)
-
-        // Combine and fill remaining slots with any type
-        const mixed = [...apartments, ...rooms, ...roommates]
-        const remaining = allProps.filter((p: Property) => !mixed.find(m => m._id === p._id)).slice(0, 6 - mixed.length)
-
-        setProperties([...mixed, ...remaining].slice(0, 6))
+        // Show data exactly as it comes from backend
+        setProperties(data.properties)
       }
     } catch (err: any) {
       console.error('❌ Properties fetch error:', err.message)
