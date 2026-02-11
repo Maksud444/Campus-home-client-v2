@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { citiesWithAreas } from '@/data/cities'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
 
@@ -82,6 +83,7 @@ const COUNTRY_CODES = [
 export default function CreatePostPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -356,14 +358,14 @@ export default function CreatePostPage() {
             ← Back to Home
           </Link>
           <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
-            {userRole === 'owner' ? 'List Your Property' : 
-             userRole === 'agent' ? 'Add Property Listing' : 
-             'Create Post'}
+            {userRole === 'owner' ? 'List Your Property' :
+             userRole === 'agent' ? 'Add Property Listing' :
+             t('post.title')}
           </h1>
           <p className="text-gray-600 text-lg">
-            {userRole === 'owner' ? 'List your property for rent' : 
-             userRole === 'agent' ? 'Add a new property to your listings' : 
-             'Find a roommate or room'}
+            {userRole === 'owner' ? 'List your property for rent' :
+             userRole === 'agent' ? 'Add a new property to your listings' :
+             t('post.subtitle')}
           </p>
         </div>
 
@@ -382,7 +384,7 @@ export default function CreatePostPage() {
           {/* Post Type */}
           <div className="mb-6">
             <label className="block mb-3 font-semibold text-gray-700">
-              Post Type <span className="text-red-500">*</span>
+              {t('post.type')} <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <button
@@ -395,8 +397,8 @@ export default function CreatePostPage() {
                 }`}
               >
                 <div className="text-3xl mb-2">🏠</div>
-                <div className="font-bold">Property</div>
-                <div className="text-sm text-gray-600">List a property</div>
+                <div className="font-bold">{t('post.property')}</div>
+                <div className="text-sm text-gray-600">{t('post.propertyDesc')}</div>
               </button>
 
               {userRole === 'student' && (
@@ -411,8 +413,8 @@ export default function CreatePostPage() {
                     }`}
                   >
                     <div className="text-3xl mb-2">👥</div>
-                    <div className="font-bold">Looking for Roommate</div>
-                    <div className="text-sm text-gray-600">Find someone to share</div>
+                    <div className="font-bold">{t('post.lookingRoommate')}</div>
+                    <div className="text-sm text-gray-600">{t('post.lookingRoommateDesc')}</div>
                   </button>
 
                   <button
@@ -425,8 +427,8 @@ export default function CreatePostPage() {
                     }`}
                   >
                     <div className="text-3xl mb-2">🔍</div>
-                    <div className="font-bold">Looking for Room</div>
-                    <div className="text-sm text-gray-600">Find a place to stay</div>
+                    <div className="font-bold">{t('post.lookingRoom')}</div>
+                    <div className="text-sm text-gray-600">{t('post.lookingRoomDesc')}</div>
                   </button>
                 </>
               )}
@@ -436,7 +438,7 @@ export default function CreatePostPage() {
           {/* Title */}
           <div className="mb-6">
             <label className="block mb-2 font-semibold text-gray-700">
-              Title <span className="text-red-500">*</span>
+              {t('post.titleLabel')} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -452,14 +454,14 @@ export default function CreatePostPage() {
           {/* Description */}
           <div className="mb-6">
             <label className="block mb-2 font-semibold text-gray-700">
-              Description <span className="text-red-500">*</span>
+              {t('post.description')} <span className="text-red-500">*</span>
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="input resize-none"
               rows={5}
-              placeholder="Describe your property or requirements..."
+              placeholder={t('post.descriptionPlaceholder')}
               required
               disabled={loading}
             />
