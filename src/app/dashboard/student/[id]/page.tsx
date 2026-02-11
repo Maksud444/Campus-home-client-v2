@@ -97,11 +97,37 @@ export default function StudentDashboard() {
   const fetchMyPosts = async (userId: string) => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/posts?userId=${userId}`)
+      // Fetch from backend API using user email
+      const userEmail = session?.user?.email
+      if (!userEmail) {
+        setLoading(false)
+        return
+      }
+
+      const response = await fetch(`${API_URL}/api/properties?userEmail=${userEmail}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      })
       const data = await response.json()
 
-      if (data.success) {
-        setMyPosts(data.posts)
+      if (data.success && data.properties) {
+        // Convert backend properties to Post format
+        const posts = data.properties.map((prop: any) => ({
+          id: prop._id,
+          title: prop.title,
+          type: prop.type || prop.propertyType || 'apartment',
+          price: prop.price,
+          location: `${prop.location.area}, ${prop.location.city}`,
+          images: prop.images?.map((img: any) => typeof img === 'string' ? img : img.url) || [],
+          views: prop.views || 0,
+          likes: prop.likes || [],
+          status: prop.status || 'active',
+          createdAt: prop.createdAt
+        }))
+        setMyPosts(posts)
       }
     } catch (error) {
       console.error('Error fetching posts:', error)
@@ -260,12 +286,14 @@ export default function StudentDashboard() {
                     
                     <div className="absolute top-3 left-3">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        post.type === 'property' ? 'bg-blue-500 text-white' :
+                        post.type === 'apartment' ? 'bg-blue-500 text-white' :
+                        post.type === 'room' ? 'bg-purple-500 text-white' :
                         post.type === 'roommate' ? 'bg-green-500 text-white' :
-                        'bg-purple-500 text-white'
+                        'bg-gray-500 text-white'
                       }`}>
-                        {post.type === 'property' ? '🏢' :
-                         post.type === 'roommate' ? '👥' : '🔍'}
+                        {post.type === 'apartment' ? '🏢' :
+                         post.type === 'room' ? '🛏️' :
+                         post.type === 'roommate' ? '👥' : '🏠'}
                       </span>
                     </div>
                   </Link>

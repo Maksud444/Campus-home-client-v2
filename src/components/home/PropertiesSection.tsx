@@ -8,13 +8,13 @@ import { useLanguage } from '@/contexts/LanguageContext'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
 
-// Interface unchanged...
+// Interface updated with type property
 interface Property {
   _id: string; title: string; description: string; price: number | null;
   location: { city: string; area: string; address?: string };
   bedrooms?: number; bathrooms?: number; area?: number;
   images: Array<{ url: string; public_id?: string } | string>;
-  propertyType: string; featured?: boolean;
+  propertyType: string; type?: string; featured?: boolean;
 }
 
 export default function PropertiesSection() {
@@ -29,13 +29,25 @@ export default function PropertiesSection() {
       setLoading(true)
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 8000)
-      const response = await fetch(`${API_URL}/api/properties?limit=6`, {
+      const response = await fetch(`${API_URL}/api/properties?limit=20`, {
         signal: controller.signal,
         headers: { 'Content-Type': 'application/json' },
       })
       clearTimeout(timeoutId)
       const data = await response.json()
-      if (data.success && data.properties) setProperties(data.properties)
+      if (data.success && data.properties) {
+        // Get a balanced mix of property types (apartment, room, roommate)
+        const allProps = data.properties
+        const apartments = allProps.filter((p: Property) => p.type === 'apartment' || p.propertyType === 'apartment').slice(0, 2)
+        const rooms = allProps.filter((p: Property) => p.type === 'room').slice(0, 2)
+        const roommates = allProps.filter((p: Property) => p.type === 'roommate').slice(0, 2)
+
+        // Combine and fill remaining slots with any type
+        const mixed = [...apartments, ...rooms, ...roommates]
+        const remaining = allProps.filter((p: Property) => !mixed.find(m => m._id === p._id)).slice(0, 6 - mixed.length)
+
+        setProperties([...mixed, ...remaining].slice(0, 6))
+      }
     } catch (err: any) {
       console.error('❌ Properties fetch error:', err.message)
     } finally {
@@ -108,7 +120,10 @@ export default function PropertiesSection() {
                       </div>
                     )}
                     <div className="bg-white/90 backdrop-blur-md text-slate-900 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm">
-                      {property.propertyType || 'Apartment'}
+                      {property.type === 'apartment' ? '🏢 Apartment' :
+                       property.type === 'room' ? '🛏️ Room' :
+                       property.type === 'roommate' ? '👥 Roommate' :
+                       property.propertyType || 'Apartment'}
                     </div>
                   </div>
 

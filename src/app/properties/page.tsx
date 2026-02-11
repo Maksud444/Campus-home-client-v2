@@ -13,6 +13,7 @@ interface Property {
   _id: string
   title: string
   description: string
+  type: string
   price: number
   location: {
     city: string
@@ -54,7 +55,7 @@ function PropertiesPageContent() {
   const [error, setError] = useState('')
   const [filters, setFilters] = useState({
     city: '',
-    propertyType: '',
+    type: '',
     minPrice: '',
     maxPrice: '',
     bedrooms: ''
@@ -70,7 +71,7 @@ function PropertiesPageContent() {
       setFilters(prev => ({
         ...prev,
         city: location || '',
-        propertyType: type || '',
+        type: type || '',
       }))
     }
   }, [searchParams])
@@ -109,7 +110,7 @@ function PropertiesPageContent() {
 
   const filteredProperties = properties.filter(property => {
     if (filters.city && property.location.city !== filters.city) return false
-    if (filters.propertyType && property.propertyType !== filters.propertyType) return false
+    if (filters.type && property.type !== filters.type) return false
     if (filters.minPrice && property.price < parseInt(filters.minPrice)) return false
     if (filters.maxPrice && property.price > parseInt(filters.maxPrice)) return false
     if (filters.bedrooms && property.bedrooms !== parseInt(filters.bedrooms)) return false
@@ -182,16 +183,14 @@ function PropertiesPageContent() {
             <div>
               <label className="block mb-2 text-xs sm:text-sm font-semibold text-gray-700">{t('propertiesPage.type')}</label>
               <select
-                value={filters.propertyType}
-                onChange={(e) => setFilters({ ...filters, propertyType: e.target.value })}
+                value={filters.type}
+                onChange={(e) => setFilters({ ...filters, type: e.target.value })}
                 className="input text-xs sm:text-sm"
               >
                 <option value="">All Types</option>
-                <option value="apartment">Apartment</option>
-                <option value="room">Room</option>
-                <option value="roommate">Roommate</option>
-                <option value="villa">Villa</option>
-                <option value="studio">Studio</option>
+                <option value="apartment">🏢 Apartment</option>
+                <option value="room">🛏️ Room</option>
+                <option value="roommate">👥 Roommate</option>
               </select>
             </div>
 
@@ -234,7 +233,7 @@ function PropertiesPageContent() {
           </div>
 
           <button
-            onClick={() => setFilters({ city: '', propertyType: '', minPrice: '', maxPrice: '', bedrooms: '' })}
+            onClick={() => setFilters({ city: '', type: '', minPrice: '', maxPrice: '', bedrooms: '' })}
             className="btn btn-outline mt-4 text-xs sm:text-sm"
           >
             {t('propertiesPage.clearFilters')}
@@ -306,7 +305,10 @@ function PropertiesPageContent() {
                     {/* Property Type Badge */}
                     <div className="absolute top-4 right-4">
                       <span className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold capitalize">
-                        {property.propertyType}
+                        {property.type === 'apartment' ? '🏢 Apartment' :
+                         property.type === 'room' ? '🛏️ Room' :
+                         property.type === 'roommate' ? '👥 Roommate' :
+                         property.type || property.propertyType}
                       </span>
                     </div>
                   </Link>
