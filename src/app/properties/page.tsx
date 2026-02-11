@@ -67,11 +67,29 @@ function PropertiesPageContent() {
     const type = searchParams.get('type')
     const priceRange = searchParams.get('priceRange')
 
+    // Parse price range (e.g., "2,000 - 5,000 EGP" or "10,000+ EGP")
+    let minPrice = ''
+    let maxPrice = ''
+    if (priceRange && priceRange !== 'Any Price') {
+      if (priceRange.includes('+')) {
+        // "10,000+ EGP" format
+        minPrice = priceRange.replace(/[^\d]/g, '')
+        maxPrice = ''
+      } else if (priceRange.includes('-')) {
+        // "2,000 - 5,000 EGP" format
+        const parts = priceRange.split('-').map(p => p.replace(/[^\d]/g, '').trim())
+        minPrice = parts[0] || ''
+        maxPrice = parts[1] || ''
+      }
+    }
+
     if (location || type || priceRange) {
       setFilters(prev => ({
         ...prev,
         city: location || '',
         type: type || '',
+        minPrice: minPrice,
+        maxPrice: maxPrice
       }))
     }
   }, [searchParams])
@@ -109,11 +127,23 @@ function PropertiesPageContent() {
   }
 
   const filteredProperties = properties.filter(property => {
-    if (filters.city && property.location.city !== filters.city) return false
-    if (filters.type && property.type !== filters.type) return false
-    if (filters.minPrice && property.price < parseInt(filters.minPrice)) return false
-    if (filters.maxPrice && property.price > parseInt(filters.maxPrice)) return false
+    // City filter - case insensitive
+    if (filters.city && property.location?.city?.toLowerCase() !== filters.city.toLowerCase()) return false
+
+    // Type filter - case insensitive
+    if (filters.type && property.type?.toLowerCase() !== filters.type.toLowerCase()) return false
+
+    // Price filters - check if property has price
+    if (filters.minPrice && property.price !== null && property.price !== undefined) {
+      if (property.price < parseInt(filters.minPrice)) return false
+    }
+    if (filters.maxPrice && property.price !== null && property.price !== undefined) {
+      if (property.price > parseInt(filters.maxPrice)) return false
+    }
+
+    // Bedrooms filter
     if (filters.bedrooms && property.bedrooms !== parseInt(filters.bedrooms)) return false
+
     return true
   })
 
