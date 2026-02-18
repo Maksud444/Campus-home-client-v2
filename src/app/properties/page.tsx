@@ -227,7 +227,7 @@ function PropertiesPageContent() {
                 className="input text-xs sm:text-sm"
               >
                 <option value="">All Types</option>
-                <option value="apartment">🏢 Apartment</option>
+                <option value="property">🏢 Property</option>
                 <option value="room">🛏️ Room</option>
                 <option value="roommate">👥 Roommate</option>
               </select>
@@ -344,10 +344,7 @@ function PropertiesPageContent() {
                     {/* Property Type Badge */}
                     <div className="absolute top-4 right-4">
                       <span className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold capitalize">
-                        {property.type === 'apartment' ? '🏢 Apartment' :
-                         property.type === 'room' ? '🛏️ Room' :
-                         property.type === 'roommate' ? '👥 Roommate' :
-                         property.type || 'Apartment'}
+                        {property.propertyType || property.type || 'Apartment'}
                       </span>
                     </div>
                   </Link>

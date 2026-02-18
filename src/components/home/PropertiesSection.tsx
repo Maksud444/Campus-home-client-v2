@@ -111,10 +111,7 @@ export default function PropertiesSection() {
                       </div>
                     )}
                     <div className="bg-white/90 backdrop-blur-md text-slate-900 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm">
-                      {property.type === 'apartment' ? '🏢 Apartment' :
-                       property.type === 'room' ? '🛏️ Room' :
-                       property.type === 'roommate' ? '👥 Roommate' :
-                       property.type || 'Apartment'}
+                      {property.propertyType || property.type || 'Apartment'}
                     </div>
                   </div>
 

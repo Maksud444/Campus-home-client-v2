@@ -29,14 +29,14 @@ export default function HeroSection() {
     'مكرم عبيد', 'مدينة نصر', 'مصطفى النحاس', 'مقطم', 'معادي', 'مهندسين', 'نادي غمالية'
   ]
 
-  // Property types for dropdown - matching backend data (apartment, room, roommate)
+  // Property types for dropdown - matching backend type field (property, room, roommate)
   const propertyTypes = [
-    'Apartment', 'Room', 'Roommate'
+    'Property', 'Room', 'Roommate'
   ]
 
   // Property type quick filters
   const quickFilters = [
-    { value: 'apartment', label: t('hero.apartment') },
+    { value: 'property', label: t('hero.apartment') },
     { value: 'room', label: t('hero.room') },
     { value: 'roommate', label: t('hero.roommate') },
   ]
