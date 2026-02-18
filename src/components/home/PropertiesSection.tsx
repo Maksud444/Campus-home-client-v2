@@ -114,7 +114,7 @@ export default function PropertiesSection() {
                       {property.type === 'apartment' ? '🏢 Apartment' :
                        property.type === 'room' ? '🛏️ Room' :
                        property.type === 'roommate' ? '👥 Roommate' :
-                       property.propertyType || 'Apartment'}
+                       property.type || 'Apartment'}
                     </div>
                   </div>
 

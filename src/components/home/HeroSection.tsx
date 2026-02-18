@@ -19,18 +19,22 @@ export default function HeroSection() {
   const circle1Ref = useRef<HTMLDivElement>(null)
   const circle2Ref = useRef<HTMLDivElement>(null)
 
-  // Egyptian cities/locations
+  // Cairo areas/locations
   const locations = [
-    'Cairo', 'Giza', 'Alexandria', 'Nasr City', 'New Cairo',
-    'Maadi', 'Heliopolis', 'Zamalek', '6th October', 'Sheikh Zayed'
+    'ابو يوسف (تبة)', 'باب الشرعية', 'باب الفطور', 'بركات (دراسة)', 'تبة',
+    'التجمع الخامس', 'حي الثامن', 'حي العاشر', 'حي السابع', 'خان خليل',
+    'دراسة', 'دوية', 'دجلة المعادي', 'رمسيس', 'زهراء', 'زهراء المعادي',
+    'ميدان التحرير', 'سيدة عائشة', 'سيدة زينب', 'عتبة', 'عباسية',
+    'عبدي باشا', 'عباس العقاد', 'مستشفى حسين', 'مدينة البعوث', 'منهل',
+    'مكرم عبيد', 'مدينة نصر', 'مصطفى النحاس', 'مقطم', 'معادي', 'مهندسين', 'نادي غمالية'
   ]
 
-  // Property types for dropdown
+  // Property types for dropdown - matching backend data (apartment, room, roommate)
   const propertyTypes = [
-    'Apartment', 'Room', 'Roommate', 'Studio', 'Villa', 'Duplex', 'Penthouse'
+    'Apartment', 'Room', 'Roommate'
   ]
 
-  // Property type quick filters (as requested by user)
+  // Property type quick filters
   const quickFilters = [
     { value: 'apartment', label: t('hero.apartment') },
     { value: 'room', label: t('hero.room') },
@@ -160,7 +164,7 @@ export default function HeroSection() {
                     onChange={(e) => setSearchData({ ...searchData, location: e.target.value })}
                     className="w-full pl-10 sm:pl-12 pr-8 sm:pr-10 py-2.5 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary transition-all appearance-none cursor-pointer bg-white font-medium text-gray-700"
                   >
-                    <option value="">Select Location</option>
+                    <option value="">Select Area</option>
                     {locations.map((location) => (
                       <option key={location} value={location}>
                         {location}

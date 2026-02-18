@@ -118,7 +118,7 @@ export default function StudentDashboard() {
         const posts = data.properties.map((prop: any) => ({
           id: prop._id,
           title: prop.title,
-          type: prop.type || prop.propertyType || 'apartment',
+          type: prop.type || 'apartment',
           price: prop.price,
           location: `${prop.location.area}, ${prop.location.city}`,
           images: prop.images?.map((img: any) => typeof img === 'string' ? img : img.url) || [],
@@ -285,15 +285,15 @@ export default function StudentDashboard() {
                     )}
                     
                     <div className="absolute top-3 left-3">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        post.type === 'apartment' ? 'bg-blue-500 text-white' :
-                        post.type === 'room' ? 'bg-purple-500 text-white' :
-                        post.type === 'roommate' ? 'bg-green-500 text-white' :
-                        'bg-gray-500 text-white'
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold text-white ${
+                        post.type === 'apartment' ? 'bg-blue-500' :
+                        post.type === 'room' ? 'bg-purple-500' :
+                        post.type === 'roommate' ? 'bg-green-500' :
+                        'bg-blue-500'
                       }`}>
-                        {post.type === 'apartment' ? '🏢' :
-                         post.type === 'room' ? '🛏️' :
-                         post.type === 'roommate' ? '👥' : '🏠'}
+                        {post.type === 'apartment' ? '🏢 Apartment' :
+                         post.type === 'room' ? '🛏️ Room' :
+                         post.type === 'roommate' ? '👥 Roommate' : '🏢 Apartment'}
                       </span>
                     </div>
                   </Link>

@@ -200,6 +200,7 @@ export default function EditPropertyPage() {
                 <option value="room">🛏️ Room</option>
                 <option value="roommate">👥 Roommate</option>
               </select>
+              <p className="text-xs text-gray-500 mt-1">Types: Apartment, Room, Roommate</p>
             </div>
 
             {/* Title */}
@@ -231,32 +232,36 @@ export default function EditPropertyPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block mb-2 font-semibold">City *</label>
-                <select
+                <input
+                  type="text"
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                   className="input"
                   required
-                >
-                  <option value="">Select City</option>
-                  <option value="Cairo">Cairo</option>
-                  <option value="Giza">Giza</option>
-                  <option value="Alexandria">Alexandria</option>
-                  <option value="Nasr City">Nasr City</option>
-                  <option value="New Cairo">New Cairo</option>
-                  <option value="Maadi">Maadi</option>
-                </select>
+                  placeholder="Cairo"
+                  defaultValue="Cairo"
+                />
               </div>
 
               <div>
                 <label className="block mb-2 font-semibold">Area *</label>
-                <input
-                  type="text"
+                <select
                   value={formData.area}
                   onChange={(e) => setFormData({ ...formData, area: e.target.value })}
                   className="input"
                   required
-                  placeholder="e.g., Downtown, Zamalek"
-                />
+                >
+                  <option value="">Select Area</option>
+                  {['ابو يوسف (تبة)', 'باب الشرعية', 'باب الفطور', 'بركات (دراسة)', 'تبة',
+                    'التجمع الخامس', 'حي الثامن', 'حي العاشر', 'حي السابع', 'خان خليل',
+                    'دراسة', 'دوية', 'دجلة المعادي', 'رمسيس', 'زهراء', 'زهراء المعادي',
+                    'ميدان التحرير', 'سيدة عائشة', 'سيدة زينب', 'عتبة', 'عباسية',
+                    'عبدي باشا', 'عباس العقاد', 'مستشفى حسين', 'مدينة البعوث', 'منهل',
+                    'مكرم عبيد', 'مدينة نصر', 'مصطفى النحاس', 'مقطم', 'معادي', 'مهندسين', 'نادي غمالية'
+                  ].map(area => (
+                    <option key={area} value={area}>{area}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -283,7 +288,7 @@ export default function EditPropertyPage() {
               />
             </div>
 
-            {/* Property Details (for apartment/room) */}
+            {/* Property Details (for apartment/room types) */}
             {(formData.type === 'apartment' || formData.type === 'room') && (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

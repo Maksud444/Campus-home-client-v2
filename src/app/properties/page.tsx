@@ -127,8 +127,13 @@ function PropertiesPageContent() {
   }
 
   const filteredProperties = properties.filter(property => {
-    // City filter - case insensitive
-    if (filters.city && property.location?.city?.toLowerCase() !== filters.city.toLowerCase()) return false
+    // Location filter - match city or area
+    if (filters.city) {
+      const filterVal = filters.city.toLowerCase()
+      const city = property.location?.city?.toLowerCase() || ''
+      const area = property.location?.area?.toLowerCase() || ''
+      if (city !== filterVal && area !== filterVal) return false
+    }
 
     // Type filter - case insensitive
     if (filters.type && property.type?.toLowerCase() !== filters.type.toLowerCase()) return false
@@ -200,13 +205,17 @@ function PropertiesPageContent() {
                 onChange={(e) => setFilters({ ...filters, city: e.target.value })}
                 className="input text-xs sm:text-sm"
               >
-                <option value="">All Cities</option>
-                <option value="Cairo">Cairo</option>
-                <option value="Giza">Giza</option>
-                <option value="Alexandria">Alexandria</option>
-                <option value="Nasr City">Nasr City</option>
-                <option value="New Cairo">New Cairo</option>
-                <option value="Maadi">Maadi</option>
+                <option value="">All Areas</option>
+                <option value="Cairo">Cairo (All)</option>
+                {['ابو يوسف (تبة)', 'باب الشرعية', 'باب الفطور', 'بركات (دراسة)', 'تبة',
+                  'التجمع الخامس', 'حي الثامن', 'حي العاشر', 'حي السابع', 'خان خليل',
+                  'دراسة', 'دوية', 'دجلة المعادي', 'رمسيس', 'زهراء', 'زهراء المعادي',
+                  'ميدان التحرير', 'سيدة عائشة', 'سيدة زينب', 'عتبة', 'عباسية',
+                  'عبدي باشا', 'عباس العقاد', 'مستشفى حسين', 'مدينة البعوث', 'منهل',
+                  'مكرم عبيد', 'مدينة نصر', 'مصطفى النحاس', 'مقطم', 'معادي', 'مهندسين', 'نادي غمالية'
+                ].map(area => (
+                  <option key={area} value={area}>{area}</option>
+                ))}
               </select>
             </div>
 
@@ -338,7 +347,7 @@ function PropertiesPageContent() {
                         {property.type === 'apartment' ? '🏢 Apartment' :
                          property.type === 'room' ? '🛏️ Room' :
                          property.type === 'roommate' ? '👥 Roommate' :
-                         property.type || property.propertyType}
+                         property.type || 'Apartment'}
                       </span>
                     </div>
                   </Link>
