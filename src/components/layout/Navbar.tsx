@@ -262,8 +262,8 @@ export default function Navbar() {
                       >
                         <span className="text-xl">➕</span>
                         <div>
-                          <div className="font-semibold text-gray-900">Create Post</div>
-                          <div className="text-xs text-gray-600">Add property or post</div>
+                          <div className="font-semibold text-gray-900">{t('nav.createPost')}</div>
+                          <div className="text-xs text-gray-600">{t('post.propertyDesc')}</div>
                         </div>
                       </Link>
                     </div>
@@ -391,12 +391,12 @@ export default function Navbar() {
                     >
                       {t('nav.settings')}
                     </Link>
-                    <Link 
-                      href="/post" 
+                    <Link
+                      href="/post"
                       className="btn btn-outline w-full"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Create Post
+                      {t('nav.createPost')}
                     </Link>
                     <button 
                       onClick={() => {
