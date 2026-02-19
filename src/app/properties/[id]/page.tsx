@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight, MapPin, Bed, Bath, Maximize, Phone, Share2, Heart, Eye, Calendar, User, Home, Shield, Star, X } from 'lucide-react'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
 
@@ -50,6 +51,7 @@ export default function PropertyDetailPage() {
   const { data: session } = useSession()
   const router = useRouter()
   const params = useParams()
+  const { t } = useLanguage()
   const propertyId = params.id as string
 
   const [property, setProperty] = useState<Property | null>(null)
@@ -180,11 +182,11 @@ export default function PropertyDetailPage() {
       <div className="min-h-screen flex items-center justify-center pt-28">
         <div className="text-center">
           <div className="text-7xl mb-6">🏠</div>
-          <h2 className="text-3xl font-bold mb-4 text-gray-900">Property not found</h2>
-          <p className="text-gray-500 mb-6">This listing may have been removed or is no longer available.</p>
+          <h2 className="text-3xl font-bold mb-4 text-gray-900">{t('detail.notFound')}</h2>
+          <p className="text-gray-500 mb-6">{t('detail.notFoundDesc')}</p>
           <Link href="/properties" className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-semibold hover:bg-primary-dark transition-colors">
             <ChevronLeft className="w-5 h-5" />
-            Back to Properties
+            {t('detail.backToProperties')}
           </Link>
         </div>
       </div>
@@ -196,9 +198,9 @@ export default function PropertyDetailPage() {
 
   const getTypeLabel = (type: string) => {
     switch(type) {
-      case 'property': return 'Property'
-      case 'room': return 'Room'
-      case 'roommate': return 'Looking for Roommate'
+      case 'property': return t('propertiesPage.propertyType')
+      case 'room': return t('propertiesPage.roomType')
+      case 'roommate': return t('propertiesPage.roommateType')
       default: return type
     }
   }
@@ -281,9 +283,9 @@ export default function PropertyDetailPage() {
       <div className="bg-white border-b pt-20">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <nav className="flex items-center gap-2 text-sm text-gray-500">
-            <Link href="/" className="hover:text-primary transition-colors">Home</Link>
+            <Link href="/" className="hover:text-primary transition-colors">{t('detail.home')}</Link>
             <span>/</span>
-            <Link href="/properties" className="hover:text-primary transition-colors">Properties</Link>
+            <Link href="/properties" className="hover:text-primary transition-colors">{t('detail.properties')}</Link>
             <span>/</span>
             <span className="text-gray-900 font-medium truncate max-w-[200px]">{property.title}</span>
           </nav>
@@ -332,7 +334,7 @@ export default function PropertyDetailPage() {
                     {/* Show more overlay on last visible image */}
                     {index === 3 && imageUrls.length > 5 && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <span className="text-white text-xl font-bold">+{imageUrls.length - 5} more</span>
+                        <span className="text-white text-xl font-bold">+{imageUrls.length - 5} {t('propertiesPage.more')}</span>
                       </div>
                     )}
                   </div>
@@ -348,7 +350,7 @@ export default function PropertyDetailPage() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                   </svg>
-                  View all {imageUrls.length} photos
+                  {t('detail.viewAllPhotos')} ({imageUrls.length})
                 </button>
               )}
 
@@ -408,12 +410,12 @@ export default function PropertyDetailPage() {
                       ? 'bg-orange-100 text-orange-700'
                       : 'bg-green-100 text-green-700'
                   }`}>
-                    {property.targetAudience === 'family' ? 'For Family' : 'For Students'}
+                    {property.targetAudience === 'family' ? t('detail.forFamily') : t('detail.forStudents')}
                   </span>
                 )}
                 {property.furnished && (
                   <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">
-                    Furnished
+                    {t('detail.furnished')}
                   </span>
                 )}
               </div>
@@ -438,7 +440,7 @@ export default function PropertyDetailPage() {
                   <span className="text-3xl sm:text-4xl font-extrabold text-primary">
                     {property.price.toLocaleString()}
                   </span>
-                  <span className="text-gray-500 font-medium text-lg">EGP / month</span>
+                  <span className="text-gray-500 font-medium text-lg">EGP / {t('properties.month')}</span>
                 </div>
               )}
 
@@ -446,15 +448,15 @@ export default function PropertyDetailPage() {
               <div className="flex items-center gap-4 text-sm text-gray-500">
                 <div className="flex items-center gap-1.5">
                   <Eye className="w-4 h-4" />
-                  <span>{property.views || 0} views</span>
+                  <span>{property.views || 0} {t('propertiesPage.views')}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Heart className="w-4 h-4" />
-                  <span>{property.likes?.length || 0} likes</span>
+                  <span>{property.likes?.length || 0} {t('propertiesPage.likes')}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Calendar className="w-4 h-4" />
-                  <span>Posted {new Date(property.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                  <span>{new Date(property.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                 </div>
               </div>
 
@@ -465,7 +467,7 @@ export default function PropertyDetailPage() {
                   className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
                 >
                   <Share2 className="w-4 h-4" />
-                  Share
+                  {t('detail.share')}
                 </button>
               </div>
             </div>
@@ -475,7 +477,7 @@ export default function PropertyDetailPage() {
               <div className="bg-white rounded-2xl p-6 shadow-sm">
                 <h2 className="text-xl font-bold text-gray-900 mb-5 flex items-center gap-2">
                   <Home className="w-5 h-5 text-primary" />
-                  Property Details
+                  {t('detail.propertyDetails')}
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {property.propertyType && (
@@ -483,7 +485,7 @@ export default function PropertyDetailPage() {
                       <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
                         <Home className="w-5 h-5 text-primary" />
                       </div>
-                      <p className="text-xs text-gray-500 font-medium mb-0.5">Type</p>
+                      <p className="text-xs text-gray-500 font-medium mb-0.5">{t('detail.type')}</p>
                       <p className="font-bold text-gray-900 capitalize">{property.propertyType}</p>
                     </div>
                   )}
@@ -492,7 +494,7 @@ export default function PropertyDetailPage() {
                       <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
                         <Bed className="w-5 h-5 text-primary" />
                       </div>
-                      <p className="text-xs text-gray-500 font-medium mb-0.5">Bedrooms</p>
+                      <p className="text-xs text-gray-500 font-medium mb-0.5">{t('properties.bedrooms')}</p>
                       <p className="font-bold text-gray-900">{property.bedrooms}</p>
                     </div>
                   )}
@@ -501,7 +503,7 @@ export default function PropertyDetailPage() {
                       <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
                         <Bath className="w-5 h-5 text-primary" />
                       </div>
-                      <p className="text-xs text-gray-500 font-medium mb-0.5">Bathrooms</p>
+                      <p className="text-xs text-gray-500 font-medium mb-0.5">{t('properties.bathrooms')}</p>
                       <p className="font-bold text-gray-900">{property.bathrooms}</p>
                     </div>
                   )}
@@ -510,7 +512,7 @@ export default function PropertyDetailPage() {
                       <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
                         <Maximize className="w-5 h-5 text-primary" />
                       </div>
-                      <p className="text-xs text-gray-500 font-medium mb-0.5">Area</p>
+                      <p className="text-xs text-gray-500 font-medium mb-0.5">{t('properties.area')}</p>
                       <p className="font-bold text-gray-900">{property.area} m²</p>
                     </div>
                   )}
@@ -520,7 +522,7 @@ export default function PropertyDetailPage() {
 
             {/* Description */}
             <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Description</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">{t('detail.description')}</h2>
               <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{property.description}</p>
             </div>
 
@@ -529,7 +531,7 @@ export default function PropertyDetailPage() {
               <div className="bg-white rounded-2xl p-6 shadow-sm">
                 <h2 className="text-xl font-bold text-gray-900 mb-5 flex items-center gap-2">
                   <Shield className="w-5 h-5 text-primary" />
-                  Amenities & Features
+                  {t('detail.amenities')}
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {property.amenities.map((amenity, index) => (
@@ -549,7 +551,7 @@ export default function PropertyDetailPage() {
             {/* Preferences */}
             {property.preferences && (
               <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Preferences</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">{t('detail.preferences')}</h2>
                 <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{property.preferences}</p>
               </div>
             )}
@@ -557,7 +559,7 @@ export default function PropertyDetailPage() {
             {/* Videos */}
             {property.videos && property.videos.length > 0 && (
               <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Property Videos</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">{t('detail.videos')}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {property.videos.map((video, index) => (
                     <video key={index} src={video} controls className="w-full rounded-xl" />
@@ -579,8 +581,8 @@ export default function PropertyDetailPage() {
                       <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
                         <Shield className="w-6 h-6 text-green-600" />
                       </div>
-                      <p className="font-semibold text-gray-900">Your Property</p>
-                      <p className="text-sm text-gray-500">Manage your listing</p>
+                      <p className="font-semibold text-gray-900">{t('detail.yourProperty')}</p>
+                      <p className="text-sm text-gray-500">{t('detail.manageProperty')}</p>
                     </div>
                     <div className="space-y-3">
                       <Link
@@ -590,7 +592,7 @@ export default function PropertyDetailPage() {
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
-                        Edit Property
+                        {t('detail.editProperty')}
                       </Link>
                       <button
                         onClick={handleDelete}
@@ -604,7 +606,7 @@ export default function PropertyDetailPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
                         )}
-                        {deleting ? 'Deleting...' : 'Delete Property'}
+                        {deleting ? t('detail.deleting') : t('detail.deleteProperty')}
                       </button>
                     </div>
                   </>
@@ -613,7 +615,7 @@ export default function PropertyDetailPage() {
                     {/* Price in sidebar for mobile */}
                     {property.price && (
                       <div className="text-center mb-4 pb-4 border-b">
-                        <p className="text-sm text-gray-500 mb-1">Monthly Rent</p>
+                        <p className="text-sm text-gray-500 mb-1">{t('detail.monthlyRent')}</p>
                         <div className="text-3xl font-extrabold text-primary">
                           {property.price.toLocaleString()} <span className="text-base text-gray-500 font-medium">EGP</span>
                         </div>
@@ -628,10 +630,10 @@ export default function PropertyDetailPage() {
                       <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                       </svg>
-                      Contact via WhatsApp
+                      {t('detail.contactWhatsapp')}
                     </a>
                     <p className="text-center text-xs text-gray-400 mt-2">
-                      Direct message to the property owner
+                      {t('detail.directMessage')}
                     </p>
                   </>
                 )}
@@ -639,7 +641,7 @@ export default function PropertyDetailPage() {
 
               {/* Agent/Owner Card */}
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wide">Posted By</h3>
+                <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wide">{t('detail.postedBy')}</h3>
                 <div className="flex items-center gap-4">
                   {property.userImage ? (
                     <Image
@@ -661,7 +663,7 @@ export default function PropertyDetailPage() {
                       {property.userRole || 'user'}
                     </p>
                     <p className="text-xs text-gray-400 mt-1">
-                      Member since {new Date(property.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                      {t('detail.memberSince')} {new Date(property.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                     </p>
                   </div>
                 </div>
@@ -671,20 +673,20 @@ export default function PropertyDetailPage() {
               <div className="bg-amber-50 rounded-2xl p-5 border border-amber-100">
                 <h3 className="font-bold text-amber-800 mb-3 text-sm flex items-center gap-2">
                   <Shield className="w-4 h-4" />
-                  Safety Tips
+                  {t('detail.safetyTips')}
                 </h3>
                 <ul className="space-y-2 text-xs text-amber-700">
                   <li className="flex items-start gap-2">
                     <span className="mt-1">•</span>
-                    <span>Always visit the property in person before making payments</span>
+                    <span>{t('detail.safetyTip1')}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="mt-1">•</span>
-                    <span>Never transfer money without seeing the property first</span>
+                    <span>{t('detail.safetyTip2')}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="mt-1">•</span>
-                    <span>Verify the identity of the property owner</span>
+                    <span>{t('detail.safetyTip3')}</span>
                   </li>
                 </ul>
               </div>

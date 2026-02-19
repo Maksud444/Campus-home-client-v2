@@ -38,13 +38,13 @@ export default function ServicesPage() {
           <div className="text-center max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-semibold mb-6">
               <Shield className="w-4 h-4" />
-              Verified Service Providers
+              {t('servicesPage.verified')}
             </div>
             <h1 className="text-4xl sm:text-5xl font-extrabold mb-4 leading-tight">
-              Home Services at Your Doorstep
+              {t('servicesPage.heroTitle')}
             </h1>
             <p className="text-lg text-white/80 mb-8">
-              Find trusted professionals for plumbing, electrical, cleaning, AC repair, painting, and carpentry services across Cairo.
+              {t('servicesPage.heroSubtitle')}
             </p>
 
             {/* Search Bar */}
@@ -52,7 +52,7 @@ export default function ServicesPage() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="Search for a service..."
+                placeholder={t('servicesPage.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-12 pr-4 py-4 rounded-2xl text-gray-900 text-base focus:outline-none focus:ring-4 focus:ring-white/30 shadow-xl"
@@ -64,19 +64,19 @@ export default function ServicesPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-12 max-w-3xl mx-auto">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
               <div className="text-2xl font-extrabold">816+</div>
-              <div className="text-xs text-white/70 font-medium mt-1">Service Providers</div>
+              <div className="text-xs text-white/70 font-medium mt-1">{t('servicesPage.providers')}</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
               <div className="text-2xl font-extrabold">6</div>
-              <div className="text-xs text-white/70 font-medium mt-1">Service Categories</div>
+              <div className="text-xs text-white/70 font-medium mt-1">{t('servicesPage.categories')}</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
               <div className="text-2xl font-extrabold">4.8</div>
-              <div className="text-xs text-white/70 font-medium mt-1">Avg Rating</div>
+              <div className="text-xs text-white/70 font-medium mt-1">{t('servicesPage.avgRating')}</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
               <div className="text-2xl font-extrabold">24/7</div>
-              <div className="text-xs text-white/70 font-medium mt-1">Availability</div>
+              <div className="text-xs text-white/70 font-medium mt-1">{t('servicesPage.availability')}</div>
             </div>
           </div>
         </div>
@@ -85,8 +85,8 @@ export default function ServicesPage() {
       {/* Service Categories */}
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Our Services</h2>
-          <p className="text-gray-500">Choose from our wide range of professional home services</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{t('servicesPage.ourServices')}</h2>
+          <p className="text-gray-500">{t('servicesPage.ourServicesDesc')}</p>
         </div>
 
         {/* Category Filter Pills */}
@@ -99,7 +99,7 @@ export default function ServicesPage() {
                 : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
             }`}
           >
-            All Services
+            {t('servicesPage.allServices')}
           </button>
           {services.map(service => (
             <button
@@ -160,11 +160,11 @@ export default function ServicesPage() {
                   <p className="font-bold text-gray-900">{service.priceRange}</p>
                   <p className="text-xs text-gray-500 flex items-center gap-1">
                     <Users className="w-3 h-3" />
-                    {service.providers}+ providers
+                    {service.providers}+ {t('servicesPage.providers2')}
                   </p>
                 </div>
                 <div className="flex items-center gap-1 text-primary font-semibold text-sm group-hover:gap-2 transition-all">
-                  View
+                  {t('servicesPage.view')}
                   <ArrowRight className="w-4 h-4" />
                 </div>
               </div>
@@ -175,13 +175,13 @@ export default function ServicesPage() {
         {filteredServices.length === 0 && (
           <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
             <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">No services found</h3>
-            <p className="text-gray-500 mb-4">Try adjusting your search or browse all categories</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">{t('servicesPage.noServices')}</h3>
+            <p className="text-gray-500 mb-4">{t('servicesPage.ourServicesDesc')}</p>
             <button
               onClick={() => { setSearchQuery(''); setSelectedCategory('all') }}
               className="text-primary font-semibold hover:underline"
             >
-              Clear filters
+              {t('servicesPage.clearSearch')}
             </button>
           </div>
         )}
@@ -192,12 +192,12 @@ export default function ServicesPage() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Top Rated Providers</h2>
-              <p className="text-gray-500 text-sm">Handpicked professionals with the highest ratings</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{t('servicesPage.topProviders')}</h2>
+              <p className="text-gray-500 text-sm">{t('servicesPage.topProvidersDesc')}</p>
             </div>
             <div className="flex items-center gap-1 bg-yellow-50 px-3 py-1.5 rounded-full">
               <Award className="w-4 h-4 text-yellow-600" />
-              <span className="text-sm font-bold text-yellow-700">Verified</span>
+              <span className="text-sm font-bold text-yellow-700">{t('servicesPage.verified')}</span>
             </div>
           </div>
 
@@ -223,7 +223,7 @@ export default function ServicesPage() {
                       {provider.available && (
                         <span className="flex items-center gap-1 text-green-600 text-xs font-medium">
                           <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                          Available
+                          {t('servicesPage.available')}
                         </span>
                       )}
                     </div>
@@ -253,7 +253,7 @@ export default function ServicesPage() {
                     className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
                   >
                     <Phone className="w-4 h-4" />
-                    Call Now
+                    {t('servicesPage.callNow')}
                   </a>
                 </div>
               </div>
@@ -265,8 +265,8 @@ export default function ServicesPage() {
       {/* Service Areas */}
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Service Areas</h2>
-          <p className="text-gray-500">We cover major areas across Cairo</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{t('servicesPage.serviceAreas')}</h2>
+          <p className="text-gray-500">{t('servicesPage.serviceAreasDesc')}</p>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -279,7 +279,7 @@ export default function ServicesPage() {
                 <MapPin className="w-5 h-5 text-primary" />
               </div>
               <h3 className="font-bold text-gray-900 text-sm mb-1">{location.name}</h3>
-              <p className="text-xs text-gray-500">{location.count} providers</p>
+              <p className="text-xs text-gray-500">{location.count} {t('servicesPage.providers2')}</p>
             </div>
           ))}
         </div>
@@ -289,8 +289,8 @@ export default function ServicesPage() {
       <div className="bg-white py-12">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">How It Works</h2>
-            <p className="text-gray-500">Book a service in 3 simple steps</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{t('servicesPage.howItWorks')}</h2>
+            <p className="text-gray-500">{t('servicesPage.howItWorksDesc')}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
@@ -298,25 +298,25 @@ export default function ServicesPage() {
               <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Search className="w-8 h-8 text-primary" />
               </div>
-              <div className="text-sm font-bold text-primary mb-2">Step 1</div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Choose Service</h3>
-              <p className="text-sm text-gray-500">Browse our categories and select the service you need</p>
+              <div className="text-sm font-bold text-primary mb-2">1</div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">{t('servicesPage.step1')}</h3>
+              <p className="text-sm text-gray-500">{t('servicesPage.step1Desc')}</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <MapPin className="w-8 h-8 text-primary" />
               </div>
-              <div className="text-sm font-bold text-primary mb-2">Step 2</div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Select Location</h3>
-              <p className="text-sm text-gray-500">Pick your area to find nearby service providers</p>
+              <div className="text-sm font-bold text-primary mb-2">2</div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">{t('servicesPage.step2')}</h3>
+              <p className="text-sm text-gray-500">{t('servicesPage.step2Desc')}</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Phone className="w-8 h-8 text-primary" />
               </div>
-              <div className="text-sm font-bold text-primary mb-2">Step 3</div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Contact Provider</h3>
-              <p className="text-sm text-gray-500">Call or message the provider directly to book</p>
+              <div className="text-sm font-bold text-primary mb-2">3</div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">{t('servicesPage.step3')}</h3>
+              <p className="text-sm text-gray-500">{t('servicesPage.step3Desc')}</p>
             </div>
           </div>
         </div>
@@ -325,22 +325,22 @@ export default function ServicesPage() {
       {/* CTA Section */}
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="bg-gradient-to-r from-primary to-primary-dark rounded-3xl p-8 sm:p-12 text-center text-white">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4">Need Help Finding a Service?</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4">{t('servicesPage.needHelp')}</h2>
           <p className="text-white/80 mb-6 max-w-lg mx-auto">
-            Can't find what you're looking for? Contact us and we'll connect you with the right professional.
+            {t('servicesPage.needHelpDesc')}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/"
               className="bg-white text-primary px-6 py-3 rounded-xl font-bold hover:bg-gray-100 transition-colors"
             >
-              Back to Home
+              {t('servicesPage.backToHome')}
             </Link>
             <Link
               href="/properties"
               className="bg-white/10 backdrop-blur-sm text-white border border-white/20 px-6 py-3 rounded-xl font-bold hover:bg-white/20 transition-colors"
             >
-              Browse Properties
+              {t('servicesPage.browseProperties')}
             </Link>
           </div>
         </div>
