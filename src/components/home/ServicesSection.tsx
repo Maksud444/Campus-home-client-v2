@@ -30,13 +30,13 @@ export default function ServicesSection() {
         <div className="text-center max-w-3xl mx-auto mb-16">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest mb-4">
             <Sparkles size={14} />
-            Extra Comfort
+            {t('servicesSection.badge')}
           </div>
           <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">
             {t('services.title')}
           </h2>
           <p className="text-base sm:text-lg text-slate-500 font-medium leading-relaxed">
-            Professional maintenance, cleaning, and support services to make your student life easier.
+            {t('servicesSection.desc')}
           </p>
         </div>
 
@@ -83,7 +83,7 @@ export default function ServicesSection() {
                     </div>
                     <div className="flex items-center gap-1 text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
                       <Users size={12} />
-                      {service.providers}+ Experts
+                      {service.providers}+ {t('servicesSection.experts')}
                     </div>
                   </div>
 

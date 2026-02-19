@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { MapPin, Bed, Calendar, ArrowRight, Building2, Layers } from 'lucide-react'
+import { MapPin, Bed, ArrowRight, Building2, Layers } from 'lucide-react'
 import Link from 'next/link'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
 
@@ -15,6 +16,7 @@ interface Property {
 }
 
 export default function NewProjectsSection() {
+  const { t } = useLanguage()
   const [activeCity, setActiveCity] = useState('Cairo')
   const [projects, setProjects] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
@@ -55,7 +57,7 @@ export default function NewProjectsSection() {
     const created = new Date(createdAt)
     const diffTime = Math.abs(now.getTime() - created.getTime())
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    if (diffDays === 0) return 'Today'
+    if (diffDays === 0) return t('newProjects.today')
     if (diffDays < 30) return `${diffDays}d ago`
     return `${Math.floor(diffDays / 30)}m ago`
   }
@@ -76,13 +78,13 @@ export default function NewProjectsSection() {
   return (
     <section className="py-24 bg-slate-50/50">
       <div className="max-w-7xl mx-auto px-6">
-        
+
         {/* Modern Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
           <div className="space-y-4">
-            <span className="text-primary font-bold tracking-widest uppercase text-xs">Featured Collection</span>
+            <span className="text-primary font-bold tracking-widest uppercase text-xs">{t('newProjects.badge')}</span>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
-              Featured <span className="text-primary">Properties</span>
+              {t('newProjects.title')} <span className="text-primary">{t('newProjects.titleHighlight')}</span>
             </h2>
           </div>
 
@@ -93,8 +95,8 @@ export default function NewProjectsSection() {
                 key={city.id}
                 onClick={() => setActiveCity(city.id)}
                 className={`whitespace-nowrap px-6 py-2.5 rounded-xl font-bold transition-all duration-300 ${
-                  activeCity === city.id 
-                    ? 'bg-primary text-white shadow-lg' 
+                  activeCity === city.id
+                    ? 'bg-primary text-white shadow-lg'
                     : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
@@ -120,7 +122,7 @@ export default function NewProjectsSection() {
                     alt={project.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   />
-                  
+
                   {/* Floating Badges */}
                   <div className="absolute top-5 left-5 right-5 flex justify-between items-start">
                     <span className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-2">
@@ -135,7 +137,7 @@ export default function NewProjectsSection() {
                   {/* Price Tag Overlay */}
                   <div className="absolute bottom-5 left-5">
                     <div className="bg-slate-900 text-white px-5 py-2.5 rounded-2xl font-bold shadow-xl">
-                       <span className="text-sm font-light opacity-70">from</span> {project.price?.toLocaleString()} EGP
+                       <span className="text-sm font-light opacity-70">{t('newProjects.from')}</span> {project.price?.toLocaleString()} EGP
                     </div>
                   </div>
                 </div>
@@ -144,7 +146,7 @@ export default function NewProjectsSection() {
                 <div className="p-8 flex flex-col flex-grow">
                   <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest mb-3">
                     <Building2 size={14} />
-                    {project.propertyType || 'Residential'}
+                    {project.propertyType || t('newProjects.residential')}
                   </div>
 
                   <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-primary transition-colors line-clamp-1 leading-tight">
@@ -160,7 +162,7 @@ export default function NewProjectsSection() {
                   <div className="mt-auto pt-6 border-t border-slate-50 flex items-center gap-6 text-slate-600 font-semibold">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-primary"><Bed size={16} /></div>
-                      <span className="text-sm">{project.bedrooms || 0} Beds</span>
+                      <span className="text-sm">{project.bedrooms || 0} {t('newProjects.beds')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-primary"><Layers size={16} /></div>
@@ -174,18 +176,18 @@ export default function NewProjectsSection() {
         ) : (
           <div className="text-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-slate-100 mb-16">
             <div className="text-6xl mb-6">🏜️</div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-2">No matching properties</h3>
-            <p className="text-slate-500">Try changing the city or check back later.</p>
+            <h3 className="text-2xl font-bold text-slate-900 mb-2">{t('newProjects.noProperties')}</h3>
+            <p className="text-slate-500">{t('newProjects.noPropertiesDesc')}</p>
           </div>
         )}
 
         {/* View All Button - Footer Style */}
         <div className="text-center">
-          <Link 
-            href="/properties" 
+          <Link
+            href="/properties"
             className="group inline-flex items-center gap-4 bg-white border border-slate-200 px-10 py-5 rounded-[2rem] font-black text-slate-900 hover:bg-slate-900 hover:text-white transition-all duration-300 shadow-xl shadow-slate-200/50"
           >
-            Explore Full Collection
+            {t('newProjects.exploreAll')}
             <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
           </Link>
         </div>
