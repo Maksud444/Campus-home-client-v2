@@ -58,11 +58,11 @@ export default function ServicesSection() {
                 </div>
 
                 <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-3 md:mb-4 group-hover:text-primary transition-colors">
-                  {service.name}
+                  {t(`service.${service.id}.name`)}
                 </h3>
-                
+
                 <p className="text-slate-500 text-sm leading-relaxed mb-6 line-clamp-2">
-                  {service.description}
+                  {t(`service.${service.id}.desc`)}
                 </p>
 
                 {/* Feature List */}

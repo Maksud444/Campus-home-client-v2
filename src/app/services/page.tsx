@@ -111,7 +111,7 @@ export default function ServicesPage() {
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
               }`}
             >
-              {service.icon} {service.name}
+              {service.icon} {t(`service.${service.id}.name`)}
             </button>
           ))}
         </div>
@@ -137,10 +137,10 @@ export default function ServicesPage() {
                 </div>
 
                 <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-primary transition-colors">
-                  {service.name}
+                  {t(`service.${service.id}.name`)}
                 </h3>
                 <p className="text-gray-500 text-sm leading-relaxed mb-4">
-                  {service.description}
+                  {t(`service.${service.id}.desc`)}
                 </p>
 
                 {/* Features */}

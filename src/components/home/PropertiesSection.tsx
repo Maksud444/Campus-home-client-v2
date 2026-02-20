@@ -72,12 +72,12 @@ export default function PropertiesSection() {
         {/* Modern Header */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
           <div className="max-w-xl">
-            <span className="text-primary font-bold tracking-widest uppercase text-xs mb-3 block">Premium Listings</span>
+            <span className="text-primary font-bold tracking-widest uppercase text-xs mb-3 block">{t('properties.premiumListings')}</span>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
               {t('properties.featured')}
             </h2>
             <p className="mt-4 text-slate-500 font-medium text-lg">
-              Carefully curated student housing options designed for comfort and success.
+              {t('properties.premiumDesc')}
             </p>
           </div>
           <Link href="/properties" className="group flex items-center gap-3 text-slate-900 font-black hover:text-primary transition-all">
@@ -107,11 +107,11 @@ export default function PropertiesSection() {
                     {property.featured && (
                       <div className="bg-primary text-white px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg">
                         <FaStar size={10} className="text-yellow-300" />
-                        Featured
+                        {t('properties.featuredBadge')}
                       </div>
                     )}
                     <div className="bg-white/90 backdrop-blur-md text-slate-900 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm">
-                      {property.propertyType || property.type || 'Apartment'}
+                      {t(`propertyType.${(property.propertyType || property.type || 'apartment').toLowerCase()}`)}
                     </div>
                   </div>
 
@@ -120,7 +120,7 @@ export default function PropertiesSection() {
                     <div className="bg-slate-900/90 backdrop-blur-md text-white px-5 py-2.5 rounded-2xl shadow-xl">
                       <span className="text-xl font-black">
                         {property.price?.toLocaleString()} 
-                        <span className="text-xs font-normal opacity-70 ml-1">EGP/mo</span>
+                        <span className="text-xs font-normal opacity-70 ml-1">{t('properties.egpPerMonth')}</span>
                       </span>
                     </div>
                   </div>
@@ -169,15 +169,15 @@ export default function PropertiesSection() {
         ) : (
           <div className="text-center py-32 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
             <div className="text-7xl mb-6 grayscale opacity-50">🏠</div>
-            <h3 className="text-3xl font-black text-slate-900 mb-3">No active listings</h3>
-            <p className="text-slate-500 max-w-sm mx-auto">We're currently updating our catalog. Please check back in a few hours!</p>
+            <h3 className="text-3xl font-black text-slate-900 mb-3">{t('properties.noListings')}</h3>
+            <p className="text-slate-500 max-w-sm mx-auto">{t('properties.noListingsDesc')}</p>
           </div>
         )}
 
         {/* View All Button - Footer */}
         <div className="mt-20 flex justify-center">
           <Link href="/properties" className="px-12 py-5 bg-slate-900 text-white rounded-full font-black hover:bg-primary transition-all shadow-2xl shadow-slate-200 flex items-center gap-4 group">
-            Explore All Properties
+            {t('properties.exploreAll')}
             <FaArrowRight className="group-hover:translate-x-2 transition-transform" />
           </Link>
         </div>

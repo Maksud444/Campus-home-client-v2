@@ -293,11 +293,10 @@ export default function HeroSection() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mt-12 sm:mt-16 max-w-5xl mx-auto px-4">
+        <div className="grid grid-cols-3 gap-3 sm:gap-4 md:gap-6 mt-12 sm:mt-16 max-w-4xl mx-auto px-4">
           {[
             { value: '5,234+', label: t('stats.properties'), icon: '🏠' },
             { value: '10,450+', label: t('stats.students'), icon: '🎓' },
-            { value: '602+', label: t('stats.agents'), icon: '👔' },
             { value: '98%', label: t('stats.satisfied'), icon: '⭐' },
           ].map((stat, index) => (
             <div

@@ -440,7 +440,7 @@ function PropertiesPageContent() {
                     )}
                     <div className="absolute top-4 right-4">
                       <span className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold capitalize">
-                        {property.propertyType || property.type || 'Apartment'}
+                        {t(`propertyType.${(property.propertyType || property.type || 'apartment').toLowerCase()}`)}
                       </span>
                     </div>
                   </Link>
