@@ -295,7 +295,7 @@ export default function Navbar() {
                   {t('nav.login')}
                 </Link>
                 <Link
-                  href="/signup"
+                  href="/login"
                   className="btn btn-primary"
                 >
                   {t('nav.getStarted')}
