@@ -343,3 +343,5 @@ properties.map(prop => <PropertyCard key={prop.id} property={prop} />)
 **🎉 Project Ready for Development & Deployment!**
 
 Made with ❤️ using Next.js + Tailwind CSS - December 2025
+ 
+ 
