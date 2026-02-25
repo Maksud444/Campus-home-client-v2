@@ -86,7 +86,7 @@ export default function HeroSection() {
   }
 
   return (
-    <section className="relative min-h-screen overflow-hidden">
+    <section className="relative overflow-hidden">
       {/* Animated Background */}
       <div
         ref={bgRef}
@@ -106,7 +106,7 @@ export default function HeroSection() {
       </div>
 
       {/* ═══════════════ DESKTOP LAYOUT (md+) ═══════════════ */}
-      <div className="hidden md:flex relative z-10 flex-col items-center justify-center min-h-screen px-8 py-10">
+      <div className="hidden md:flex relative z-10 flex-col items-center px-8 pt-20 pb-12 min-h-[500px]">
         {/* Title */}
         <div className="text-center mb-6">
           <h1 className="text-4xl lg:text-5xl xl:text-6xl font-extrabold text-white leading-tight mb-3 drop-shadow-lg">
@@ -232,7 +232,7 @@ export default function HeroSection() {
       </div>
 
       {/* ═══════════════ MOBILE LAYOUT (< md) ═══════════════ */}
-      <div className="md:hidden flex flex-col justify-between min-h-screen">
+      <div className="md:hidden flex flex-col justify-between h-[calc(100vh-4rem)]">
         {/* Title at top — tight, no extra gap */}
         <div className="relative z-10 pt-4 pb-2 px-5 text-center">
           <h1 className="text-xl font-extrabold text-white leading-tight mb-1 drop-shadow-lg whitespace-nowrap">
