@@ -65,7 +65,7 @@ export default function WhyChooseUsAndHowItWorks() {
                 <span className="text-primary font-bold tracking-widest uppercase text-xs bg-primary/10 px-3 py-1.5 rounded-full">
                   {t('howItWorks.whyTitle')}
                 </span>
-                <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mt-4 leading-tight">
+                <h2 className="text-2xl md:text-4xl font-extrabold text-slate-900 mt-4 leading-tight">
                   {t('howItWorks.mainTitle')} <span className="text-primary">{t('howItWorks.mainTitleHighlight')}</span> {t('howItWorks.mainTitleEnd')}
                 </h2>
               </div>
@@ -115,7 +115,7 @@ export default function WhyChooseUsAndHowItWorks() {
       <section className="py-10 bg-slate-900 text-white rounded-2xl mx-3 mb-6 overflow-hidden relative">
         <div className="max-w-7xl mx-auto px-4 relative z-10">
           <div className="text-center max-w-2xl mx-auto mb-8">
-            <h2 className="text-3xl font-bold mb-2">{t('howItWorks.title')}</h2>
+            <h2 className="text-2xl md:text-4xl font-bold mb-2">{t('howItWorks.title')}</h2>
             <p className="text-slate-400 text-sm">{t('howItWorks.subtitle')}</p>
           </div>
 

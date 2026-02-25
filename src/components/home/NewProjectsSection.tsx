@@ -83,7 +83,7 @@ export default function NewProjectsSection() {
         <div className="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
           <div className="space-y-1.5">
             <span className="text-primary font-bold tracking-widest uppercase text-xs">{t('newProjects.badge')}</span>
-            <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">
               {t('newProjects.title')} <span className="text-primary">{t('newProjects.titleHighlight')}</span>
             </h2>
           </div>

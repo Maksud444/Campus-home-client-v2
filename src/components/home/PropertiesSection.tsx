@@ -73,7 +73,7 @@ export default function PropertiesSection() {
         <div className="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
           <div className="max-w-xl">
             <span className="text-primary font-bold tracking-widest uppercase text-xs mb-1.5 block">{t('properties.premiumListings')}</span>
-            <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+            <h2 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight">
               {t('properties.featured')}
             </h2>
             <p className="mt-2 text-slate-500 font-medium text-sm">
