@@ -42,6 +42,18 @@ export default function HeroSection() {
   const [showTypeDropdown, setShowTypeDropdown] = useState(false)
   const [showBudgetDropdown, setShowBudgetDropdown] = useState(false)
 
+  // Autocomplete suggestions
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const filteredLocations = searchText.trim()
+    ? locations.filter(loc => loc.includes(searchText.trim()))
+    : locations
+
+  const handleSelectSuggestion = (loc: string) => {
+    setSearchText(loc)
+    setSelectedArea(loc)
+    setShowSuggestions(false)
+  }
+
   const bgRef = useRef<HTMLDivElement>(null)
   const circle1Ref = useRef<HTMLDivElement>(null)
   const circle2Ref = useRef<HTMLDivElement>(null)
@@ -142,18 +154,40 @@ export default function HeroSection() {
 
           {/* Search input + button row */}
           <div className="flex gap-3 mb-3">
-            <div className="flex-1 flex items-center gap-3 border-2 border-gray-200 rounded-xl px-4 py-3 focus-within:border-primary transition-colors">
-              <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <input
-                type="text"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                placeholder="Enter location or area..."
-                className="flex-1 text-gray-800 placeholder-gray-400 outline-none text-base bg-transparent"
-              />
+            <div className="flex-1 relative">
+              <div className="flex items-center gap-3 border-2 border-gray-200 rounded-xl px-4 py-3 focus-within:border-primary transition-colors">
+                <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={searchText}
+                  onChange={(e) => { setSearchText(e.target.value); setShowSuggestions(true) }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                  placeholder="Enter location or area..."
+                  className="flex-1 text-gray-800 placeholder-gray-400 outline-none text-base bg-transparent"
+                />
+              </div>
+              {showSuggestions && filteredLocations.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl max-h-56 overflow-y-auto z-50">
+                  {filteredLocations.map((loc) => (
+                    <button
+                      key={loc}
+                      type="button"
+                      onMouseDown={() => handleSelectSuggestion(loc)}
+                      className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 border-b border-gray-50 last:border-0"
+                    >
+                      <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <span className="text-sm text-gray-700">{loc}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <button
               type="submit"
@@ -249,26 +283,48 @@ export default function HeroSection() {
             onSubmit={handleSearch}
             className="bg-white rounded-3xl shadow-2xl overflow-visible"
           >
-            {/* Row 1: Search text input */}
-            <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
-              <svg className="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                placeholder="Search by area..."
-                className="flex-1 text-sm text-gray-700 placeholder-gray-400 outline-none bg-transparent"
-              />
-              <button
-                type="button"
-                className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex-shrink-0"
-              >
-                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 010 2H4a1 1 0 01-1-1zm3 5a1 1 0 011-1h10a1 1 0 010 2H7a1 1 0 01-1-1zm4 5a1 1 0 011-1h4a1 1 0 010 2h-4a1 1 0 01-1-1z" />
+            {/* Row 1: Search text input with autocomplete */}
+            <div className="relative border-b border-gray-100">
+              <div className="flex items-center gap-3 px-5 py-4">
+                <svg className="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-              </button>
+                <input
+                  type="text"
+                  value={searchText}
+                  onChange={(e) => { setSearchText(e.target.value); setShowSuggestions(true) }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                  placeholder="Search by area..."
+                  className="flex-1 text-sm text-gray-700 placeholder-gray-400 outline-none bg-transparent"
+                />
+                <button
+                  type="button"
+                  className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex-shrink-0"
+                >
+                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 010 2H4a1 1 0 01-1-1zm3 5a1 1 0 011-1h10a1 1 0 010 2H7a1 1 0 01-1-1zm4 5a1 1 0 011-1h4a1 1 0 010 2h-4a1 1 0 01-1-1z" />
+                  </svg>
+                </button>
+              </div>
+              {showSuggestions && filteredLocations.length > 0 && (
+                <div className="absolute left-0 right-0 top-full z-50 bg-white border border-gray-200 rounded-2xl shadow-2xl max-h-52 overflow-y-auto">
+                  {filteredLocations.map((loc) => (
+                    <button
+                      key={loc}
+                      type="button"
+                      onMouseDown={() => handleSelectSuggestion(loc)}
+                      className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 border-b border-gray-50 last:border-0"
+                    >
+                      <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      {loc}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Row 2: All Areas dropdown */}
