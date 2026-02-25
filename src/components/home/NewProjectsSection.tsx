@@ -65,10 +65,10 @@ export default function NewProjectsSection() {
   // Modern Skeleton Loader
   if (loading) {
     return (
-      <section className="py-24 bg-slate-50/50">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+      <section className="py-10 bg-slate-50/50">
+        <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-5">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white rounded-[2rem] h-[450px] animate-pulse border border-slate-100" />
+            <div key={i} className="bg-white rounded-2xl h-72 animate-pulse border border-slate-100" />
           ))}
         </div>
       </section>
@@ -76,14 +76,14 @@ export default function NewProjectsSection() {
   }
 
   return (
-    <section className="py-24 bg-slate-50/50">
-      <div className="max-w-7xl mx-auto px-6">
+    <section className="py-10 bg-slate-50/50">
+      <div className="max-w-7xl mx-auto px-4">
 
-        {/* Modern Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
-          <div className="space-y-4">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
+          <div className="space-y-1.5">
             <span className="text-primary font-bold tracking-widest uppercase text-xs">{t('newProjects.badge')}</span>
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
               {t('newProjects.title')} <span className="text-primary">{t('newProjects.titleHighlight')}</span>
             </h2>
           </div>
@@ -108,15 +108,15 @@ export default function NewProjectsSection() {
 
         {/* Projects Grid */}
         {filteredProjects.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
             {filteredProjects.map((project) => (
               <Link
                 key={project._id}
                 href={`/properties/${project._id}`}
-                className="group bg-white rounded-[2.5rem] overflow-hidden border border-slate-100 hover:border-primary/20 hover:shadow-[0_20px_50px_rgba(0,0,0,0.05)] transition-all duration-500 flex flex-col h-full"
+                className="group bg-white rounded-2xl overflow-hidden border border-slate-100 hover:border-primary/20 hover:shadow-lg transition-all duration-300 flex flex-col h-full"
               >
                 {/* Image Container */}
-                <div className="relative h-72 overflow-hidden">
+                <div className="relative h-48 overflow-hidden">
                   <img
                     src={getImageUrl(project.images)}
                     alt={project.title}
@@ -135,38 +135,38 @@ export default function NewProjectsSection() {
                   </div>
 
                   {/* Price Tag Overlay */}
-                  <div className="absolute bottom-5 left-5">
-                    <div className="bg-slate-900 text-white px-5 py-2.5 rounded-2xl font-bold shadow-xl">
+                  <div className="absolute bottom-3 left-3">
+                    <div className="bg-slate-900 text-white px-3 py-1.5 rounded-xl font-bold shadow-xl text-sm">
                        <span className="text-sm font-light opacity-70">{t('newProjects.from')}</span> {project.price?.toLocaleString()} EGP
                     </div>
                   </div>
                 </div>
 
                 {/* Content Section */}
-                <div className="p-8 flex flex-col flex-grow">
-                  <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest mb-3">
-                    <Building2 size={14} />
+                <div className="p-4 flex flex-col flex-grow">
+                  <div className="flex items-center gap-1.5 text-primary font-bold text-xs uppercase tracking-widest mb-1.5">
+                    <Building2 size={12} />
                     {project.propertyType || t('newProjects.residential')}
                   </div>
 
-                  <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-primary transition-colors line-clamp-1 leading-tight">
+                  <h3 className="text-base font-bold text-slate-900 mb-1.5 group-hover:text-primary transition-colors line-clamp-1 leading-tight">
                     {project.title}
                   </h3>
 
-                  <div className="flex items-center gap-2 text-slate-400 mb-6">
-                    <MapPin size={16} className="text-slate-300" />
-                    <span className="text-sm font-medium line-clamp-1">{project.location?.area}, {project.location?.city}</span>
+                  <div className="flex items-center gap-1.5 text-slate-400 mb-3">
+                    <MapPin size={13} className="text-slate-300" />
+                    <span className="text-xs font-medium line-clamp-1">{project.location?.area}, {project.location?.city}</span>
                   </div>
 
-                  {/* Amenities - Clean UI */}
-                  <div className="mt-auto pt-6 border-t border-slate-50 flex items-center gap-6 text-slate-600 font-semibold">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-primary"><Bed size={16} /></div>
-                      <span className="text-sm">{project.bedrooms || 0} {t('newProjects.beds')}</span>
+                  {/* Amenities */}
+                  <div className="mt-auto pt-3 border-t border-slate-50 flex items-center gap-4 text-slate-600 font-semibold">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center text-primary"><Bed size={13} /></div>
+                      <span className="text-xs">{project.bedrooms || 0} {t('newProjects.beds')}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-primary"><Layers size={16} /></div>
-                      <span className="text-sm capitalize">{project.type || 'N/A'}</span>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center text-primary"><Layers size={13} /></div>
+                      <span className="text-xs capitalize">{project.type || 'N/A'}</span>
                     </div>
                   </div>
                 </div>
@@ -174,18 +174,18 @@ export default function NewProjectsSection() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-slate-100 mb-16">
-            <div className="text-6xl mb-6">🏜️</div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-2">{t('newProjects.noProperties')}</h3>
+          <div className="text-center py-12 bg-white rounded-2xl border-2 border-dashed border-slate-100 mb-8">
+            <div className="text-4xl mb-3">🏜️</div>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">{t('newProjects.noProperties')}</h3>
             <p className="text-slate-500">{t('newProjects.noPropertiesDesc')}</p>
           </div>
         )}
 
-        {/* View All Button - Footer Style */}
+        {/* View All Button */}
         <div className="text-center">
           <Link
             href="/properties"
-            className="group inline-flex items-center gap-4 bg-white border border-slate-200 px-10 py-5 rounded-[2rem] font-black text-slate-900 hover:bg-slate-900 hover:text-white transition-all duration-300 shadow-xl shadow-slate-200/50"
+            className="group inline-flex items-center gap-3 bg-white border border-slate-200 px-7 py-3 rounded-2xl font-bold text-sm text-slate-900 hover:bg-slate-900 hover:text-white transition-all duration-300 shadow-md"
           >
             {t('newProjects.exploreAll')}
             <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />

@@ -118,13 +118,13 @@ export default function HeroSection() {
       </div>
 
       {/* ═══════════════ DESKTOP LAYOUT (md+) ═══════════════ */}
-      <div className="hidden md:flex relative z-10 flex-col items-center px-8 pt-20 pb-12 min-h-[500px]">
+      <div className="hidden md:flex relative z-10 flex-col items-center px-8 pt-12 pb-8 min-h-[400px]">
         {/* Title */}
-        <div className="text-center mb-6">
-          <h1 className="text-4xl lg:text-5xl xl:text-6xl font-extrabold text-white leading-tight mb-3 drop-shadow-lg">
+        <div className="text-center mb-5">
+          <h1 className="text-3xl lg:text-4xl xl:text-5xl font-extrabold text-white leading-tight mb-2 drop-shadow-lg">
             {t('hero.title')}
           </h1>
-          <p className="text-lg lg:text-xl text-white font-light drop-shadow">
+          <p className="text-base lg:text-lg text-white font-light drop-shadow">
             {t('hero.subtitle')}
           </p>
         </div>
@@ -132,16 +132,16 @@ export default function HeroSection() {
         {/* Search Card */}
         <form
           onSubmit={handleSearch}
-          className="bg-white rounded-2xl shadow-2xl p-5 w-full max-w-4xl"
+          className="bg-white rounded-2xl shadow-2xl p-4 w-full max-w-4xl"
         >
           {/* Type Tabs */}
-          <div className="flex gap-2 mb-4">
+          <div className="flex gap-1.5 mb-3">
             {typeTabs.map((tab) => (
               <button
                 key={tab.value}
                 type="button"
                 onClick={() => setSelectedType(tab.value)}
-                className={`px-5 py-2 rounded-xl font-semibold text-sm transition-all ${
+                className={`px-4 py-1.5 rounded-lg font-semibold text-sm transition-all ${
                   selectedType === tab.value
                     ? 'bg-primary text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -153,9 +153,9 @@ export default function HeroSection() {
           </div>
 
           {/* Search input + button row */}
-          <div className="flex gap-3 mb-3">
+          <div className="flex gap-2 mb-2.5">
             <div className="flex-1 relative">
-              <div className="flex items-center gap-3 border-2 border-gray-200 rounded-xl px-4 py-3 focus-within:border-primary transition-colors">
+              <div className="flex items-center gap-2 border-2 border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-primary transition-colors">
                 <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -191,7 +191,7 @@ export default function HeroSection() {
             </div>
             <button
               type="submit"
-              className="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-xl font-bold text-base transition-all hover:shadow-lg flex items-center gap-2 whitespace-nowrap"
+              className="bg-primary hover:bg-primary-dark text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all hover:shadow-lg flex items-center gap-2 whitespace-nowrap"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -201,7 +201,7 @@ export default function HeroSection() {
           </div>
 
           {/* Filter dropdowns row */}
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             {/* All Areas */}
             <div className="relative flex-1">
               <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -268,24 +268,24 @@ export default function HeroSection() {
       {/* ═══════════════ MOBILE LAYOUT (< md) ═══════════════ */}
       <div className="md:hidden flex flex-col">
         {/* Title */}
-        <div className="relative z-10 pt-5 pb-4 px-5 text-center">
-          <h1 className="text-xl font-extrabold text-white leading-tight mb-1 drop-shadow-lg whitespace-nowrap">
+        <div className="relative z-10 pt-4 pb-3 px-4 text-center">
+          <h1 className="text-lg font-extrabold text-white leading-tight mb-0.5 drop-shadow-lg whitespace-nowrap">
             {t('hero.title')}
           </h1>
-          <p className="text-xs text-white font-light drop-shadow whitespace-nowrap">
+          <p className="text-[11px] text-white font-light drop-shadow whitespace-nowrap">
             {t('hero.subtitle')}
           </p>
         </div>
 
         {/* Search Card — directly below title, no gap */}
-        <div className="relative z-10 px-4 pb-8">
+        <div className="relative z-10 px-3 pb-5">
           <form
             onSubmit={handleSearch}
-            className="bg-white rounded-3xl shadow-2xl overflow-visible"
+            className="bg-white rounded-2xl shadow-2xl overflow-visible"
           >
             {/* Row 1: Search text input with autocomplete */}
             <div className="relative border-b border-gray-100">
-              <div className="flex items-center gap-3 px-5 py-4">
+              <div className="flex items-center gap-2 px-4 py-3">
                 <svg className="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -336,14 +336,14 @@ export default function HeroSection() {
                   setShowTypeDropdown(false)
                   setShowBudgetDropdown(false)
                 }}
-                className="w-full flex items-center justify-between px-5 py-4 text-left"
+                className="w-full flex items-center justify-between px-4 py-3 text-left"
               >
-                <div className="flex items-center gap-3">
-                  <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  <span className="text-sm font-semibold text-gray-800">
+                  <span className="text-xs font-semibold text-gray-800">
                     {selectedArea || 'All Areas'}
                   </span>
                 </div>
@@ -385,12 +385,12 @@ export default function HeroSection() {
                     setShowAreaDropdown(false)
                     setShowBudgetDropdown(false)
                   }}
-                  className="w-full flex items-center gap-2.5 px-4 py-4"
+                  className="w-full flex items-center gap-2 px-3 py-3"
                 >
-                  <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                   </svg>
-                  <span className="text-sm font-semibold text-gray-800 truncate">
+                  <span className="text-xs font-semibold text-gray-800 truncate">
                     {selectedType
                       ? selectedType.charAt(0).toUpperCase() + selectedType.slice(1)
                       : 'Property Type'}
@@ -428,13 +428,13 @@ export default function HeroSection() {
                     setShowAreaDropdown(false)
                     setShowTypeDropdown(false)
                   }}
-                  className="w-full flex items-center justify-between px-4 py-4"
+                  className="w-full flex items-center justify-between px-3 py-3"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span className="text-sm font-semibold text-gray-800 truncate">
+                    <span className="text-xs font-semibold text-gray-800 truncate">
                       {selectedBudget || 'Any Budget'}
                     </span>
                   </div>
@@ -467,10 +467,10 @@ export default function HeroSection() {
             </div>
 
             {/* Row 4: Search Button */}
-            <div className="px-4 py-4">
+            <div className="px-3 py-3">
               <button
                 type="submit"
-                className="w-full bg-primary hover:bg-primary-dark text-white py-3.5 rounded-xl font-bold text-base transition-all hover:shadow-lg"
+                className="w-full bg-primary hover:bg-primary-dark text-white py-2.5 rounded-xl font-bold text-sm transition-all hover:shadow-lg"
               >
                 {t('hero.search')}
               </button>

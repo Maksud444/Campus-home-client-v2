@@ -54,53 +54,53 @@ export default function WhyChooseUsAndHowItWorks() {
 
   return (
     <div className="bg-white">
-      {/* WHY CHOOSE US - MODERN SPLIT DESIGN */}
-      <section className="py-24 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col lg:flex-row items-center gap-16">
+      {/* WHY CHOOSE US */}
+      <section className="py-10 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex flex-col lg:flex-row items-center gap-8">
 
             {/* Left Side: Text Content */}
-            <div className="lg:w-1/2 space-y-8">
+            <div className="lg:w-1/2 space-y-5">
               <div>
-                <span className="text-primary font-bold tracking-widest uppercase text-sm bg-primary/10 px-4 py-2 rounded-full">
+                <span className="text-primary font-bold tracking-widest uppercase text-xs bg-primary/10 px-3 py-1.5 rounded-full">
                   {t('howItWorks.whyTitle')}
                 </span>
-                <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900 mt-6 leading-tight">
+                <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-4 leading-tight">
                   {t('howItWorks.mainTitle')} <span className="text-primary">{t('howItWorks.mainTitleHighlight')}</span> {t('howItWorks.mainTitleEnd')}
                 </h2>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {features.map((feature, index) => (
-                  <div key={index} className="p-6 rounded-3xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 group">
-                    <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-primary mb-4 group-hover:scale-110 transition-transform">
+                  <div key={index} className="p-4 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-md transition-all duration-300 group">
+                    <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-primary mb-3 group-hover:scale-110 transition-transform">
                       {feature.icon}
                     </div>
-                    <h3 className="font-bold text-slate-900 text-lg mb-2">{feature.title}</h3>
-                    <p className="text-slate-500 text-sm leading-relaxed">{feature.description}</p>
+                    <h3 className="font-bold text-slate-900 text-sm mb-1">{feature.title}</h3>
+                    <p className="text-slate-500 text-xs leading-relaxed">{feature.description}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Right Side: Visual Image & Stats */}
+            {/* Right Side: Image */}
             <div className="lg:w-1/2 relative">
-              <div className="relative z-10 rounded-[2.5rem] overflow-hidden shadow-2xl">
+              <div className="relative z-10 rounded-2xl overflow-hidden shadow-xl">
                 <img
                   src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80"
-                  className="w-full h-[600px] object-cover"
+                  className="w-full h-72 md:h-96 object-cover"
                   alt="Modern Luxury Real Estate"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
 
                 {/* Floating Trust Badge */}
-                <div className="absolute bottom-8 left-8 right-8 bg-white/10 backdrop-blur-xl border border-white/20 p-6 rounded-2xl flex items-center gap-4">
-                  <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white">
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                <div className="absolute bottom-4 left-4 right-4 bg-white/10 backdrop-blur-xl border border-white/20 p-3 rounded-xl flex items-center gap-3">
+                  <div className="w-9 h-9 bg-green-500 rounded-full flex items-center justify-center text-white flex-shrink-0">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                   </div>
                   <div>
-                    <p className="text-white font-bold text-lg leading-none">100% Verified</p>
-                    <p className="text-white/70 text-sm mt-1">Properties are manually inspected</p>
+                    <p className="text-white font-bold text-sm leading-none">100% Verified</p>
+                    <p className="text-white/70 text-xs mt-0.5">Properties are manually inspected</p>
                   </div>
                 </div>
               </div>
@@ -111,39 +111,39 @@ export default function WhyChooseUsAndHowItWorks() {
         </div>
       </section>
 
-      {/* HOW IT WORKS - TIMELINE DESIGN */}
-      <section className="py-24 bg-slate-900 text-white rounded-[3rem] mx-4 mb-10 overflow-hidden relative">
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="text-center max-w-2xl mx-auto mb-20">
-            <h2 className="text-4xl font-bold mb-4">{t('howItWorks.title')}</h2>
-            <p className="text-slate-400">{t('howItWorks.subtitle')}</p>
+      {/* HOW IT WORKS */}
+      <section className="py-10 bg-slate-900 text-white rounded-2xl mx-3 mb-6 overflow-hidden relative">
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
+          <div className="text-center max-w-2xl mx-auto mb-8">
+            <h2 className="text-2xl font-bold mb-2">{t('howItWorks.title')}</h2>
+            <p className="text-slate-400 text-sm">{t('howItWorks.subtitle')}</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {steps.map((step, idx) => (
               <div key={idx} className="relative group">
                 {/* Connector Line (Desktop Only) */}
                 {idx !== 3 && (
-                  <div className="hidden lg:block absolute top-10 left-full w-full h-[2px] bg-gradient-to-r from-primary/50 to-transparent z-0" />
+                  <div className="hidden lg:block absolute top-8 left-full w-full h-[2px] bg-gradient-to-r from-primary/50 to-transparent z-0" />
                 )}
 
-                <div className="relative z-10 bg-slate-800/50 p-8 rounded-3xl border border-slate-700 group-hover:border-primary/50 transition-all duration-300">
-                  <div className="text-sm font-black text-primary mb-4 opacity-50">STEP 0{step.number}</div>
-                  <div className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-300">{step.icon}</div>
-                  <h3 className="text-xl font-bold mb-3">{step.title}</h3>
-                  <p className="text-slate-400 text-sm leading-relaxed">{step.desc}</p>
+                <div className="relative z-10 bg-slate-800/50 p-5 rounded-2xl border border-slate-700 group-hover:border-primary/50 transition-all duration-300">
+                  <div className="text-xs font-black text-primary mb-2 opacity-50">STEP 0{step.number}</div>
+                  <div className="text-3xl mb-3 group-hover:scale-110 transition-transform duration-300">{step.icon}</div>
+                  <h3 className="text-base font-bold mb-1.5">{step.title}</h3>
+                  <p className="text-slate-400 text-xs leading-relaxed">{step.desc}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="mt-20 text-center">
+          <div className="mt-8 text-center">
              <Link
               href="/properties"
-              className="inline-flex items-center gap-3 bg-primary hover:bg-primary/90 text-white px-10 py-4 rounded-2xl font-bold transition-all shadow-xl shadow-primary/20"
+              className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-7 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20"
             >
               {t('howItWorks.cta')}
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
             </Link>
           </div>
         </div>

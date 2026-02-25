@@ -55,10 +55,10 @@ export default function PropertiesSection() {
   // Modern Loading Skeleton
   if (loading) {
     return (
-      <section className="py-24 bg-white">
-        <div className="container mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10">
+      <section className="py-10 bg-white">
+        <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-5">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="rounded-[2.5rem] h-[500px] bg-slate-100 animate-pulse" />
+            <div key={i} className="rounded-2xl h-72 bg-slate-100 animate-pulse" />
           ))}
         </div>
       </section>
@@ -66,17 +66,17 @@ export default function PropertiesSection() {
   }
 
   return (
-    <section className="py-24 bg-white">
-      <div className="container mx-auto px-6">
-        
-        {/* Modern Header */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+    <section className="py-10 bg-white">
+      <div className="container mx-auto px-4">
+
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
           <div className="max-w-xl">
-            <span className="text-primary font-bold tracking-widest uppercase text-xs mb-3 block">{t('properties.premiumListings')}</span>
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+            <span className="text-primary font-bold tracking-widest uppercase text-xs mb-1.5 block">{t('properties.premiumListings')}</span>
+            <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight leading-tight">
               {t('properties.featured')}
             </h2>
-            <p className="mt-4 text-slate-500 font-medium text-lg">
+            <p className="mt-2 text-slate-500 font-medium text-sm">
               {t('properties.premiumDesc')}
             </p>
           </div>
@@ -86,15 +86,15 @@ export default function PropertiesSection() {
         </div>
 
         {properties.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {properties.map((property) => (
               <Link
                 href={`/properties/${property._id}`}
                 key={property._id}
-                className="group flex flex-col bg-white rounded-[2.5rem] border border-slate-100 hover:border-primary/20 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-all duration-500 overflow-hidden"
+                className="group flex flex-col bg-white rounded-2xl border border-slate-100 hover:border-primary/20 hover:shadow-lg transition-all duration-300 overflow-hidden"
               >
                 {/* Image Section */}
-                <div className="relative h-72 w-full overflow-hidden">
+                <div className="relative h-48 w-full overflow-hidden">
                   <Image
                     src={getImageUrl(property.images)}
                     alt={property.title}
@@ -116,9 +116,9 @@ export default function PropertiesSection() {
                   </div>
 
                   {/* Price Tag */}
-                  <div className="absolute bottom-6 left-6">
-                    <div className="bg-slate-900/90 backdrop-blur-md text-white px-5 py-2.5 rounded-2xl shadow-xl">
-                      <span className="text-xl font-black">
+                  <div className="absolute bottom-3 left-3">
+                    <div className="bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl shadow-xl">
+                      <span className="text-sm font-black">
                         {property.price?.toLocaleString()} 
                         <span className="text-xs font-normal opacity-70 ml-1">{t('properties.egpPerMonth')}</span>
                       </span>
@@ -127,39 +127,39 @@ export default function PropertiesSection() {
                 </div>
 
                 {/* Content Section */}
-                <div className="p-8 flex flex-col flex-grow">
-                  <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-primary transition-colors line-clamp-1">
+                <div className="p-4 flex flex-col flex-grow">
+                  <h3 className="text-base font-bold text-slate-900 mb-1.5 group-hover:text-primary transition-colors line-clamp-1">
                     {property.title}
                   </h3>
-                  
-                  <div className="flex items-center gap-2 text-slate-400 mb-6">
+
+                  <div className="flex items-center gap-2 text-slate-400 mb-3">
                     <FaMapMarkerAlt className="text-primary/60 flex-shrink-0" />
                     <span className="text-sm font-medium line-clamp-1">
                       {property.location?.area}, {property.location?.city}
                     </span>
                   </div>
 
-                  {/* Amenities - Modern Icon Set */}
-                  <div className="mt-auto grid grid-cols-3 gap-4 pt-6 border-t border-slate-50 text-slate-600">
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                        <FaBed size={16} />
+                  {/* Amenities */}
+                  <div className="mt-auto grid grid-cols-3 gap-2 pt-3 border-t border-slate-50 text-slate-600">
+                    <div className="flex flex-col items-center gap-0.5">
+                      <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                        <FaBed size={14} />
                       </div>
-                      <span className="text-[11px] font-bold uppercase tracking-tighter opacity-60">{property.bedrooms || 0}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-tighter opacity-60">{property.bedrooms || 0}</span>
                     </div>
 
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                        <FaBath size={16} />
+                    <div className="flex flex-col items-center gap-0.5">
+                      <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                        <FaBath size={14} />
                       </div>
-                      <span className="text-[11px] font-bold uppercase tracking-tighter opacity-60">{property.bathrooms || 0}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-tighter opacity-60">{property.bathrooms || 0}</span>
                     </div>
 
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                        <FaRulerCombined size={14} />
+                    <div className="flex flex-col items-center gap-0.5">
+                      <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                        <FaRulerCombined size={13} />
                       </div>
-                      <span className="text-[11px] font-bold uppercase tracking-tighter opacity-60">{property.area || 0}m²</span>
+                      <span className="text-[10px] font-bold uppercase tracking-tighter opacity-60">{property.area || 0}m²</span>
                     </div>
                   </div>
                 </div>
@@ -167,16 +167,16 @@ export default function PropertiesSection() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-32 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
-            <div className="text-7xl mb-6 grayscale opacity-50">🏠</div>
-            <h3 className="text-3xl font-black text-slate-900 mb-3">{t('properties.noListings')}</h3>
+          <div className="text-center py-16 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+            <div className="text-5xl mb-4 grayscale opacity-50">🏠</div>
+            <h3 className="text-xl font-black text-slate-900 mb-2">{t('properties.noListings')}</h3>
             <p className="text-slate-500 max-w-sm mx-auto">{t('properties.noListingsDesc')}</p>
           </div>
         )}
 
-        {/* View All Button - Footer */}
-        <div className="mt-20 flex justify-center">
-          <Link href="/properties" className="px-12 py-5 bg-slate-900 text-white rounded-full font-black hover:bg-primary transition-all shadow-2xl shadow-slate-200 flex items-center gap-4 group">
+        {/* View All Button */}
+        <div className="mt-8 flex justify-center">
+          <Link href="/properties" className="px-8 py-3 bg-slate-900 text-white rounded-full font-bold text-sm hover:bg-primary transition-all shadow-lg flex items-center gap-3 group">
             {t('properties.exploreAll')}
             <FaArrowRight className="group-hover:translate-x-2 transition-transform" />
           </Link>
