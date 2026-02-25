@@ -23,7 +23,7 @@ export default function ServicesSection() {
   const cardsRef = useStaggerCards(isMobile ? [] : [services])
 
   return (
-    <section className="py-10 bg-slate-50">
+    <section className="py-10 bg-slate-50 rounded-2xl mx-3 mb-3 overflow-hidden">
       <div className="container mx-auto px-4">
 
         {/* Header */}
@@ -32,7 +32,7 @@ export default function ServicesSection() {
             <Sparkles size={12} />
             {t('servicesSection.badge')}
           </div>
-          <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-2 tracking-tight">
+          <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-2 tracking-tight">
             {t('services.title')}
           </h2>
           <p className="text-sm text-slate-500 font-medium leading-relaxed">

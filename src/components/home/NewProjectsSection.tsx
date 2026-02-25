@@ -65,7 +65,7 @@ export default function NewProjectsSection() {
   // Modern Skeleton Loader
   if (loading) {
     return (
-      <section className="py-10 bg-slate-50/50">
+      <section className="py-10 bg-slate-50 rounded-2xl mx-3 mb-3 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-5">
           {[1, 2, 3].map((i) => (
             <div key={i} className="bg-white rounded-2xl h-72 animate-pulse border border-slate-100" />
@@ -76,14 +76,14 @@ export default function NewProjectsSection() {
   }
 
   return (
-    <section className="py-10 bg-slate-50/50">
+    <section className="py-10 bg-slate-50 rounded-2xl mx-3 mb-3 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4">
 
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
           <div className="space-y-1.5">
             <span className="text-primary font-bold tracking-widest uppercase text-xs">{t('newProjects.badge')}</span>
-            <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
               {t('newProjects.title')} <span className="text-primary">{t('newProjects.titleHighlight')}</span>
             </h2>
           </div>

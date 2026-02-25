@@ -98,7 +98,7 @@ export default function HeroSection() {
   }
 
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative overflow-hidden rounded-2xl mx-3 mt-3 mb-3">
       {/* Animated Background */}
       <div
         ref={bgRef}
@@ -121,7 +121,7 @@ export default function HeroSection() {
       <div className="hidden md:flex relative z-10 flex-col items-center px-8 pt-12 pb-8 min-h-[400px]">
         {/* Title */}
         <div className="text-center mb-5">
-          <h1 className="text-3xl lg:text-4xl xl:text-5xl font-extrabold text-white leading-tight mb-2 drop-shadow-lg">
+          <h1 className="text-4xl lg:text-5xl xl:text-6xl font-extrabold text-white leading-tight mb-2 drop-shadow-lg">
             {t('hero.title')}
           </h1>
           <p className="text-base lg:text-lg text-white font-light drop-shadow">

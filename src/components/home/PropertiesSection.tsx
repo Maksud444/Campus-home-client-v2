@@ -55,7 +55,7 @@ export default function PropertiesSection() {
   // Modern Loading Skeleton
   if (loading) {
     return (
-      <section className="py-10 bg-white">
+      <section className="py-10 bg-white rounded-2xl mx-3 mb-3 overflow-hidden">
         <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-5">
           {[1, 2, 3].map((i) => (
             <div key={i} className="rounded-2xl h-72 bg-slate-100 animate-pulse" />
@@ -66,14 +66,14 @@ export default function PropertiesSection() {
   }
 
   return (
-    <section className="py-10 bg-white">
+    <section className="py-10 bg-white rounded-2xl mx-3 mb-3 overflow-hidden">
       <div className="container mx-auto px-4">
 
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
           <div className="max-w-xl">
             <span className="text-primary font-bold tracking-widest uppercase text-xs mb-1.5 block">{t('properties.premiumListings')}</span>
-            <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight leading-tight">
+            <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight">
               {t('properties.featured')}
             </h2>
             <p className="mt-2 text-slate-500 font-medium text-sm">
