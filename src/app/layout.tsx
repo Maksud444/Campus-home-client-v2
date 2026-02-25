@@ -10,7 +10,7 @@ import MobileLanguageSwitcher from '@/components/MobileLanguageSwitcher'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Campus Egypt - Student Housing & Services',
+  title: 'Baytino - Student Housing & Services',
   description: 'Find student housing, roommates, and essential services in Egypt',
 }
 

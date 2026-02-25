@@ -180,9 +180,9 @@ export default function LoginPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white font-extrabold text-3xl mx-auto mb-4">
-            C
+            B
           </div>
-          <h1 className="text-3xl font-bold text-primary">Campus Egypt</h1>
+          <h1 className="text-3xl font-bold text-primary">Baytino</h1>
           <p className="text-gray-600 mt-2">
             {isSignup ? 'Create your account to get started' : 'Welcome back! Sign in to continue'}
           </p>
@@ -399,7 +399,7 @@ export default function LoginPage() {
         {isSignup && (
           <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
             <p className="text-sm text-blue-800">
-              ✨ <strong>New to Campus Egypt?</strong>
+              ✨ <strong>New to Baytino?</strong>
               <br />
               Create your account to access housing, roommates, and home services!
             </p>

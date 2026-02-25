@@ -1,109 +1,82 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/contexts/LanguageContext'
 import gsap from 'gsap'
 
+const locations = [
+  'ابو يوسف (تبة)', 'باب الشرعية', 'باب الفطور', 'بركات (دراسة)', 'تبة',
+  'التجمع الخامس', 'حي الثامن', 'حي العاشر', 'حي السابع', 'خان خليل',
+  'دراسة', 'دوية', 'دجلة المعادي', 'رمسيس', 'زهراء', 'زهراء المعادي',
+  'ميدان التحرير', 'سيدة عائشة', 'سيدة زينب', 'عتبة', 'عباسية',
+  'عبدي باشا', 'عباس العقاد', 'مستشفى حسين', 'مدينة البعوث', 'منهل',
+  'مكرم عبيد', 'مدينة نصر', 'مصطفى النحاس', 'مقطم', 'معادي', 'مهندسين', 'نادي غمالية'
+]
+
+const propertyTypes = ['Property', 'Room', 'Roommate']
+
+const priceRanges = [
+  'Any Budget', '0 - 2,000 EGP', '2,000 - 5,000 EGP',
+  '5,000 - 10,000 EGP', '10,000+ EGP'
+]
+
 export default function HeroSection() {
   const router = useRouter()
   const { t } = useLanguage()
-  const [selectedPropertyType, setSelectedPropertyType] = useState<string>('')
-  const [searchData, setSearchData] = useState({
-    location: '',
-    propertyType: '',
-    priceRange: ''
-  })
+  const [searchText, setSearchText] = useState('')
+  const [selectedArea, setSelectedArea] = useState('')
+  const [selectedType, setSelectedType] = useState('')
+  const [selectedBudget, setSelectedBudget] = useState('')
+  const [showAreaDropdown, setShowAreaDropdown] = useState(false)
+  const [showTypeDropdown, setShowTypeDropdown] = useState(false)
+  const [showBudgetDropdown, setShowBudgetDropdown] = useState(false)
 
   const bgRef = useRef<HTMLDivElement>(null)
   const circle1Ref = useRef<HTMLDivElement>(null)
   const circle2Ref = useRef<HTMLDivElement>(null)
 
-  // Cairo areas/locations
-  const locations = [
-    'ابو يوسف (تبة)', 'باب الشرعية', 'باب الفطور', 'بركات (دراسة)', 'تبة',
-    'التجمع الخامس', 'حي الثامن', 'حي العاشر', 'حي السابع', 'خان خليل',
-    'دراسة', 'دوية', 'دجلة المعادي', 'رمسيس', 'زهراء', 'زهراء المعادي',
-    'ميدان التحرير', 'سيدة عائشة', 'سيدة زينب', 'عتبة', 'عباسية',
-    'عبدي باشا', 'عباس العقاد', 'مستشفى حسين', 'مدينة البعوث', 'منهل',
-    'مكرم عبيد', 'مدينة نصر', 'مصطفى النحاس', 'مقطم', 'معادي', 'مهندسين', 'نادي غمالية'
-  ]
-
-  // Property types for dropdown - matching backend type field (property, room, roommate)
-  const propertyTypes = [
-    'Property', 'Room', 'Roommate'
-  ]
-
-  // Property type quick filters
-  const quickFilters = [
-    { value: 'property', label: t('hero.apartment') },
-    { value: 'room', label: t('hero.room') },
-    { value: 'roommate', label: t('hero.roommate') },
-  ]
-
-  // Price ranges
-  const priceRanges = [
-    'Any Price', '0 - 2,000 EGP', '2,000 - 5,000 EGP',
-    '5,000 - 10,000 EGP', '10,000+ EGP'
-  ]
-
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Background animation
       gsap.to(bgRef.current, {
-        scale: 1.1,
+        scale: 1.08,
         duration: 20,
         repeat: -1,
         yoyo: true,
         ease: 'sine.inOut'
       })
-
-      // Floating circles
       gsap.to(circle1Ref.current, {
-        y: -50,
-        x: 30,
+        y: -40,
+        x: 25,
         duration: 8,
         repeat: -1,
         yoyo: true,
         ease: 'sine.inOut'
       })
-
       gsap.to(circle2Ref.current, {
-        y: 40,
-        x: -40,
+        y: 35,
+        x: -35,
         duration: 10,
         repeat: -1,
         yoyo: true,
         ease: 'sine.inOut'
       })
     })
-
     return () => ctx.revert()
   }, [])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-
-    // Build query string
     const params = new URLSearchParams()
-
-    const propertyType = selectedPropertyType || searchData.propertyType
-
-    if (searchData.location) params.append('location', searchData.location)
-    if (propertyType) params.append('type', propertyType.toLowerCase())
-    if (searchData.priceRange) params.append('priceRange', searchData.priceRange)
-
-    // Navigate to properties page with filters
+    const location = selectedArea || searchText
+    if (location) params.append('location', location)
+    if (selectedType) params.append('type', selectedType.toLowerCase())
+    if (selectedBudget && selectedBudget !== 'Any Budget') params.append('priceRange', selectedBudget)
     router.push(`/properties?${params.toString()}`)
   }
 
-  const handleQuickFilter = (type: string) => {
-    setSelectedPropertyType(type)
-    setSearchData({ ...searchData, propertyType: type })
-  }
-
   return (
-    <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-20 overflow-hidden">
+    <section className="relative min-h-screen flex flex-col justify-between overflow-hidden">
       {/* Animated Background */}
       <div
         ref={bgRef}
@@ -113,204 +86,200 @@ export default function HeroSection() {
           transformOrigin: 'center center'
         }}
       />
-
       {/* Overlay */}
-      <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
+      <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/50 via-black/40 to-black/60" />
 
       {/* Animated Circles */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <div
           ref={circle1Ref}
-          className="absolute -top-40 -right-40 w-96 h-96 bg-primary/10 rounded-full blur-3xl"
+          className="absolute -top-32 -right-32 w-80 h-80 bg-primary/20 rounded-full blur-3xl"
         />
         <div
           ref={circle2Ref}
-          className="absolute -bottom-40 -left-40 w-96 h-96 bg-primary/10 rounded-full blur-3xl"
+          className="absolute -bottom-32 -left-32 w-80 h-80 bg-primary/20 rounded-full blur-3xl"
         />
       </div>
 
-      {/* Content */}
-      <div className="relative z-10 w-full max-w-6xl mx-auto text-center">
-        {/* Title */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white mb-4 leading-tight px-4">
+      {/* Top: Title & Subtitle */}
+      <div className="relative z-10 flex flex-col items-center justify-center flex-1 pt-28 pb-8 px-6 text-center">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-3">
           {t('hero.title')}
         </h1>
-        <p className="text-lg sm:text-xl md:text-2xl text-white/90 mb-12 font-light px-4">
+        <p className="text-base sm:text-lg md:text-xl text-white/85 font-light max-w-md">
           {t('hero.subtitle')}
         </p>
+      </div>
 
-        {/* Search Box */}
-        <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden mx-4 sm:mx-0">
-          {/* Search Form */}
-          <form onSubmit={handleSearch} className="p-4 sm:p-6 md:p-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              {/* Location Dropdown */}
-              <div className="w-full">
-                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 text-left">
-                  {t('hero.location')}
-                </label>
-                <div className="relative">
-                  <svg
-                    className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 pointer-events-none"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <select
-                    value={searchData.location}
-                    onChange={(e) => setSearchData({ ...searchData, location: e.target.value })}
-                    className="w-full pl-10 sm:pl-12 pr-8 sm:pr-10 py-2.5 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary transition-all appearance-none cursor-pointer bg-white font-medium text-gray-700"
-                  >
-                    <option value="">Select Area</option>
-                    {locations.map((location) => (
-                      <option key={location} value={location}>
-                        {location}
-                      </option>
-                    ))}
-                  </select>
-                  <svg
-                    className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
+      {/* Bottom: Search Card */}
+      <div className="relative z-10 px-4 pb-10 max-w-lg mx-auto w-full">
+        <form
+          onSubmit={handleSearch}
+          className="bg-white rounded-3xl shadow-2xl overflow-visible"
+        >
+          {/* Row 1: Search input */}
+          <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
+            <svg className="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder="Search by area..."
+              className="flex-1 text-sm text-gray-700 placeholder-gray-400 outline-none bg-transparent"
+            />
+            <button
+              type="button"
+              onClick={() => setShowAreaDropdown(false)}
+              className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex-shrink-0"
+            >
+              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 010 2H4a1 1 0 01-1-1zm3 5a1 1 0 011-1h10a1 1 0 010 2H7a1 1 0 01-1-1zm4 5a1 1 0 011-1h4a1 1 0 010 2h-4a1 1 0 01-1-1z" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Row 2: All Areas */}
+          <div className="relative border-b border-gray-100">
+            <button
+              type="button"
+              onClick={() => {
+                setShowAreaDropdown(!showAreaDropdown)
+                setShowTypeDropdown(false)
+                setShowBudgetDropdown(false)
+              }}
+              className="w-full flex items-center justify-between px-5 py-4 text-left"
+            >
+              <div className="flex items-center gap-3">
+                <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span className="text-sm font-semibold text-gray-700">
+                  {selectedArea || 'All Areas'}
+                </span>
               </div>
-
-              {/* Property Type Dropdown */}
-              <div className="w-full">
-                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 text-left">
-                  {t('hero.propertyType')}
-                </label>
-                <div className="relative">
-                  <svg
-                    className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 pointer-events-none"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+              <svg className={`w-4 h-4 text-gray-400 transition-transform ${showAreaDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {showAreaDropdown && (
+              <div className="absolute left-0 right-0 top-full z-50 bg-white border border-gray-100 rounded-2xl shadow-2xl max-h-52 overflow-y-auto">
+                <button
+                  type="button"
+                  onClick={() => { setSelectedArea(''); setShowAreaDropdown(false) }}
+                  className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-gray-50 font-semibold"
+                >
+                  All Areas
+                </button>
+                {locations.map((loc) => (
+                  <button
+                    key={loc}
+                    type="button"
+                    onClick={() => { setSelectedArea(loc); setShowAreaDropdown(false) }}
+                    className="w-full text-left px-5 py-2.5 text-sm text-gray-600 hover:bg-gray-50"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                  </svg>
-                  <select
-                    value={selectedPropertyType || searchData.propertyType}
-                    onChange={(e) => {
-                      setSearchData({ ...searchData, propertyType: e.target.value })
-                      setSelectedPropertyType(e.target.value)
-                    }}
-                    className="w-full pl-10 sm:pl-12 pr-8 sm:pr-10 py-2.5 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary transition-all appearance-none cursor-pointer bg-white font-medium text-gray-700"
-                  >
-                    <option value="">All Types</option>
-                    {propertyTypes.map((type) => (
-                      <option key={type} value={type.toLowerCase()}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                  <svg
-                    className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
+                    {loc}
+                  </button>
+                ))}
               </div>
+            )}
+          </div>
 
-              {/* Price Range Dropdown */}
-              <div className="w-full">
-                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 text-left">
-                  {t('hero.priceRange')}
-                </label>
-                <div className="relative">
-                  <svg
-                    className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 pointer-events-none"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+          {/* Row 3: Property Type + Any Budget */}
+          <div className="grid grid-cols-2 border-b border-gray-100">
+            {/* Property Type */}
+            <div className="relative border-r border-gray-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowTypeDropdown(!showTypeDropdown)
+                  setShowAreaDropdown(false)
+                  setShowBudgetDropdown(false)
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-4"
+              >
+                <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span className="text-sm font-semibold text-gray-700 truncate">
+                  {selectedType || 'Property Type'}
+                </span>
+              </button>
+              {showTypeDropdown && (
+                <div className="absolute left-0 top-full z-50 w-44 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedType(''); setShowTypeDropdown(false) }}
+                    className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 font-semibold"
                   >
+                    All Types
+                  </button>
+                  {propertyTypes.map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => { setSelectedType(type); setShowTypeDropdown(false) }}
+                      className="w-full text-left px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50"
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Any Budget */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowBudgetDropdown(!showBudgetDropdown)
+                  setShowAreaDropdown(false)
+                  setShowTypeDropdown(false)
+                }}
+                className="w-full flex items-center justify-between px-4 py-4"
+              >
+                <div className="flex items-center gap-2.5">
+                  <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <select
-                    value={searchData.priceRange}
-                    onChange={(e) => setSearchData({ ...searchData, priceRange: e.target.value })}
-                    className="w-full pl-10 sm:pl-12 pr-8 sm:pr-10 py-2.5 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary transition-all appearance-none cursor-pointer bg-white font-medium text-gray-700"
-                  >
-                    {priceRanges.map((range) => (
-                      <option key={range} value={range}>
-                        {range}
-                      </option>
-                    ))}
-                  </select>
-                  <svg
-                    className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
+                  <span className="text-sm font-semibold text-gray-700 truncate">
+                    {selectedBudget || 'Any Budget'}
+                  </span>
                 </div>
-              </div>
-
-              {/* Search Button */}
-              <div className="w-full flex items-end">
-                <button
-                  type="submit"
-                  className="w-full bg-primary hover:bg-primary-dark text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base lg:text-lg transition-all hover:shadow-lg flex items-center justify-center gap-2"
-                >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  {t('hero.search')}
-                </button>
-              </div>
+                <svg className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${showBudgetDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {showBudgetDropdown && (
+                <div className="absolute right-0 top-full z-50 w-52 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden">
+                  {priceRanges.map((range) => (
+                    <button
+                      key={range}
+                      type="button"
+                      onClick={() => { setSelectedBudget(range === 'Any Budget' ? '' : range); setShowBudgetDropdown(false) }}
+                      className="w-full text-left px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 first:font-semibold first:text-gray-700"
+                    >
+                      {range}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+          </div>
 
-            {/* Quick Filter Tags */}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-4 sm:mt-6">
-              {quickFilters.map((filter) => (
-                <button
-                  key={filter.value}
-                  type="button"
-                  onClick={() => handleQuickFilter(filter.value)}
-                  className={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-full transition-all ${
-                    selectedPropertyType === filter.value
-                      ? 'bg-primary text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
-          </form>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-3 sm:gap-4 md:gap-6 mt-12 sm:mt-16 max-w-4xl mx-auto px-4">
-          {[
-            { value: '5,234+', label: t('stats.properties'), icon: '🏠' },
-            { value: '10,450+', label: t('stats.students'), icon: '🎓' },
-            { value: '98%', label: t('stats.satisfied'), icon: '⭐' },
-          ].map((stat, index) => (
-            <div
-              key={index}
-              className="bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl p-4 sm:p-6 border-2 border-white/50 hover:bg-white hover:scale-105 transition-all group cursor-pointer shadow-xl"
+          {/* Row 4: Search Button */}
+          <div className="px-4 py-4">
+            <button
+              type="submit"
+              className="w-full bg-primary hover:bg-primary-dark text-white py-3.5 rounded-xl font-bold text-base transition-all hover:shadow-lg"
             >
-              <div className="text-3xl sm:text-4xl mb-2">{stat.icon}</div>
-              <div className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-1 group-hover:text-primary transition-colors">
-                {stat.value}
-              </div>
-              <div className="text-xs sm:text-sm text-gray-600 font-medium">{stat.label}</div>
-            </div>
-          ))}
-        </div>
+              {t('hero.search')}
+            </button>
+          </div>
+        </form>
       </div>
     </section>
   )

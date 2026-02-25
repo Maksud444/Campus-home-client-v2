@@ -129,10 +129,10 @@ export default function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xl transition-all bg-primary text-white">
-              C
+              B
             </div>
             <span className="text-2xl font-bold text-primary">
-              Campus Egypt
+              Baytino
             </span>
           </Link>
 

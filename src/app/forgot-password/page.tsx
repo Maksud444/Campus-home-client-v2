@@ -52,9 +52,9 @@ export default function ForgotPasswordPage() {
           <div className="text-center mb-8">
             <Link href="/" className="inline-flex items-center gap-2 mb-4">
               <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-2xl">
-                C
+                B
               </div>
-              <span className="text-2xl font-bold text-primary">Campus Egypt</span>
+              <span className="text-2xl font-bold text-primary">Baytino</span>
             </Link>
             <h2 className="text-3xl font-extrabold text-gray-900 mb-2">
               Forgot Password? 🔐

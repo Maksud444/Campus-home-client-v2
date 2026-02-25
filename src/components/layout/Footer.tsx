@@ -14,9 +14,9 @@ export default function Footer() {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-11 h-11 bg-primary rounded-xl flex items-center justify-center text-white font-extrabold text-2xl">
-                C
+                B
               </div>
-              <span className="text-2xl font-bold text-white">Campus Egypt</span>
+              <span className="text-2xl font-bold text-white">Baytino</span>
             </div>
             <p className="text-gray-400 leading-relaxed">
               {t('footer.tagline')}
