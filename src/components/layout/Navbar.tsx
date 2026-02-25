@@ -152,12 +152,19 @@ export default function Navbar() {
               <span>🏢</span>
               <span>{t('nav.properties')}</span>
             </Link>
-            <Link 
-              href="/services" 
+            <Link
+              href="/services"
               className="font-semibold hover:text-primary transition-colors flex items-center gap-2 text-gray-700"
             >
               <span>🔧</span>
               <span>{t('nav.services')}</span>
+            </Link>
+            <Link
+              href={session ? '/post' : '/login'}
+              className="font-semibold hover:text-primary transition-colors flex items-center gap-2 text-gray-700"
+            >
+              <span>➕</span>
+              <span>{t('nav.createPost')}</span>
             </Link>
 
             {session ? (
@@ -341,15 +348,23 @@ export default function Navbar() {
                 <span>🏢</span>
                 <span>{t('nav.properties')}</span>
               </Link>
-              <Link 
-                href="/services" 
+              <Link
+                href="/services"
                 className="text-gray-800 font-semibold hover:text-primary transition-colors flex items-center gap-3 py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <span>🔧</span>
                 <span>{t('nav.services')}</span>
               </Link>
-              
+              <Link
+                href={session ? '/post' : '/login'}
+                className="text-gray-800 font-semibold hover:text-primary transition-colors flex items-center gap-3 py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span>➕</span>
+                <span>{t('nav.createPost')}</span>
+              </Link>
+
               <div className="pt-4 border-t border-gray-200">
                 {session ? (
                   <div className="flex flex-col gap-3">
