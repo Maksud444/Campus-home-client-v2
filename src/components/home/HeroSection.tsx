@@ -232,9 +232,9 @@ export default function HeroSection() {
       </div>
 
       {/* ═══════════════ MOBILE LAYOUT (< md) ═══════════════ */}
-      <div className="md:hidden flex flex-col justify-between h-[calc(100vh-4rem)]">
-        {/* Title at top — tight, no extra gap */}
-        <div className="relative z-10 pt-4 pb-2 px-5 text-center">
+      <div className="md:hidden flex flex-col">
+        {/* Title */}
+        <div className="relative z-10 pt-5 pb-4 px-5 text-center">
           <h1 className="text-xl font-extrabold text-white leading-tight mb-1 drop-shadow-lg whitespace-nowrap">
             {t('hero.title')}
           </h1>
@@ -243,8 +243,8 @@ export default function HeroSection() {
           </p>
         </div>
 
-        {/* Search Card at bottom */}
-        <div className="relative z-10 px-4 pb-6">
+        {/* Search Card — directly below title, no gap */}
+        <div className="relative z-10 px-4 pb-8">
           <form
             onSubmit={handleSearch}
             className="bg-white rounded-3xl shadow-2xl overflow-visible"
