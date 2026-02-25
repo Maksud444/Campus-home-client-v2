@@ -106,13 +106,13 @@ export default function HeroSection() {
       </div>
 
       {/* ═══════════════ DESKTOP LAYOUT (md+) ═══════════════ */}
-      <div className="hidden md:flex relative z-10 flex-col items-center justify-center min-h-screen px-8 py-24">
+      <div className="hidden md:flex relative z-10 flex-col items-center justify-center min-h-screen px-8 py-10">
         {/* Title */}
-        <div className="text-center mb-10">
-          <h1 className="text-5xl lg:text-6xl xl:text-7xl font-extrabold text-white leading-tight mb-4 drop-shadow-lg">
+        <div className="text-center mb-6">
+          <h1 className="text-4xl lg:text-5xl xl:text-6xl font-extrabold text-white leading-tight mb-3 drop-shadow-lg">
             {t('hero.title')}
           </h1>
-          <p className="text-xl lg:text-2xl text-white font-light drop-shadow">
+          <p className="text-lg lg:text-xl text-white font-light drop-shadow">
             {t('hero.subtitle')}
           </p>
         </div>
@@ -120,10 +120,10 @@ export default function HeroSection() {
         {/* Search Card */}
         <form
           onSubmit={handleSearch}
-          className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-4xl"
+          className="bg-white rounded-2xl shadow-2xl p-5 w-full max-w-4xl"
         >
           {/* Type Tabs */}
-          <div className="flex gap-2 mb-5">
+          <div className="flex gap-2 mb-4">
             {typeTabs.map((tab) => (
               <button
                 key={tab.value}
@@ -141,7 +141,7 @@ export default function HeroSection() {
           </div>
 
           {/* Search input + button row */}
-          <div className="flex gap-3 mb-4">
+          <div className="flex gap-3 mb-3">
             <div className="flex-1 flex items-center gap-3 border-2 border-gray-200 rounded-xl px-4 py-3 focus-within:border-primary transition-colors">
               <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -233,18 +233,18 @@ export default function HeroSection() {
 
       {/* ═══════════════ MOBILE LAYOUT (< md) ═══════════════ */}
       <div className="md:hidden flex flex-col justify-between min-h-screen">
-        {/* Title at top */}
-        <div className="relative z-10 pt-28 pb-8 px-6 text-center">
-          <h1 className="text-3xl font-extrabold text-white leading-tight mb-3 drop-shadow-lg">
+        {/* Title at top — tight, no extra gap */}
+        <div className="relative z-10 pt-4 pb-2 px-5 text-center">
+          <h1 className="text-xl font-extrabold text-white leading-tight mb-1 drop-shadow-lg whitespace-nowrap">
             {t('hero.title')}
           </h1>
-          <p className="text-base text-white font-light drop-shadow">
+          <p className="text-xs text-white font-light drop-shadow whitespace-nowrap">
             {t('hero.subtitle')}
           </p>
         </div>
 
         {/* Search Card at bottom */}
-        <div className="relative z-10 px-4 pb-10">
+        <div className="relative z-10 px-4 pb-6">
           <form
             onSubmit={handleSearch}
             className="bg-white rounded-3xl shadow-2xl overflow-visible"

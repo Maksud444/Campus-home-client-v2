@@ -125,9 +125,9 @@ export default function Navbar() {
         : 'bg-white/95 backdrop-blur-md shadow-md py-4'
     }`}>
       <div className="container mx-auto px-6">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
+        <div className="flex items-center">
+          {/* Logo - LEFT */}
+          <Link href="/" className="flex-shrink-0 flex items-center gap-2 group">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xl transition-all bg-primary text-white">
               B
             </div>
@@ -136,37 +136,40 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-8">
-            <Link 
-              href="/" 
-              className="font-semibold hover:text-primary transition-colors flex items-center gap-2 text-gray-700"
+          {/* Desktop Nav Links - CENTER */}
+          <div className="hidden md:flex flex-1 justify-center items-center gap-7">
+            <Link
+              href="/"
+              className="font-semibold hover:text-primary transition-colors flex items-center gap-1.5 text-gray-700"
             >
               <span>🏠</span>
               <span>{t('nav.home')}</span>
             </Link>
-            <Link 
-              href="/properties" 
-              className="font-semibold hover:text-primary transition-colors flex items-center gap-2 text-gray-700"
+            <Link
+              href="/properties"
+              className="font-semibold hover:text-primary transition-colors flex items-center gap-1.5 text-gray-700"
             >
               <span>🏢</span>
               <span>{t('nav.properties')}</span>
             </Link>
             <Link
               href="/services"
-              className="font-semibold hover:text-primary transition-colors flex items-center gap-2 text-gray-700"
+              className="font-semibold hover:text-primary transition-colors flex items-center gap-1.5 text-gray-700"
             >
               <span>🔧</span>
               <span>{t('nav.services')}</span>
             </Link>
             <Link
               href={session ? '/post' : '/login'}
-              className="font-semibold hover:text-primary transition-colors flex items-center gap-2 text-gray-700"
+              className="font-semibold hover:text-primary transition-colors flex items-center gap-1.5 text-gray-700"
             >
               <span>➕</span>
               <span>{t('nav.createPost')}</span>
             </Link>
+          </div>
 
+          {/* Desktop Auth - RIGHT */}
+          <div className="hidden md:flex items-center gap-3 flex-shrink-0">
             {session ? (
               <div className="relative" ref={dropdownRef}>
                 <button
@@ -314,7 +317,7 @@ export default function Navbar() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden text-gray-800 hover:text-primary transition-colors"
+            className="md:hidden ml-auto text-gray-800 hover:text-primary transition-colors"
           >
             {mobileMenuOpen ? (
               <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
