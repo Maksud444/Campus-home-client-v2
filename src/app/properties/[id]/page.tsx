@@ -297,8 +297,58 @@ export default function PropertyDetailPage() {
         <div className="max-w-7xl mx-auto px-4 py-4">
           {imageUrls.length > 0 ? (
             <div className="relative">
-              {/* Grid Gallery */}
-              <div className={`grid gap-2 rounded-2xl overflow-hidden ${
+
+              {/* ── MOBILE: proper image slider ── */}
+              <div className="sm:hidden relative rounded-2xl overflow-hidden" style={{ height: '260px' }}>
+                <Image
+                  src={imageUrls[currentImageIndex]}
+                  alt={property.title}
+                  fill
+                  className="object-cover transition-all duration-300"
+                  priority
+                />
+                {imageUrls.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => setCurrentImageIndex(prev => prev === 0 ? imageUrls.length - 1 : prev - 1)}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-md z-10"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => setCurrentImageIndex(prev => prev === imageUrls.length - 1 ? 0 : prev + 1)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-md z-10"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                    <div className="absolute bottom-3 left-3 bg-black/60 text-white px-3 py-1 rounded-full text-xs font-medium z-10">
+                      {currentImageIndex + 1} / {imageUrls.length}
+                    </div>
+                    <button
+                      onClick={() => setShowFullGallery(true)}
+                      className="absolute bottom-3 right-3 bg-white/90 text-gray-900 px-3 py-1.5 rounded-lg font-semibold text-xs shadow-lg flex items-center gap-1.5 z-10"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                      </svg>
+                      {t('detail.viewAllPhotos')} ({imageUrls.length})
+                    </button>
+                    {/* Dot indicators */}
+                    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                      {imageUrls.map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setCurrentImageIndex(i)}
+                          className={`rounded-full transition-all ${i === currentImageIndex ? 'w-4 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/50'}`}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* ── DESKTOP: Grid gallery ── */}
+              <div className={`hidden sm:grid gap-2 rounded-2xl overflow-hidden ${
                 imageUrls.length === 1 ? 'grid-cols-1' :
                 imageUrls.length === 2 ? 'grid-cols-2' :
                 'grid-cols-4 grid-rows-2'
@@ -322,7 +372,7 @@ export default function PropertyDetailPage() {
                 {imageUrls.slice(1, 5).map((url, index) => (
                   <div
                     key={index}
-                    className="relative cursor-pointer group hidden sm:block"
+                    className="relative cursor-pointer group"
                     onClick={() => { setCurrentImageIndex(index + 1); setShowFullGallery(true) }}
                   >
                     <Image
@@ -331,7 +381,6 @@ export default function PropertyDetailPage() {
                       fill
                       className="object-cover group-hover:brightness-90 transition-all"
                     />
-                    {/* Show more overlay on last visible image */}
                     {index === 3 && imageUrls.length > 5 && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                         <span className="text-white text-xl font-bold">+{imageUrls.length - 5} {t('propertiesPage.more')}</span>
@@ -341,11 +390,11 @@ export default function PropertyDetailPage() {
                 ))}
               </div>
 
-              {/* View All Photos Button */}
+              {/* View All Photos Button — desktop only */}
               {imageUrls.length > 1 && (
                 <button
                   onClick={() => { setCurrentImageIndex(0); setShowFullGallery(true) }}
-                  className="absolute bottom-4 right-4 bg-white hover:bg-gray-50 text-gray-900 px-4 py-2 rounded-lg font-semibold text-sm shadow-lg flex items-center gap-2 transition-colors"
+                  className="hidden sm:flex absolute bottom-4 right-4 bg-white hover:bg-gray-50 text-gray-900 px-4 py-2 rounded-lg font-semibold text-sm shadow-lg items-center gap-2 transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -354,28 +403,6 @@ export default function PropertyDetailPage() {
                 </button>
               )}
 
-              {/* Mobile Image Slider */}
-              <div className="sm:hidden">
-                {imageUrls.length > 1 && (
-                  <>
-                    <button
-                      onClick={() => setCurrentImageIndex(prev => prev === 0 ? imageUrls.length - 1 : prev - 1)}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-md"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => setCurrentImageIndex(prev => prev === imageUrls.length - 1 ? 0 : prev + 1)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-md"
-                    >
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
-                    <div className="absolute bottom-4 left-4 bg-black/60 text-white px-3 py-1 rounded-full text-xs font-medium">
-                      {currentImageIndex + 1} / {imageUrls.length}
-                    </div>
-                  </>
-                )}
-              </div>
             </div>
           ) : (
             <div className="h-[400px] rounded-2xl flex items-center justify-center bg-gray-100 text-8xl">

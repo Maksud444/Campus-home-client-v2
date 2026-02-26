@@ -98,23 +98,26 @@ export default function HeroSection() {
   }
 
   return (
-    <section className="relative overflow-hidden rounded-2xl mx-3 mt-3 mb-3">
-      {/* Animated Background */}
-      <div
-        ref={bgRef}
-        className="absolute inset-0 z-0 bg-cover bg-center"
-        style={{
-          backgroundImage: 'url(https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1920&q=80)',
-          transformOrigin: 'center center',
-        }}
-      />
-      {/* Overlay */}
-      <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/55 via-black/45 to-black/65" />
-
-      {/* Animated Circles */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <div ref={circle1Ref} className="absolute -top-32 -right-32 w-80 h-80 bg-primary/20 rounded-full blur-3xl" />
-        <div ref={circle2Ref} className="absolute -bottom-32 -left-32 w-80 h-80 bg-primary/20 rounded-full blur-3xl" />
+    <section className="relative rounded-2xl mx-3 mt-3 mb-3">
+      {/* Background wrapper — overflow-hidden here keeps bg clipped to rounded corners
+          without clipping the dropdown menus that extend beyond the form */}
+      <div className="absolute inset-0 rounded-2xl overflow-hidden z-0 pointer-events-none">
+        {/* Animated Background */}
+        <div
+          ref={bgRef}
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: 'url(https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1920&q=80)',
+            transformOrigin: 'center center',
+          }}
+        />
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/45 to-black/65" />
+        {/* Animated Circles */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div ref={circle1Ref} className="absolute -top-32 -right-32 w-80 h-80 bg-primary/20 rounded-full blur-3xl" />
+          <div ref={circle2Ref} className="absolute -bottom-32 -left-32 w-80 h-80 bg-primary/20 rounded-full blur-3xl" />
+        </div>
       </div>
 
       {/* ═══════════════ DESKTOP LAYOUT (md+) ═══════════════ */}
@@ -328,7 +331,7 @@ export default function HeroSection() {
             </div>
 
             {/* Row 2: All Areas dropdown */}
-            <div className="relative border-b border-gray-100">
+            <div className={`relative border-b transition-colors ${selectedArea ? 'border-primary/30 bg-primary/5' : 'border-gray-100'}`}>
               <button
                 type="button"
                 onClick={() => {
@@ -339,15 +342,18 @@ export default function HeroSection() {
                 className="w-full flex items-center justify-between px-4 py-3 text-left"
               >
                 <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`w-4 h-4 flex-shrink-0 ${selectedArea ? 'text-primary' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  <span className="text-xs font-semibold text-gray-800">
+                  <span className={`text-xs font-semibold ${selectedArea ? 'text-primary' : 'text-gray-800'}`}>
                     {selectedArea || 'All Areas'}
                   </span>
+                  {selectedArea && (
+                    <span className="text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-full font-medium leading-none">✓</span>
+                  )}
                 </div>
-                <svg className={`w-4 h-4 text-gray-500 transition-transform ${showAreaDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-4 h-4 transition-transform ${showAreaDropdown ? 'rotate-180' : ''} ${selectedArea ? 'text-primary' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
