@@ -31,20 +31,10 @@ const handler = NextAuth({
               console.log('🔍 Checking MongoDB for credentials...')
               const client = new MongoClient(MONGODB_URI)
               await client.connect()
-              
-              // Try different database names
-              let db = client.db('test') // Try 'test' first
-              let collections = await db.listCollections().toArray()
-              
-              if (collections.length === 0) {
-                db = client.db('campus-egypt')
-                collections = await db.listCollections().toArray()
-              }
-              
-              if (collections.length === 0) {
-                db = client.db('campus-home')
-              }
-              
+
+              // Use the database specified in the connection URI (campus-egypt)
+              const db = client.db()
+
               console.log(`📂 Using database: ${db.databaseName}`)
               
               const user = await db.collection('users').findOne({ email: credentials.email })
@@ -63,15 +53,32 @@ const handler = NextAuth({
               if (user && user.password) {
                 console.log('✅ Found user with password in MongoDB')
                 const passwordMatch = await bcrypt.compare(credentials.password, user.password)
-                
+
                 if (passwordMatch) {
-                  console.log('✅ Password match! Login successful!')
+                  console.log('✅ Password match! Getting backend token...')
+                  // Also get backend JWT token so admin API calls work
+                  let backendToken: string | undefined
+                  try {
+                    const tokenRes = await fetch(`${API_URL}/api/auth/login`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email: credentials.email, password: credentials.password }),
+                    })
+                    const tokenData = await tokenRes.json()
+                    if (tokenData.success && tokenData.token) {
+                      backendToken = tokenData.token
+                      console.log('✅ Got backend token')
+                    }
+                  } catch {
+                    console.log('⚠️ Could not get backend token, proceeding without it')
+                  }
                   return {
                     id: user._id.toString(),
                     email: user.email,
                     name: user.name,
                     role: user.role,
                     image: user.avatar || user.image,
+                    token: backendToken,
                   }
                 } else {
                   console.log('❌ Password mismatch')

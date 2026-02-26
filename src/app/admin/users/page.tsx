@@ -50,6 +50,7 @@ export default function AdminUsersPage() {
     try {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
       if (token) headers['Authorization'] = `Bearer ${token}`
+      if (process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY) headers['X-Admin-Key'] = process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY
       const res = await fetch(`${API_URL}/api/admin/users`, { headers })
       const data = await res.json()
       if (data.success && data.users) {
@@ -82,7 +83,7 @@ export default function AdminUsersPage() {
     try {
       const res = await fetch(`${API_URL}/api/admin/users/${userId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...(process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY ? { 'X-Admin-Key': process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY } : {}) },
         body: JSON.stringify({ role: newRole }),
       })
       const data = await res.json()
@@ -105,7 +106,7 @@ export default function AdminUsersPage() {
     try {
       const res = await fetch(`${API_URL}/api/admin/users/${userId}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { 'Authorization': `Bearer ${token}`, ...(process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY ? { 'X-Admin-Key': process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY } : {}) },
       })
       const data = await res.json()
       if (data.success || res.ok) {

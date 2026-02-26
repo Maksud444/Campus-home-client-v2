@@ -39,6 +39,7 @@ export default function AdminOverviewPage() {
     try {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
       if (token) headers['Authorization'] = `Bearer ${token}`
+      if (process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY) headers['X-Admin-Key'] = process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY
 
       const [propsRes, postsRes] = await Promise.allSettled([
         fetch(`${API_URL}/api/properties?limit=100`, { headers }),

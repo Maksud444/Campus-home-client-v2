@@ -40,15 +40,18 @@ export default function AdminPostsPage() {
   const fetchPosts = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/posts`)
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (token) headers['Authorization'] = `Bearer ${token}`
+      if (process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY) headers['X-Admin-Key'] = process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY
+      const res = await fetch(`${API_URL}/api/admin/posts`, { headers })
       const data = await res.json()
-      if (data.success && data.posts) setPosts(data.posts)
+      if (data.success && data.data?.posts) setPosts(data.data.posts)
     } catch (err) {
       console.error('Error:', err)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [token])
 
   useEffect(() => { fetchPosts() }, [fetchPosts])
 

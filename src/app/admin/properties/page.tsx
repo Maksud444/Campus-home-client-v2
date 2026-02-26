@@ -50,6 +50,7 @@ function PropertiesContent() {
     try {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
       if (token) headers['Authorization'] = `Bearer ${token}`
+      if (process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY) headers['X-Admin-Key'] = process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY
       const res = await fetch(`${API_URL}/api/properties?limit=200`, { headers })
       const data = await res.json()
       if (data.success && data.properties) setProperties(data.properties)
@@ -75,7 +76,7 @@ function PropertiesContent() {
     try {
       const res = await fetch(`${API_URL}/api/properties/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...(process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY ? { 'X-Admin-Key': process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY } : {}) },
         body: JSON.stringify({ status: 'active' }),
       })
       const data = await res.json()
@@ -97,7 +98,7 @@ function PropertiesContent() {
     try {
       const res = await fetch(`${API_URL}/api/properties/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...(process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY ? { 'X-Admin-Key': process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY } : {}) },
         body: JSON.stringify({ status: 'rejected' }),
       })
       const data = await res.json()
@@ -120,7 +121,7 @@ function PropertiesContent() {
     try {
       const res = await fetch(`${API_URL}/api/properties/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { 'Authorization': `Bearer ${token}`, ...(process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY ? { 'X-Admin-Key': process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY } : {}) },
       })
       const data = await res.json()
       if (data.success || res.ok) {
