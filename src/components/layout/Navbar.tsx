@@ -14,31 +14,31 @@ export default function Navbar() {
   const { data: session } = useSession()
   const { t } = useLanguage()
 
-  // Hide navbar on admin panel and secret admin login page
-  if (pathname.startsWith('/admin') || pathname.startsWith('/xadmin')) return null
+  // All hooks must be called before any conditional return (React rules)
   const [isScrolled, setIsScrolled] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  
-  // Fresh user data
   const [userName, setUserName] = useState('')
   const [userImage, setUserImage] = useState('')
 
+  const isAdminPage = pathname.startsWith('/admin') || pathname.startsWith('/xadmin')
+
   // Load fresh user data from backend
   useEffect(() => {
+    if (isAdminPage) return
     const loadFreshUserData = async () => {
       // Check localStorage first for immediate updates
       const wasUpdated = localStorage.getItem('profile_updated')
       if (wasUpdated === 'true') {
         const updatedName = localStorage.getItem('updated_name')
         const updatedImage = localStorage.getItem('updated_image')
-        
+
         if (updatedName) {
           setUserName(updatedName)
           setUserImage(updatedImage || '')
         }
-        
+
         // Clear flags after reading
         localStorage.removeItem('profile_updated')
         localStorage.removeItem('updated_name')
@@ -56,9 +56,9 @@ export default function Navbar() {
               'Pragma': 'no-cache'
             }
           })
-          
+
           const data = await response.json()
-          
+
           if (data.success && data.user) {
             setUserName(data.user.name)
             setUserImage(data.user.avatar || '')
@@ -74,15 +74,16 @@ export default function Navbar() {
     }
 
     loadFreshUserData()
-  }, [session?.user?.email, pathname])
+  }, [session?.user?.email, pathname, isAdminPage])
 
   useEffect(() => {
+    if (isAdminPage) return
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50)
     }
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+  }, [isAdminPage])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -97,6 +98,9 @@ export default function Navbar() {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [isProfileOpen])
+
+  // Hide navbar on admin panel and secret admin login page (after all hooks)
+  if (isAdminPage) return null
 
   const getRoleDisplay = (role?: string) => {
     if (!role) return 'User'
