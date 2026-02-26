@@ -109,8 +109,9 @@ export default function Navbar() {
 
   const getDashboardUrl = () => {
     if (!session?.user) return '/dashboard'
-    const userId = (session.user as any).id || session.user.email?.split('@')[0]
     const role = (session.user as any).role || 'student'
+    if (role === 'admin') return '/admin'
+    const userId = (session.user as any).id || session.user.email?.split('@')[0]
     return `/dashboard/${role}/${userId}`
   }
 
@@ -252,6 +253,20 @@ export default function Navbar() {
                           <div className="text-xs text-gray-600">View your dashboard</div>
                         </div>
                       </Link>
+
+                      {userRole === 'admin' && (
+                        <Link
+                          href="/admin"
+                          onClick={() => setIsProfileOpen(false)}
+                          className="flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors"
+                        >
+                          <span className="text-xl">🛡️</span>
+                          <div>
+                            <div className="font-semibold text-red-600">Admin Panel</div>
+                            <div className="text-xs text-gray-600">Manage platform</div>
+                          </div>
+                        </Link>
+                      )}
 
                       <Link
                         href="/settings"

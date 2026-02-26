@@ -26,10 +26,13 @@ export default function DashboardPage() {
       // Redirect with user ID in URL
       const role = (session.user as any).role || 'student'
       const userId = session.user.id || session.user.email?.split('@')[0]
-      
-      console.log('🔄 Redirecting to:', `/dashboard/${role}/${userId}`)
-      
-      // Use replace instead of push to avoid back button issues
+
+      // Admin goes directly to admin panel
+      if (role === 'admin') {
+        router.replace('/admin')
+        return
+      }
+
       router.replace(`/dashboard/${role}/${userId}`)
     }
   }, [session, status, redirecting, router])
