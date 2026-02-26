@@ -2,10 +2,10 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/layout/Navbar'
+import MobileBottomNav from '@/components/layout/MobileBottomNav'
 import SessionProvider from '@/components/SessionProvider'
 import { LanguageProvider } from '@/contexts/LanguageContext'
 import DesktopLanguageSwitcher from '@/components//Desktoplanguageswitcher'
-import MobileLanguageSwitcher from '@/components/MobileLanguageSwitcher'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -25,9 +25,12 @@ export default function RootLayout({
         <SessionProvider>
           <LanguageProvider>
             <Navbar />
+            {/* Desktop only language switcher */}
             <DesktopLanguageSwitcher />
-            <MobileLanguageSwitcher />
-            <main className="pt-16 min-h-screen">
+            {/* Mobile bottom nav (includes language) */}
+            <MobileBottomNav />
+            {/* pb-16 on mobile for bottom nav clearance */}
+            <main className="pt-16 min-h-screen pb-16 md:pb-0">
               {children}
             </main>
           </LanguageProvider>
