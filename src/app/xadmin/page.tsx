@@ -65,14 +65,14 @@ export default function AdminSecretLoginPage() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center -mt-16">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 -mt-16">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">

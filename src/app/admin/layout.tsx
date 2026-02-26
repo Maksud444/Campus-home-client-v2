@@ -58,7 +58,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100">
+      <div className="min-h-screen flex items-center justify-center bg-slate-100 -mt-16">
         <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-primary" />
       </div>
     )
@@ -70,7 +70,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const displayEmail = session.user?.email || ''
 
   return (
-    <div className="min-h-screen bg-slate-100 flex">
+    <div className="min-h-screen bg-slate-100 flex -mt-16">
       {/* ─── Sidebar ─── */}
       <aside className="w-64 bg-slate-900 text-white flex flex-col fixed top-0 left-0 h-full z-40 shadow-2xl">
         {/* Logo */}

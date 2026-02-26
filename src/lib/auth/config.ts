@@ -48,15 +48,17 @@ export const authOptions: NextAuthOptions = {
           const data = await response.json()
 
           if (!response.ok || !data.success) {
-            throw new Error(data.message || 'Login failed')
+            throw new Error(data.message || `Login failed (${response.status})`)
           }
 
+          const user = data.user
           return {
-            id: data.user.id,
-            email: data.user.email,
-            name: data.user.name,
-            role: data.user.role,
-            image: data.user.avatar
+            id: user._id || user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            image: user.avatar || user.image,
+            backendToken: data.token || data.accessToken || ''
           }
         } catch (error: any) {
           throw new Error(error.message)
@@ -66,7 +68,7 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account }) {
       // Handle OAuth providers (Google/Facebook)
       if (account?.provider === 'google' || account?.provider === 'facebook') {
         try {
@@ -114,6 +116,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id
         token.role = user.role || 'student'
         token.image = user.image
+        token.backendToken = (user as any).backendToken || ''
       }
 
       // Session update trigger
@@ -131,6 +134,7 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role as string
         session.user.name = token.name as string
         session.user.image = token.picture as string
+        ;(session.user as any).backendToken = token.backendToken as string
       }
       return session
     },

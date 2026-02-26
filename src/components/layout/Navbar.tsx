@@ -13,6 +13,9 @@ export default function Navbar() {
   const pathname = usePathname()
   const { data: session } = useSession()
   const { t } = useLanguage()
+
+  // Hide navbar on admin panel and secret admin login page
+  if (pathname.startsWith('/admin') || pathname.startsWith('/xadmin')) return null
   const [isScrolled, setIsScrolled] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
