@@ -212,11 +212,105 @@ function PropertiesPageContent() {
   return (
     <div className="min-h-screen bg-gray-50 pt-3">
 
-      {/* ── Sticky one-line filter bar ── */}
-      <div className="bg-white border-b border-gray-200 sticky top-20 z-30 shadow-sm">
-        <div className="max-w-7xl mx-auto px-3 py-2.5">
-          <div className="flex items-center gap-2">
+      {/* ── Sticky filter bar ── */}
+      <div className="bg-white border-b border-gray-200 sticky top-16 z-30 shadow-sm">
+        <div className="max-w-7xl mx-auto px-3">
 
+          {/* ── MOBILE layout: 2 rows ── */}
+          <div className="md:hidden">
+            {/* Row 1: Search + Map */}
+            <div className="flex items-center gap-2 pt-2.5 pb-2">
+              <div className="relative flex-1 min-w-0">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t('propertiesPage.search')}
+                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary"
+                />
+              </div>
+              <Link
+                href="/properties/map"
+                className="flex-shrink-0 flex items-center gap-1.5 bg-primary text-white px-3 py-2 rounded-lg text-sm font-semibold"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+                Map
+              </Link>
+            </div>
+            {/* Row 2: Scrollable filter chips */}
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2.5">
+              <select
+                value={filters.city}
+                onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+                className={`flex-shrink-0 border rounded-full px-3 py-1.5 text-xs focus:outline-none bg-white font-medium ${filters.city ? 'border-primary text-primary' : 'border-gray-200 text-gray-700'}`}
+              >
+                <option value="">{t('propertiesPage.allAreas')}</option>
+                <option value="Cairo">{t('propertiesPage.cairoAll')}</option>
+                {['ابو يوسف (تبة)', 'باب الشرعية', 'باب الفطور', 'بركات (دراسة)', 'تبة',
+                  'التجمع الخامس', 'حي الثامن', 'حي العاشر', 'حي السابع', 'خان خليل',
+                  'دراسة', 'دوية', 'دجلة المعادي', 'رمسيس', 'زهراء', 'زهراء المعادي',
+                  'ميدان التحرير', 'سيدة عائشة', 'سيدة زينب', 'عتبة', 'عباسية',
+                  'عبدي باشا', 'عباس العقاد', 'مستشفى حسين', 'مدينة البعوث', 'منهل',
+                  'مكرم عبيد', 'مدينة نصر', 'مصطفى النحاس', 'مقطم', 'معادي', 'مهندسين', 'نادي غمالية'
+                ].map(area => <option key={area} value={area}>{area}</option>)}
+              </select>
+              <select
+                value={filters.type}
+                onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+                className={`flex-shrink-0 border rounded-full px-3 py-1.5 text-xs focus:outline-none bg-white font-medium ${filters.type ? 'border-primary text-primary' : 'border-gray-200 text-gray-700'}`}
+              >
+                <option value="">{t('propertiesPage.allTypes')}</option>
+                <option value="property">{t('propertiesPage.propertyType')}</option>
+                <option value="room">{t('propertiesPage.roomType')}</option>
+                <option value="roommate">{t('propertiesPage.roommateType')}</option>
+              </select>
+              <select
+                value={filters.minPrice && filters.maxPrice ? `${filters.minPrice}-${filters.maxPrice}` : filters.minPrice ? `${filters.minPrice}-` : ''}
+                onChange={(e) => {
+                  const v = e.target.value
+                  if (!v) setFilters({ ...filters, minPrice: '', maxPrice: '' })
+                  else if (v === '0-2000') setFilters({ ...filters, minPrice: '0', maxPrice: '2000' })
+                  else if (v === '2000-5000') setFilters({ ...filters, minPrice: '2000', maxPrice: '5000' })
+                  else if (v === '5000-10000') setFilters({ ...filters, minPrice: '5000', maxPrice: '10000' })
+                  else if (v === '10000-') setFilters({ ...filters, minPrice: '10000', maxPrice: '' })
+                }}
+                className={`flex-shrink-0 border rounded-full px-3 py-1.5 text-xs focus:outline-none bg-white font-medium ${(filters.minPrice || filters.maxPrice) ? 'border-primary text-primary' : 'border-gray-200 text-gray-700'}`}
+              >
+                <option value="">{t('propertiesPage.price')}</option>
+                <option value="0-2000">0 – 2,000 EGP</option>
+                <option value="2000-5000">2,000 – 5,000 EGP</option>
+                <option value="5000-10000">5,000 – 10,000 EGP</option>
+                <option value="10000-">10,000+ EGP</option>
+              </select>
+              <select
+                value={filters.bedrooms}
+                onChange={(e) => setFilters({ ...filters, bedrooms: e.target.value })}
+                className={`flex-shrink-0 border rounded-full px-3 py-1.5 text-xs focus:outline-none bg-white font-medium ${filters.bedrooms ? 'border-primary text-primary' : 'border-gray-200 text-gray-700'}`}
+              >
+                <option value="">{t('properties.bedrooms')}</option>
+                <option value="1">1 {t('propertiesPage.br')}</option>
+                <option value="2">2 {t('propertiesPage.br')}</option>
+                <option value="3">3 {t('propertiesPage.br')}</option>
+                <option value="4">4+ {t('propertiesPage.br')}</option>
+              </select>
+              {hasActiveFilters && (
+                <button
+                  onClick={() => { setFilters({ city: '', type: '', minPrice: '', maxPrice: '', bedrooms: '' }); setSearchQuery('') }}
+                  className="flex-shrink-0 text-xs text-red-500 border border-red-200 rounded-full px-3 py-1.5 whitespace-nowrap flex items-center gap-1 bg-red-50 font-medium"
+                >
+                  ✕ {t('propertiesPage.clearFilters')}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* ── DESKTOP layout: single row ── */}
+          <div className="hidden md:flex items-center gap-2 py-2.5">
             {/* Search input */}
             <div className="relative flex-1 min-w-0">
               <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -230,9 +324,7 @@ function PropertiesPageContent() {
                 className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary"
               />
             </div>
-
             <div className="w-px h-7 bg-gray-200 flex-shrink-0" />
-
             {/* Location */}
             <select
               value={filters.city}
@@ -251,7 +343,6 @@ function PropertiesPageContent() {
                 <option key={area} value={area}>{area}</option>
               ))}
             </select>
-
             {/* Type */}
             <select
               value={filters.type}
@@ -263,7 +354,6 @@ function PropertiesPageContent() {
               <option value="room">{t('propertiesPage.roomType')}</option>
               <option value="roommate">{t('propertiesPage.roommateType')}</option>
             </select>
-
             {/* Price dropdown */}
             <div ref={priceDropdownRef} className="relative flex-shrink-0">
               <button
@@ -280,7 +370,6 @@ function PropertiesPageContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-
               {showPriceDropdown && (
                 <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-40 p-4 w-64">
                   <div className="flex gap-3">
@@ -323,7 +412,6 @@ function PropertiesPageContent() {
                 </div>
               )}
             </div>
-
             {/* Bedrooms */}
             <select
               value={filters.bedrooms}
@@ -336,7 +424,6 @@ function PropertiesPageContent() {
               <option value="3">3 {t('propertiesPage.br')}</option>
               <option value="4">4+ {t('propertiesPage.br')}</option>
             </select>
-
             {/* Clear filters */}
             {hasActiveFilters && (
               <button
@@ -349,7 +436,6 @@ function PropertiesPageContent() {
                 {t('propertiesPage.clearFilters')}
               </button>
             )}
-
             {/* Map view button */}
             <Link
               href="/properties/map"
@@ -361,6 +447,7 @@ function PropertiesPageContent() {
               Map
             </Link>
           </div>
+
         </div>
       </div>
 
