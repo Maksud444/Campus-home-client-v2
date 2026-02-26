@@ -486,7 +486,7 @@ function PropertiesPageContent() {
       )}
 
       {/* ── Main content ── */}
-      <div className="max-w-7xl mx-auto px-4 pt-4 pb-5">
+      <div className="max-w-7xl mx-auto px-4 pt-6 pb-5">
 
         {/* Error */}
         {error && (

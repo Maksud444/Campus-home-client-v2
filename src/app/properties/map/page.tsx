@@ -20,9 +20,32 @@ interface Property {
   }
 }
 
-// Coordinates for Cairo areas
+// Coordinates for Cairo areas (English + Arabic names)
 const areaCoordinates: Record<string, [number, number]> = {
   'Cairo': [30.0444, 31.2357],
+  // English area names
+  'Downtown Cairo': [30.0512, 31.2472],
+  'Nasr City': [30.0624, 31.3252],
+  'New Cairo': [30.0200, 31.4700],
+  'Fifth Settlement': [30.0200, 31.4700],
+  'Maadi': [29.9592, 31.2569],
+  'Zamalek': [30.0683, 31.2189],
+  'Dokki': [30.0609, 31.1985],
+  'Mohandessin': [30.0609, 31.1985],
+  'Heliopolis': [30.0878, 31.3218],
+  'Ain Shams': [30.1100, 31.3200],
+  '6th of October': [29.9402, 30.9184],
+  '6th October': [29.9402, 30.9184],
+  'October City': [29.9402, 30.9184],
+  'Giza': [30.0131, 31.2089],
+  'Shubra': [30.1100, 31.2450],
+  'Abbasia': [30.0700, 31.2802],
+  'Ramses': [30.0628, 31.2513],
+  'Garden City': [30.0381, 31.2306],
+  'Tahrir': [30.0443, 31.2357],
+  'Agouza': [30.0662, 31.2097],
+  'Madinet Nasr': [30.0624, 31.3252],
+  // Arabic area names
   'ابو يوسف (تبة)': [30.0558, 31.2472],
   'باب الشرعية': [30.0592, 31.2528],
   'باب الفطور': [30.0583, 31.2502],
@@ -127,10 +150,9 @@ export default function MapPage() {
         grouped[area].push(property)
       })
 
-      // Create a marker for each area that has a known coordinate
+      // Create a marker for each area (use Cairo center as fallback for unknown areas)
       Object.entries(grouped).forEach(([area, areaProps]) => {
-        const coords = areaCoordinates[area]
-        if (!coords) return
+        const coords = areaCoordinates[area] || [30.0444, 31.2357] as [number, number]
 
         const firstProp = areaProps[0]
         const imgUrl = firstProp.images?.[0]?.url || ''
