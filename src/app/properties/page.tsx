@@ -212,7 +212,7 @@ function PropertiesPageContent() {
   return (
     <div className="min-h-screen bg-gray-50 pt-3">
 
-      {/* ── Sticky filter bar ── */}
+      {/* ── Sticky filter bar + area chips ── */}
       <div className="bg-white border-b border-gray-200 sticky top-16 z-30 shadow-sm">
         <div className="max-w-7xl mx-auto px-3">
 
@@ -448,42 +448,39 @@ function PropertiesPageContent() {
             </Link>
           </div>
 
-        </div>
-      </div>
-
-      {/* ── Area chips row (horizontal scroll) ── */}
-      {areaCounts.length > 0 && (
-        <div className="bg-white border-b border-gray-100 shadow-sm">
-          <div className="max-w-7xl mx-auto px-3 py-2.5">
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-              {/* "All" chip */}
-              <button
-                onClick={() => setFilters({ ...filters, city: '' })}
-                className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors ${
-                  !filters.city
-                    ? 'bg-primary text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                All ({properties.length})
-              </button>
-              {areaCounts.map(([area, count]) => (
+          {/* ── Area chips row (horizontal scroll) – inside sticky bar ── */}
+          {areaCounts.length > 0 && (
+            <div className="pb-2.5 pt-1">
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+                {/* "All" chip */}
                 <button
-                  key={area}
-                  onClick={() => setFilters({ ...filters, city: filters.city === area ? '' : area })}
+                  onClick={() => setFilters({ ...filters, city: '' })}
                   className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors ${
-                    filters.city === area
+                    !filters.city
                       ? 'bg-primary text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  {area} ({count})
+                  All ({properties.length})
                 </button>
-              ))}
+                {areaCounts.map(([area, count]) => (
+                  <button
+                    key={area}
+                    onClick={() => setFilters({ ...filters, city: filters.city === area ? '' : area })}
+                    className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors ${
+                      filters.city === area
+                        ? 'bg-primary text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {area} ({count})
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* ── Main content ── */}
       <div className="max-w-7xl mx-auto px-4 pt-6 pb-5">
@@ -519,7 +516,7 @@ function PropertiesPageContent() {
               const whatsappLink = property.whatsapp
                 ? `https://wa.me/${property.whatsapp.countryCode}${property.whatsapp.number}`
                 : null
-              const typeLabel = (property.propertyType || property.type || 'apartment').toLowerCase()
+              const typeLabel = (property.type || property.propertyType || 'property').toLowerCase()
 
               return (
                 <div

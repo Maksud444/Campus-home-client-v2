@@ -5,11 +5,13 @@ import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff } from 'lucide-react'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [isSignup, setIsSignup] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -184,7 +186,7 @@ export default function LoginPage() {
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-primary">Baytino</h1>
           <p className="text-gray-600 mt-1.5 text-sm sm:text-base whitespace-nowrap">
-            {isSignup ? 'Create your account to get started' : 'Welcome back! Sign in to continue'}
+            {isSignup ? t('login.createAccount') : t('login.welcomeBack')}
           </p>
         </div>
 
@@ -215,7 +217,7 @@ export default function LoginPage() {
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
-            Continue with Google
+            {t('login.continueGoogle')}
           </button>
 
           <button
@@ -226,14 +228,14 @@ export default function LoginPage() {
             <svg className="w-5 h-5" fill="#1877F2" viewBox="0 0 24 24">
               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
             </svg>
-            Continue with Facebook
+            {t('login.continueFacebook')}
           </button>
         </div>
 
         {/* Divider */}
         <div className="flex items-center gap-4 mb-6">
           <div className="flex-1 border-t border-gray-300"></div>
-          <span className="text-gray-500 text-sm">OR</span>
+          <span className="text-gray-500 text-sm">{t('login.or')}</span>
           <div className="flex-1 border-t border-gray-300"></div>
         </div>
 
@@ -249,7 +251,7 @@ export default function LoginPage() {
               !isSignup ? 'bg-primary text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            Login
+            {t('login.loginTab')}
           </button>
           <button
             onClick={() => {
@@ -261,7 +263,7 @@ export default function LoginPage() {
               isSignup ? 'bg-primary text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            Sign Up
+            {t('login.signUpTab')}
           </button>
         </div>
 
@@ -271,7 +273,7 @@ export default function LoginPage() {
           {isSignup && (
             <div>
               <label className="block font-semibold text-gray-700 mb-2">
-                Full Name <span className="text-red-500">*</span>
+                {t('login.fullName')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -288,7 +290,7 @@ export default function LoginPage() {
           {/* Email */}
           <div>
             <label className="block font-semibold text-gray-700 mb-2">
-              Email <span className="text-red-500">*</span>
+              {t('login.email')} <span className="text-red-500">*</span>
             </label>
             <input
               type="email"
@@ -304,7 +306,7 @@ export default function LoginPage() {
           {/* Password with Show/Hide Toggle */}
           <div>
             <label className="block font-semibold text-gray-700 mb-2">
-              Password <span className="text-red-500">*</span>
+              {t('login.password')} <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <input
@@ -331,7 +333,7 @@ export default function LoginPage() {
               </button>
             </div>
             {isSignup && (
-              <p className="text-sm text-gray-500 mt-1">Must be at least 6 characters</p>
+              <p className="text-sm text-gray-500 mt-1">{t('login.minChars')}</p>
             )}
           </div>
 
@@ -339,7 +341,7 @@ export default function LoginPage() {
           {isSignup && (
             <div>
               <label className="block font-semibold text-gray-700 mb-2">
-                I am a: <span className="text-red-500">*</span>
+                {t('login.iAmA')} <span className="text-red-500">*</span>
               </label>
               <select
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary"
@@ -348,10 +350,10 @@ export default function LoginPage() {
                 required={isSignup}
                 disabled={loading}
               >
-                <option value="student">🎓 Student</option>
-                <option value="agent">👨‍💼 Agent</option>
-                <option value="owner">🏠 Property Owner</option>
-                <option value="service-provider">🔧 Service Provider</option>
+                <option value="student">🎓 {t('login.student')}</option>
+                <option value="agent">👨‍💼 {t('login.agent')}</option>
+                <option value="owner">🏠 {t('login.propertyOwner')}</option>
+                <option value="service-provider">🔧 {t('login.serviceProvider')}</option>
               </select>
             </div>
           )}
@@ -363,7 +365,7 @@ export default function LoginPage() {
                 href="/forgot-password"
                 className="text-sm font-semibold text-primary hover:text-primary-dark"
               >
-                Forgot password?
+                {t('login.forgotPassword')}
               </Link>
             </div>
           )}
@@ -380,10 +382,10 @@ export default function LoginPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
                 </svg>
-                Please wait...
+                {t('login.pleaseWait')}
               </span>
             ) : (
-              isSignup ? '🚀 CREATE ACCOUNT' : '🔓 LOGIN'
+              isSignup ? t('login.createAccountBtn') : t('login.loginBtn')
             )}
           </button>
         </form>
@@ -391,7 +393,7 @@ export default function LoginPage() {
         {/* Back to Home Link */}
         <div className="mt-6 text-center">
           <Link href="/" className="text-primary font-semibold hover:underline">
-            ← Back to Home
+            {t('login.backToHome')}
           </Link>
         </div>
 
@@ -399,9 +401,9 @@ export default function LoginPage() {
         {isSignup && (
           <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
             <p className="text-sm text-blue-800">
-              ✨ <strong>New to Baytino?</strong>
+              ✨ <strong>{t('login.newToBaytino')}</strong>
               <br />
-              Create your account to access housing, roommates, and home services!
+              {t('login.newDesc')}
             </p>
           </div>
         )}
@@ -410,7 +412,7 @@ export default function LoginPage() {
         {!isSignup && (
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
+              {t('login.noAccount')}{' '}
               <button
                 onClick={() => {
                   setIsSignup(true)
@@ -419,7 +421,7 @@ export default function LoginPage() {
                 }}
                 className="text-primary font-semibold hover:underline"
               >
-                Sign up now
+                {t('login.signUpNow')}
               </button>
             </p>
           </div>

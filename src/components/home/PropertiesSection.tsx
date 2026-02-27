@@ -29,15 +29,18 @@ export default function PropertiesSection() {
       setLoading(true)
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 8000)
-      const response = await fetch(`${API_URL}/api/properties?limit=6`, {
+      const response = await fetch(`${API_URL}/api/properties?limit=6&sort=-createdAt`, {
         signal: controller.signal,
         headers: { 'Content-Type': 'application/json' },
       })
       clearTimeout(timeoutId)
       const data = await response.json()
       if (data.success && data.properties) {
-        // Show data exactly as it comes from backend
-        setProperties(data.properties)
+        // Sort by newest first
+        const sorted = [...data.properties].sort((a: any, b: any) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+        setProperties(sorted)
       }
     } catch (err: any) {
       console.error('❌ Properties fetch error:', err.message)
@@ -72,9 +75,9 @@ export default function PropertiesSection() {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
           <div className="max-w-xl">
-            <span className="text-primary font-bold tracking-widest uppercase text-xs mb-1.5 block">{t('properties.premiumListings')}</span>
+            <span className="text-primary font-bold tracking-widest uppercase text-xs mb-1.5 block">{t('properties.latestBadge')}</span>
             <h2 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight">
-              {t('properties.featured')}
+              {t('properties.featuredPosts')}
             </h2>
             <p className="mt-2 text-slate-500 font-medium text-sm">
               {t('properties.premiumDesc')}
@@ -111,7 +114,7 @@ export default function PropertiesSection() {
                       </div>
                     )}
                     <div className="bg-white/90 backdrop-blur-md text-slate-900 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm">
-                      {t(`propertyType.${(property.propertyType || property.type || 'apartment').toLowerCase()}`)}
+                      {t(`propertyType.${(property.type || property.propertyType || 'property').toLowerCase()}`)}
                     </div>
                   </div>
 

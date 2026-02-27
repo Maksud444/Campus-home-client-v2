@@ -212,7 +212,8 @@ export default function MapPage() {
             </div>
             ${areaProps.map((p) => `
               <a href="/properties/${p._id}"
-                style="display:flex;align-items:center;gap:10px;padding:7px 6px;border-radius:8px;margin-bottom:4px;background:#f9fafb;text-decoration:none;color:inherit;transition:background 0.15s;"
+                onclick="event.preventDefault();window.location.href='/properties/${p._id}';"
+                style="display:flex;align-items:center;gap:10px;padding:7px 6px;border-radius:8px;margin-bottom:4px;background:#f9fafb;text-decoration:none;color:inherit;transition:background 0.15s;cursor:pointer;"
                 onmouseover="this.style.background='#eef2ff'" onmouseout="this.style.background='#f9fafb'"
               >
                 <div style="width:42px;height:42px;border-radius:7px;overflow:hidden;flex-shrink:0;background:#e5e7eb;">

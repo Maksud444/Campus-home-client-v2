@@ -26,6 +26,7 @@ export default function NewProjectsSection() {
     { id: 'Giza', label: 'Giza' },
     { id: 'Alexandria', label: 'Alexandria' },
     { id: 'Mansoura', label: 'Mansoura' },
+    { id: '', label: t('newProjects.allCities') },
   ]
 
   useEffect(() => {
@@ -44,7 +45,10 @@ export default function NewProjectsSection() {
     fetchProperties()
   }, [])
 
-  const filteredProjects = projects.filter(p => p.location?.city === activeCity).slice(0, 6)
+  const filteredProjects = (activeCity === ''
+    ? projects
+    : projects.filter(p => p.location?.city === activeCity)
+  ).slice(0, 6)
 
   const getImageUrl = (images: any[]): string => {
     if (!images || images.length === 0) return 'https://via.placeholder.com/600x400'
@@ -82,9 +86,9 @@ export default function NewProjectsSection() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
           <div className="space-y-1.5">
-            <span className="text-primary font-bold tracking-widest uppercase text-xs">{t('newProjects.badge')}</span>
+            <span className="text-primary font-bold tracking-widest uppercase text-xs">{t('newProjects.locationBadge')}</span>
             <h2 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">
-              {t('newProjects.title')} <span className="text-primary">{t('newProjects.titleHighlight')}</span>
+              {t('newProjects.locationTitle')} <span className="text-primary">{t('newProjects.locationHighlight')}</span>
             </h2>
           </div>
 
