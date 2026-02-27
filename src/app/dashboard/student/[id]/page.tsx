@@ -114,9 +114,11 @@ export default function StudentDashboard() {
       const data = await response.json()
 
       if (data.success && data.properties) {
-        // Client-side filter: only show this user's own posts
+        // Client-side filter: only show this user's own posts.
+        // Posts without userEmail (older data) pass through since the backend
+        // already filtered by userEmail query param.
         const userOwnedProps = data.properties.filter((prop: any) =>
-          prop.userEmail?.toLowerCase() === userEmail.toLowerCase()
+          !prop.userEmail || prop.userEmail.toLowerCase() === userEmail.toLowerCase()
         )
         // Convert backend properties to Post format
         const posts = userOwnedProps.map((prop: any) => ({

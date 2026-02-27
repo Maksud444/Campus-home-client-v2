@@ -62,6 +62,10 @@ export default function PropertyDetailPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [deleting, setDeleting] = useState(false)
   const [showFullGallery, setShowFullGallery] = useState(false)
+  const [viewsCount, setViewsCount] = useState(0)
+  const [likesCount, setLikesCount] = useState(0)
+  const [liked, setLiked] = useState(false)
+  const [likeLoading, setLikeLoading] = useState(false)
 
   useEffect(() => {
     if (propertyId && propertyId !== 'map') {
@@ -77,6 +81,18 @@ export default function PropertyDetailPage() {
 
       if (data.success && data.property) {
         setProperty(data.property)
+        setViewsCount(data.property.views || 0)
+        setLikesCount(data.property.likes?.length || 0)
+
+        // Increment view count (fire-and-forget)
+        fetch(`${API_URL}/api/properties/${propertyId}/view`, { method: 'POST' })
+          .then(r => r.json())
+          .then(d => {
+            // If backend returns new view count use it, otherwise increment locally
+            if (typeof d.views === 'number') setViewsCount(d.views)
+            else setViewsCount(prev => prev + 1)
+          })
+          .catch(() => setViewsCount(prev => prev + 1))
       } else {
         router.push('/properties')
       }
@@ -85,6 +101,47 @@ export default function PropertyDetailPage() {
       router.push('/properties')
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Initialise liked state once both property and session are ready
+  useEffect(() => {
+    if (!property || !session?.user) return
+    const userEmail = session.user.email
+    const userId = (session.user as any)?.id
+    if (property.likes && (userEmail || userId)) {
+      const isLiked = property.likes.some((like: any) => {
+        if (typeof like === 'string') return like === userId || like === userEmail
+        return like.userEmail === userEmail || like.userId === userId
+      })
+      setLiked(isLiked)
+    }
+  }, [property, session])
+
+  async function handleLike() {
+    if (!session?.user) { router.push('/login'); return }
+    if (likeLoading) return
+    setLikeLoading(true)
+    const newLiked = !liked
+    setLiked(newLiked)
+    setLikesCount(prev => newLiked ? prev + 1 : Math.max(0, prev - 1))
+    try {
+      const res = await fetch(`${API_URL}/api/properties/${propertyId}/like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userEmail: session.user.email, userId: (session.user as any)?.id })
+      })
+      const d = await res.json()
+      if (d.success) {
+        // Backend confirmed — use its counts if provided
+        if (typeof d.likesCount === 'number') setLikesCount(d.likesCount)
+        if (typeof d.liked === 'boolean') setLiked(d.liked)
+      }
+      // If backend doesn't support likes (404/error), keep the optimistic toggle
+    } catch {
+      // Network error — keep the optimistic toggle
+    } finally {
+      setLikeLoading(false)
     }
   }
 
@@ -496,12 +553,19 @@ export default function PropertyDetailPage() {
               <div className="flex items-center gap-4 text-sm text-gray-500">
                 <div className="flex items-center gap-1.5">
                   <Eye className="w-4 h-4" />
-                  <span>{property.views || 0} {t('propertiesPage.views')}</span>
+                  <span>{viewsCount} {t('propertiesPage.views')}</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Heart className="w-4 h-4" />
-                  <span>{property.likes?.length || 0} {t('propertiesPage.likes')}</span>
-                </div>
+                <button
+                  onClick={handleLike}
+                  disabled={likeLoading}
+                  title={liked ? 'Unlike' : 'Like'}
+                  className={`flex items-center gap-1.5 transition-colors disabled:opacity-60 ${
+                    liked ? 'text-red-500' : 'text-gray-500 hover:text-red-400'
+                  }`}
+                >
+                  <Heart className={`w-4 h-4 transition-all ${liked ? 'fill-current scale-110' : ''}`} />
+                  <span>{likesCount} {t('propertiesPage.likes')}</span>
+                </button>
                 <div className="flex items-center gap-1.5">
                   <Calendar className="w-4 h-4" />
                   <span>{new Date(property.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>

@@ -287,8 +287,9 @@ export default function MapPage() {
         <p className="text-xs text-gray-400 pl-1">Tap a marker to see properties in that area</p>
       </div>
 
-      {/* Map area */}
-      <div className="flex-1 relative">
+      {/* Map area — isolation:isolate creates a new stacking context so Leaflet's
+          internal z-indexes (400-1000) don't compete with the navbar */}
+      <div className="flex-1 relative" style={{ isolation: 'isolate' }}>
         {loading ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 z-10">
             <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-primary mb-4"></div>
