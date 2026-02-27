@@ -7,6 +7,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight, MapPin, Bed, Bath, Maximize, Phone, Share2, Heart, Eye, Calendar, User, Home, Shield, Star, X } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
+import dynamic from 'next/dynamic'
+
+const MapPage = dynamic(() => import('../map/page'), { ssr: false })
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
 
@@ -61,7 +64,7 @@ export default function PropertyDetailPage() {
   const [showFullGallery, setShowFullGallery] = useState(false)
 
   useEffect(() => {
-    if (propertyId) {
+    if (propertyId && propertyId !== 'map') {
       fetchProperty()
     }
   }, [propertyId])
@@ -146,6 +149,11 @@ export default function PropertyDetailPage() {
       navigator.clipboard.writeText(window.location.href)
       alert('Link copied to clipboard!')
     }
+  }
+
+  // If routing incorrectly sent /properties/map here, render the map page
+  if (propertyId === 'map') {
+    return <MapPage />
   }
 
   // Loading State
