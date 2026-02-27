@@ -22,7 +22,7 @@ export default function Navbar() {
   const [userName, setUserName] = useState('')
   const [userImage, setUserImage] = useState('')
 
-  const isAdminPage = pathname.startsWith('/admin') || pathname.startsWith('/xadmin')
+  const isAdminPage = pathname.startsWith('/admin') || pathname.startsWith('/xadmin') || pathname.startsWith('/admin-login')
 
   // Load fresh user data from backend
   useEffect(() => {

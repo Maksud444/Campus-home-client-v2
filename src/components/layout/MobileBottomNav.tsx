@@ -26,7 +26,7 @@ export default function MobileBottomNav() {
   const [langOpen, setLangOpen] = useState(false)
 
   // Hide on admin pages
-  if (pathname.startsWith('/admin') || pathname.startsWith('/xadmin')) return null
+  if (pathname.startsWith('/admin') || pathname.startsWith('/xadmin') || pathname.startsWith('/admin-login')) return null
 
   const currentLang = languages.find(l => l.code === language)
 
