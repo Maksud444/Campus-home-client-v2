@@ -460,14 +460,27 @@ export default function PropertyDetailPage() {
                 {property.title}
               </h1>
 
-              {/* Location */}
-              <div className="flex items-center gap-2 text-gray-600 mb-4">
-                <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
-                <span className="text-sm sm:text-base">
+              {/* Location — click opens Google Maps */}
+              <a
+                href={
+                  (property.location as any).coordinates?.lat
+                    ? `https://www.google.com/maps/search/?api=1&query=${(property.location as any).coordinates.lat},${(property.location as any).coordinates.lng}`
+                    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${property.location.area} ${property.location.city} Egypt`)}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-gray-600 hover:text-primary mb-4 group w-fit"
+                title="Open in Google Maps"
+              >
+                <MapPin className="w-4 h-4 text-primary flex-shrink-0 group-hover:scale-110 transition-transform" />
+                <span className="text-sm sm:text-base group-hover:underline">
                   {property.location.area}, {property.location.city}
                   {property.location.address && ` - ${property.location.address}`}
                 </span>
-              </div>
+                <svg className="w-3 h-3 text-gray-400 group-hover:text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
 
               {/* Price */}
               {property.price && (

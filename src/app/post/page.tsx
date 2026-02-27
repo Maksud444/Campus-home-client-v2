@@ -89,6 +89,8 @@ export default function CreatePostPage() {
   const [success, setSuccess] = useState('')
   const [uploadingMedia, setUploadingMedia] = useState(false)
 
+  const [gpsLoading, setGpsLoading] = useState(false)
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -97,6 +99,8 @@ export default function CreatePostPage() {
     city: '',
     selectedArea: '',
     addressDetails: '',
+    latitude: '',
+    longitude: '',
     whatsappCountryCode: '+20',
     whatsappNumber: '',
     bedrooms: '',
@@ -132,6 +136,40 @@ export default function CreatePostPage() {
         ? prev.amenities.filter(a => a !== amenity)
         : [...prev.amenities, amenity]
     }))
+  }
+
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.')
+      return
+    }
+    setGpsLoading(true)
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords
+        setFormData(prev => ({ ...prev, latitude: String(latitude), longitude: String(longitude) }))
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+          )
+          const data = await res.json()
+          const road = data.address?.road || data.address?.neighbourhood || ''
+          const suburb = data.address?.suburb || data.address?.quarter || ''
+          const addressText = [road, suburb].filter(Boolean).join(', ')
+          if (addressText) {
+            setFormData(prev => ({ ...prev, addressDetails: addressText, latitude: String(latitude), longitude: String(longitude) }))
+          }
+        } catch {
+          // Reverse geocoding failed — coords still saved
+        }
+        setGpsLoading(false)
+      },
+      () => {
+        alert('Unable to get your location. Please check permissions.')
+        setGpsLoading(false)
+      },
+      { timeout: 10000 }
+    )
   }
 
   // Handle WhatsApp number input - only digits, max 11
@@ -288,7 +326,10 @@ export default function CreatePostPage() {
           location: {
             city: formData.city,
             area: formData.selectedArea,
-            address: formData.addressDetails
+            address: formData.addressDetails,
+            ...(formData.latitude && formData.longitude ? {
+              coordinates: { lat: parseFloat(formData.latitude), lng: parseFloat(formData.longitude) }
+            } : {})
           },
           whatsapp: {
             countryCode: formData.whatsappCountryCode,
@@ -536,14 +577,42 @@ export default function CreatePostPage() {
             <label className="block mb-2 font-semibold text-gray-700">
               Additional Address Details
             </label>
-            <input
-              type="text"
-              value={formData.addressDetails}
-              onChange={(e) => setFormData({ ...formData, addressDetails: e.target.value })}
-              className="input"
-              placeholder="e.g., Street 9, Near Cairo Festival City Mall"
-              disabled={loading}
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={formData.addressDetails}
+                onChange={(e) => setFormData({ ...formData, addressDetails: e.target.value })}
+                className="input flex-1"
+                placeholder="e.g., Street 9, Near Cairo Festival City Mall"
+                disabled={loading}
+              />
+              <button
+                type="button"
+                onClick={handleGetLocation}
+                disabled={loading || gpsLoading}
+                title="Use my current location"
+                className="flex items-center gap-1.5 px-3 py-2 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60 flex-shrink-0"
+              >
+                {gpsLoading ? (
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                )}
+                <span className="hidden sm:inline">{gpsLoading ? 'Getting...' : 'Live Location'}</span>
+              </button>
+            </div>
+            {formData.latitude && formData.longitude && (
+              <p className="text-xs text-green-600 mt-1.5 flex items-center gap-1">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
+                Location captured ({parseFloat(formData.latitude).toFixed(4)}, {parseFloat(formData.longitude).toFixed(4)})
+              </p>
+            )}
           </div>
 
           {/* WhatsApp Number with Country Code */}

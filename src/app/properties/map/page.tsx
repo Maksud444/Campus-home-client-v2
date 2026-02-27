@@ -254,40 +254,43 @@ export default function MapPage() {
   }, [properties, loading])
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-4rem)]">
+    <div className="flex flex-col" style={{ height: 'calc(100vh - 64px)', marginTop: '64px' }}>
 
       {/* Top bar */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-4 flex-shrink-0 shadow-sm">
-        <Link
-          href="/properties"
-          className="flex items-center gap-1.5 text-gray-600 hover:text-primary transition-colors text-sm font-medium"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to List
-        </Link>
-        <div className="w-px h-5 bg-gray-200" />
-        <div className="flex items-center gap-2">
-          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-          </svg>
-          <span className="font-bold text-gray-900 text-sm">Properties Map</span>
+      <div className="bg-white border-b border-gray-200 px-4 py-4 flex-shrink-0 shadow-sm">
+        {/* Row 1: back + title + count */}
+        <div className="flex items-center gap-3 mb-1">
+          <Link
+            href="/properties"
+            className="flex items-center gap-1.5 text-gray-600 hover:text-primary transition-colors text-sm font-medium flex-shrink-0"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span className="hidden sm:inline">Back to List</span>
+            <span className="sm:hidden">Back</span>
+          </Link>
+          <div className="w-px h-5 bg-gray-200 flex-shrink-0" />
+          <div className="flex items-center gap-2 min-w-0">
+            <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+            </svg>
+            <span className="font-bold text-gray-900 text-sm">Properties Map</span>
+          </div>
+          {!loading && (
+            <span className="text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full flex-shrink-0">
+              {properties.length} properties
+            </span>
+          )}
         </div>
-        {!loading && (
-          <span className="text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
-            {properties.length} properties
-          </span>
-        )}
-        <div className="ml-auto text-xs text-gray-400">
-          Click a marker to see properties in that area
-        </div>
+        {/* Row 2: hint text */}
+        <p className="text-xs text-gray-400 pl-1">Tap a marker to see properties in that area</p>
       </div>
 
       {/* Map area */}
       <div className="flex-1 relative">
         {loading ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 z-10">
             <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-primary mb-4"></div>
             <p className="text-gray-600 text-sm">Loading map...</p>
           </div>
