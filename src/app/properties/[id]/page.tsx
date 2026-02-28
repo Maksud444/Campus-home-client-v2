@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
@@ -66,8 +66,11 @@ export default function PropertyDetailPage() {
   const [likesCount, setLikesCount] = useState(0)
   const [liked, setLiked] = useState(false)
   const [likeLoading, setLikeLoading] = useState(false)
+  // Prevent the liked-init effect from re-running after handleLike updates property
+  const likeInitializedRef = useRef(false)
 
   useEffect(() => {
+    likeInitializedRef.current = false // reset for each new property
     if (propertyId && propertyId !== 'map') {
       fetchProperty()
     }
@@ -84,9 +87,19 @@ export default function PropertyDetailPage() {
 
         // Initialize counts from backend data, optimistically include this visit
         const currentViews = data.property.views || 0
-        const currentLikes = (data.property.likes || []) as string[]
+        const backendLikes = (data.property.likes || []) as string[]
         setViewsCount(currentViews + 1)
-        setLikesCount(currentLikes.length)
+        setLikesCount(backendLikes.length)
+
+        // Also load local stats — whichever has more likes wins
+        fetch(`/api/property-stats/${propertyId}`)
+          .then(r => r.json())
+          .then(d => {
+            if (d.success && d.likesCount > backendLikes.length) {
+              setLikesCount(d.likesCount)
+            }
+          })
+          .catch(() => {})
 
         // Persist view increment to the backend database (fire-and-forget)
         fetch(`${API_URL}/api/properties/${propertyId}`, {
@@ -105,13 +118,30 @@ export default function PropertyDetailPage() {
     }
   }
 
-  // Initialise liked state from backend property data once both property and session are available
+  // Initialise liked state ONCE when both property and session are ready.
+  // likeInitializedRef prevents this from re-running when handleLike calls setProperty.
   useEffect(() => {
-    if (!property || !session?.user) return
+    if (!property || !session?.user || likeInitializedRef.current) return
     const userKey = session.user.email || (session.user as any)?.id || session.user.name
     if (!userKey) return
-    const likes = (property.likes || []) as string[]
-    setLiked(likes.includes(userKey))
+
+    // Check backend likes first, then fall back to local stats
+    const backendLikes = (property.likes || []) as string[]
+    if (backendLikes.includes(userKey)) {
+      setLiked(true)
+      likeInitializedRef.current = true
+    } else {
+      // Check local stats for this user's like (persists within same server run)
+      fetch(`/api/property-stats/${propertyId}`)
+        .then(r => r.json())
+        .then(d => {
+          if (d.success && Array.isArray(d.likes)) {
+            setLiked(d.likes.includes(userKey))
+          }
+        })
+        .catch(() => {})
+        .finally(() => { likeInitializedRef.current = true })
+    }
   }, [property, session])
 
   async function handleLike() {
