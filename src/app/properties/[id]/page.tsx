@@ -120,13 +120,16 @@ export default function PropertyDetailPage() {
 
   // Initialise liked state from local stats API once session is ready
   useEffect(() => {
-    if (!propertyId || propertyId === 'map' || !session?.user?.email) return
-    const email = session.user.email
+    if (!propertyId || propertyId === 'map' || !session?.user) return
+    const userKey = session.user.email
+      || (session.user as any)?.id
+      || session.user.name
+    if (!userKey) return
     fetch(`/api/property-stats/${propertyId}`)
       .then(r => r.json())
       .then(d => {
         if (d.success && Array.isArray(d.likes)) {
-          setLiked(d.likes.includes(email))
+          setLiked(d.likes.includes(userKey))
           setLikesCount(d.likesCount || 0)
         }
       })
@@ -140,24 +143,24 @@ export default function PropertyDetailPage() {
     const newLiked = !liked
     setLiked(newLiked)
     setLikesCount(prev => newLiked ? prev + 1 : Math.max(0, prev - 1))
+    // Use email, fall back to id, then a session-based key
+    const userKey = session.user.email
+      || (session.user as any)?.id
+      || session.user.name
     try {
       const res = await fetch(`/api/property-stats/${propertyId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'like', userEmail: session.user.email }),
+        body: JSON.stringify({ action: 'like', userEmail: userKey }),
       })
       const d = await res.json()
       if (d.success) {
         if (typeof d.likesCount === 'number') setLikesCount(d.likesCount)
         if (typeof d.liked === 'boolean') setLiked(d.liked)
-      } else {
-        // Revert optimistic update on failure
-        setLiked(!newLiked)
-        setLikesCount(prev => newLiked ? Math.max(0, prev - 1) : prev + 1)
       }
+      // Keep optimistic update even if API has no success flag
     } catch {
-      setLiked(!newLiked)
-      setLikesCount(prev => newLiked ? Math.max(0, prev - 1) : prev + 1)
+      // Keep optimistic update on network error
     } finally {
       setLikeLoading(false)
     }

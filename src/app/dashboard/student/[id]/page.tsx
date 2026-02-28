@@ -31,6 +31,25 @@ export default function StudentDashboard() {
   const [myPosts, setMyPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [userName, setUserName] = useState('')
+  const [statsRefreshKey, setStatsRefreshKey] = useState(0)
+
+  // Refresh stats when user returns to this tab (e.g. after viewing a property)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (!document.hidden && session?.user) {
+        setStatsRefreshKey(k => k + 1)
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [session])
+
+  // Re-run fetchMyPosts when statsRefreshKey changes (triggered by tab returning to focus)
+  useEffect(() => {
+    if (statsRefreshKey === 0 || !session?.user) return
+    const userId = (session.user as any).id || session.user.email?.split('@')[0]
+    if (userId) fetchMyPosts(userId)
+  }, [statsRefreshKey])
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -195,6 +214,19 @@ export default function StudentDashboard() {
             Welcome back, {displayName}! 👋
           </h1>
           <p className="text-gray-600 text-lg">Student Dashboard</p>
+        </div>
+
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm text-gray-400">Stats update each time someone views or likes your posts.</p>
+          <button
+            onClick={() => setStatsRefreshKey(k => k + 1)}
+            className="flex items-center gap-1.5 text-xs text-primary hover:text-primary-dark font-semibold transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
