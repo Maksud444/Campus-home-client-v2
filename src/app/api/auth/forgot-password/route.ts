@@ -62,12 +62,10 @@ export async function POST(req: NextRequest) {
     }
 
     const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.EMAIL_PORT || '587'),
-      secure: process.env.EMAIL_SECURE === 'true',
+      service: 'gmail',
       auth: {
         user: emailUser,
-        pass: emailPass,
+        pass: emailPass.replace(/\s/g, ''), // remove spaces from app password
       },
     })
 
@@ -160,7 +158,10 @@ export async function POST(req: NextRequest) {
       message: 'Password reset link has been sent to your email.',
     })
   } catch (error: any) {
-    console.error('Forgot password error:', error)
-    return NextResponse.json({ success: false, message: 'Server error. Please try again.' }, { status: 500 })
+    console.error('Forgot password error:', error?.message || error)
+    return NextResponse.json({
+      success: false,
+      message: `Server error: ${error?.message || 'Unknown error'}`,
+    }, { status: 500 })
   }
 }
