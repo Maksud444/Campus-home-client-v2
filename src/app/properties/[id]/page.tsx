@@ -132,21 +132,25 @@ export default function PropertyDetailPage() {
       : currentLikes.filter(l => l !== userKey)
 
     try {
-      const res = await fetch(`${API_URL}/api/properties/${propertyId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ likes: newLikes }),
-      })
-      const d = await res.json()
-      if (d.success && d.property) {
-        const updatedLikes = (d.property.likes || []) as string[]
-        setLikesCount(updatedLikes.length)
-        setLiked(updatedLikes.includes(userKey))
-        setProperty(prev => prev ? { ...prev, likes: d.property.likes } : prev)
-      }
+      // Dual-write: backend (primary) + local stats (fallback for dashboard)
+      await Promise.allSettled([
+        fetch(`${API_URL}/api/properties/${propertyId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ likes: newLikes }),
+        }),
+        fetch(`/api/property-stats/${propertyId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'like', userEmail: userKey }),
+        }),
+      ])
     } catch {
       // Keep optimistic update on network error
     } finally {
+      // Always sync property.likes with newLikes so the [property, session]
+      // useEffect reflects the correct liked state and doesn't revert the click
+      setProperty(prev => prev ? { ...prev, likes: newLikes } : prev)
       setLikeLoading(false)
     }
   }

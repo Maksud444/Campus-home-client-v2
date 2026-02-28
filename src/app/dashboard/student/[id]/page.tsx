@@ -122,13 +122,19 @@ export default function StudentDashboard() {
         return
       }
 
-      // Fetch properties — views and likes are persisted in the backend database
-      const response = await fetch(`${API_URL}/api/properties?userEmail=${userEmail}`, {
-        cache: 'no-store',
-        headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
-      })
+      // Fetch properties and local stats in parallel
+      // Backend is primary source; local stats (globalThis) are fallback for likes
+      const [response, statsRes] = await Promise.all([
+        fetch(`${API_URL}/api/properties?userEmail=${userEmail}`, {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+        }),
+        fetch('/api/property-stats', { cache: 'no-store' }).catch(() => null)
+      ])
 
       const data = await response.json()
+      const statsData = statsRes ? await statsRes.json().catch(() => ({ stats: {} })) : { stats: {} }
+      const localStats: Record<string, { views: number; likes: string[] }> = statsData.stats || {}
 
       if (data.success && data.properties) {
         // Client-side filter: only show this user's own posts.
@@ -137,18 +143,25 @@ export default function StudentDashboard() {
         const userOwnedProps = data.properties.filter((prop: any) =>
           !prop.userEmail || prop.userEmail.toLowerCase() === userEmail.toLowerCase()
         )
-        const posts = userOwnedProps.map((prop: any) => ({
-          id: prop._id,
-          title: prop.title,
-          type: prop.type || 'apartment',
-          price: prop.price,
-          location: `${prop.location.area}, ${prop.location.city}`,
-          images: prop.images?.map((img: any) => typeof img === 'string' ? img : img.url) || [],
-          views: prop.views || 0,
-          likes: prop.likes || [],
-          status: prop.status || 'active',
-          createdAt: prop.createdAt
-        }))
+        const posts = userOwnedProps.map((prop: any) => {
+          const s = localStats[prop._id] || { views: 0, likes: [] }
+          // Prefer backend for views (PUT persists there), prefer whichever is larger for likes
+          const backendLikes: string[] = (prop.likes || []).filter(Boolean)
+          const localLikes: string[] = s.likes || []
+          const bestLikes = backendLikes.length >= localLikes.length ? backendLikes : localLikes
+          return {
+            id: prop._id,
+            title: prop.title,
+            type: prop.type || 'apartment',
+            price: prop.price,
+            location: `${prop.location.area}, ${prop.location.city}`,
+            images: prop.images?.map((img: any) => typeof img === 'string' ? img : img.url) || [],
+            views: prop.views || s.views || 0,
+            likes: bestLikes,
+            status: prop.status || 'active',
+            createdAt: prop.createdAt
+          }
+        })
         setMyPosts(posts)
       }
     } catch (error) {
