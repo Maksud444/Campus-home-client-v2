@@ -97,21 +97,24 @@ export default function StudentDashboard() {
   const fetchMyPosts = async (userId: string) => {
     try {
       setLoading(true)
-      // Fetch from backend API using user email
       const userEmail = session?.user?.email
       if (!userEmail) {
         setLoading(false)
         return
       }
 
-      const response = await fetch(`${API_URL}/api/properties?userEmail=${userEmail}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      })
+      // Fetch properties and local stats in parallel
+      const [response, statsRes] = await Promise.all([
+        fetch(`${API_URL}/api/properties?userEmail=${userEmail}`, {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+        }),
+        fetch('/api/property-stats', { cache: 'no-store' }).catch(() => null)
+      ])
+
       const data = await response.json()
+      const statsData = statsRes ? await statsRes.json().catch(() => ({ stats: {} })) : { stats: {} }
+      const localStats: Record<string, { views: number; likes: string[] }> = statsData.stats || {}
 
       if (data.success && data.properties) {
         // Client-side filter: only show this user's own posts.
@@ -120,19 +123,22 @@ export default function StudentDashboard() {
         const userOwnedProps = data.properties.filter((prop: any) =>
           !prop.userEmail || prop.userEmail.toLowerCase() === userEmail.toLowerCase()
         )
-        // Convert backend properties to Post format
-        const posts = userOwnedProps.map((prop: any) => ({
-          id: prop._id,
-          title: prop.title,
-          type: prop.type || 'apartment',
-          price: prop.price,
-          location: `${prop.location.area}, ${prop.location.city}`,
-          images: prop.images?.map((img: any) => typeof img === 'string' ? img : img.url) || [],
-          views: prop.views || 0,
-          likes: prop.likes || [],
-          status: prop.status || 'active',
-          createdAt: prop.createdAt
-        }))
+        // Merge backend properties with local view/like stats
+        const posts = userOwnedProps.map((prop: any) => {
+          const s = localStats[prop._id] || { views: 0, likes: [] }
+          return {
+            id: prop._id,
+            title: prop.title,
+            type: prop.type || 'apartment',
+            price: prop.price,
+            location: `${prop.location.area}, ${prop.location.city}`,
+            images: prop.images?.map((img: any) => typeof img === 'string' ? img : img.url) || [],
+            views: s.views || prop.views || 0,
+            likes: s.likes.length > 0 ? s.likes : (prop.likes || []),
+            status: prop.status || 'active',
+            createdAt: prop.createdAt
+          }
+        })
         setMyPosts(posts)
       }
     } catch (error) {

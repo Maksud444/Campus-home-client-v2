@@ -81,17 +81,31 @@ export default function PropertyDetailPage() {
 
       if (data.success && data.property) {
         setProperty(data.property)
-        setViewsCount(data.property.views || 0)
-        setLikesCount(data.property.likes?.length || 0)
 
-        // Increment view count (fire-and-forget)
-        fetch(`${API_URL}/api/properties/${propertyId}/view`, { method: 'POST' })
+        // Load view/like counts from local stats API (persists on server)
+        try {
+          const statsRes = await fetch(`/api/property-stats/${propertyId}`)
+          const statsData = await statsRes.json()
+          if (statsData.success) {
+            setViewsCount(statsData.views || 0)
+            setLikesCount(statsData.likesCount || 0)
+          } else {
+            setViewsCount(data.property.views || 0)
+            setLikesCount(data.property.likes?.length || 0)
+          }
+        } catch {
+          setViewsCount(data.property.views || 0)
+          setLikesCount(data.property.likes?.length || 0)
+        }
+
+        // Increment view count via local stats API
+        fetch(`/api/property-stats/${propertyId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'view' }),
+        })
           .then(r => r.json())
-          .then(d => {
-            // If backend returns new view count use it, otherwise increment locally
-            if (typeof d.views === 'number') setViewsCount(d.views)
-            else setViewsCount(prev => prev + 1)
-          })
+          .then(d => { if (typeof d.views === 'number') setViewsCount(d.views) })
           .catch(() => setViewsCount(prev => prev + 1))
       } else {
         router.push('/properties')
@@ -104,19 +118,20 @@ export default function PropertyDetailPage() {
     }
   }
 
-  // Initialise liked state once both property and session are ready
+  // Initialise liked state from local stats API once session is ready
   useEffect(() => {
-    if (!property || !session?.user) return
-    const userEmail = session.user.email
-    const userId = (session.user as any)?.id
-    if (property.likes && (userEmail || userId)) {
-      const isLiked = property.likes.some((like: any) => {
-        if (typeof like === 'string') return like === userId || like === userEmail
-        return like.userEmail === userEmail || like.userId === userId
+    if (!propertyId || propertyId === 'map' || !session?.user?.email) return
+    const email = session.user.email
+    fetch(`/api/property-stats/${propertyId}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.success && Array.isArray(d.likes)) {
+          setLiked(d.likes.includes(email))
+          setLikesCount(d.likesCount || 0)
+        }
       })
-      setLiked(isLiked)
-    }
-  }, [property, session])
+      .catch(() => {})
+  }, [propertyId, session])
 
   async function handleLike() {
     if (!session?.user) { router.push('/login'); return }
@@ -126,20 +141,23 @@ export default function PropertyDetailPage() {
     setLiked(newLiked)
     setLikesCount(prev => newLiked ? prev + 1 : Math.max(0, prev - 1))
     try {
-      const res = await fetch(`${API_URL}/api/properties/${propertyId}/like`, {
+      const res = await fetch(`/api/property-stats/${propertyId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userEmail: session.user.email, userId: (session.user as any)?.id })
+        body: JSON.stringify({ action: 'like', userEmail: session.user.email }),
       })
       const d = await res.json()
       if (d.success) {
-        // Backend confirmed — use its counts if provided
         if (typeof d.likesCount === 'number') setLikesCount(d.likesCount)
         if (typeof d.liked === 'boolean') setLiked(d.liked)
+      } else {
+        // Revert optimistic update on failure
+        setLiked(!newLiked)
+        setLikesCount(prev => newLiked ? Math.max(0, prev - 1) : prev + 1)
       }
-      // If backend doesn't support likes (404/error), keep the optimistic toggle
     } catch {
-      // Network error — keep the optimistic toggle
+      setLiked(!newLiked)
+      setLikesCount(prev => newLiked ? Math.max(0, prev - 1) : prev + 1)
     } finally {
       setLikeLoading(false)
     }
