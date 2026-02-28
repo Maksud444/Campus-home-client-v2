@@ -40,12 +40,22 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get('userId')
     const limit = searchParams.get('limit')
 
+    const isAdmin = searchParams.get('admin') === 'true'
+    const statusFilter = searchParams.get('status')
+
     let posts = readPosts()
 
     // Sort by most recent first
-    posts.sort((a: any, b: any) => 
+    posts.sort((a: any, b: any) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
+
+    // Public: only show approved posts. Admin: show all or filter by status.
+    if (!isAdmin) {
+      posts = posts.filter((post: any) => post.status === 'approved')
+    } else if (statusFilter) {
+      posts = posts.filter((post: any) => post.status === statusFilter)
+    }
 
     // Filter by type
     if (type) {
@@ -150,7 +160,10 @@ export async function POST(request: NextRequest) {
       targetAudience: targetAudience || 'students',
       likes: [],
       views: 0,
-      status: 'active',
+      status: 'pending',
+      approved_by: null,
+      approved_by_name: null,
+      approved_at: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     }

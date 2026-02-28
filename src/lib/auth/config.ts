@@ -36,6 +36,23 @@ export const authOptions: NextAuthOptions = {
             throw new Error('Email and password required')
           }
 
+          // ── Local admin override (credentials from env vars) ──
+          if (
+            process.env.ADMIN_EMAIL &&
+            process.env.ADMIN_PASSWORD &&
+            credentials.email.toLowerCase() === process.env.ADMIN_EMAIL.toLowerCase() &&
+            credentials.password === process.env.ADMIN_PASSWORD
+          ) {
+            return {
+              id: 'local-admin',
+              email: process.env.ADMIN_EMAIL,
+              name: process.env.ADMIN_NAME || 'Admin',
+              role: 'admin',
+              image: '',
+              backendToken: '',
+            } as any
+          }
+
           const response = await fetch(`${API_URL}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

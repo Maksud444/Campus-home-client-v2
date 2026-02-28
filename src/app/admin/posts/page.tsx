@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
-import Link from 'next/link'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
 
@@ -21,12 +20,38 @@ interface Post {
   userId?: { name: string; email: string } | string
 }
 
+interface LocalPost {
+  id: string
+  title: string
+  type: string
+  price: number | null
+  location: string
+  images: string[]
+  views: number
+  likes: any[]
+  status: 'pending' | 'approved' | 'rejected' | string
+  createdAt: string
+  userEmail: string
+  userName: string
+  approved_by?: string | null
+  approved_by_name?: string | null
+  approved_at?: string | null
+}
+
 export default function AdminPostsPage() {
   const { data: session } = useSession()
+
+  // ── External backend posts (existing) ──
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
+
+  // ── Local pending posts (approval system) ──
+  const [pendingPosts, setPendingPosts] = useState<LocalPost[]>([])
+  const [pendingLoading, setPendingLoading] = useState(true)
+  const [approveLoading, setApproveLoading] = useState<string | null>(null)
+
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
 
@@ -37,6 +62,7 @@ export default function AdminPostsPage() {
     setTimeout(() => setToast(null), 3000)
   }
 
+  // Fetch external backend posts (unchanged)
   const fetchPosts = useCallback(async () => {
     setLoading(true)
     try {
@@ -53,7 +79,50 @@ export default function AdminPostsPage() {
     }
   }, [token])
 
-  useEffect(() => { fetchPosts() }, [fetchPosts])
+  // Fetch local pending posts
+  const fetchPendingPosts = useCallback(async () => {
+    setPendingLoading(true)
+    try {
+      const res = await fetch('/api/posts?admin=true&status=pending', { cache: 'no-store' })
+      const data = await res.json()
+      if (data.success) setPendingPosts(data.posts || [])
+    } catch (err) {
+      console.error('Error fetching pending posts:', err)
+    } finally {
+      setPendingLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchPosts()
+    fetchPendingPosts()
+  }, [fetchPosts, fetchPendingPosts])
+
+  // Approve or reject a local post
+  const handleApproveAction = async (postId: string, action: 'approve' | 'reject') => {
+    setApproveLoading(postId + '_' + action)
+    try {
+      const res = await fetch(`/api/posts/${postId}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setPendingPosts(prev => prev.filter(p => p.id !== postId))
+        showToast(
+          action === 'approve' ? '✅ Post approved and is now live.' : '🗑️ Post rejected.',
+          'success'
+        )
+      } else {
+        showToast(data.message || 'Action failed', 'error')
+      }
+    } catch {
+      showToast('Network error', 'error')
+    } finally {
+      setApproveLoading(null)
+    }
+  }
 
   const filtered = posts.filter(p => {
     const matchType = typeFilter === 'all' || p.type?.toLowerCase() === typeFilter
@@ -101,13 +170,15 @@ export default function AdminPostsPage() {
     return acc
   }, {} as Record<string, number>)
 
-  const uniqueTypes = [...new Set(posts.map(p => p.type?.toLowerCase()).filter(Boolean))]
+  const uniqueTypes = Array.from(new Set(posts.map(p => p.type?.toLowerCase()).filter(Boolean)))
 
   const getStatusBadge = (status: string) => {
     const map: Record<string, string> = {
       active: 'bg-emerald-100 text-emerald-700',
       available: 'bg-emerald-100 text-emerald-700',
+      approved: 'bg-emerald-100 text-emerald-700',
       pending: 'bg-amber-100 text-amber-700',
+      rejected: 'bg-red-100 text-red-700',
       rented: 'bg-slate-100 text-slate-600',
       sold: 'bg-slate-100 text-slate-600',
     }
@@ -131,7 +202,10 @@ export default function AdminPostsPage() {
           <h1 className="text-2xl font-extrabold text-slate-900">Posts Management</h1>
           <p className="text-slate-500 text-sm mt-0.5">Review and manage all user posts</p>
         </div>
-        <button onClick={fetchPosts} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
+        <button
+          onClick={() => { fetchPosts(); fetchPendingPosts() }}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all shadow-sm"
+        >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
@@ -139,7 +213,107 @@ export default function AdminPostsPage() {
         </button>
       </div>
 
-      {/* Stats Row */}
+      {/* ══════════════════════════════════════════
+          PENDING POSTS — Approval Section
+          ══════════════════════════════════════════ */}
+      <div className="bg-white rounded-2xl border border-amber-200 shadow-sm mb-8 overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 bg-amber-50 border-b border-amber-100">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center">
+              <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-base font-extrabold text-slate-900">Pending Posts</h2>
+              <p className="text-xs text-slate-500">Awaiting admin approval before going live</p>
+            </div>
+          </div>
+          {!pendingLoading && (
+            <span className="bg-amber-500 text-white text-xs font-extrabold px-3 py-1 rounded-full">
+              {pendingPosts.length} pending
+            </span>
+          )}
+        </div>
+
+        {pendingLoading ? (
+          <div className="p-6 space-y-3">
+            {[1, 2].map(i => <div key={i} className="h-20 bg-slate-100 rounded-xl animate-pulse" />)}
+          </div>
+        ) : pendingPosts.length === 0 ? (
+          <div className="py-12 text-center">
+            <div className="text-4xl mb-2">✅</div>
+            <p className="text-slate-500 font-medium text-sm">No pending posts — all clear!</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {pendingPosts.map(post => (
+              <div key={post.id} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50/60 transition-colors">
+                {/* Thumbnail */}
+                {post.images?.[0] ? (
+                  <img src={post.images[0]} alt="" className="w-16 h-14 rounded-xl object-cover flex-shrink-0" />
+                ) : (
+                  <div className="w-16 h-14 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0 text-2xl">🏠</div>
+                )}
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-slate-900 text-sm truncate">{post.title}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    by <span className="font-semibold">{post.userName || post.userEmail}</span>
+                    {' · '}{post.location}
+                    {' · '}{post.price ? `${post.price.toLocaleString()} EGP` : 'Free'}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+
+                {/* Type badge */}
+                <span className="hidden sm:inline text-xs font-semibold bg-violet-100 text-violet-700 px-2.5 py-1 rounded-lg capitalize flex-shrink-0">
+                  {post.type}
+                </span>
+
+                {/* Action buttons */}
+                <div className="flex gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => handleApproveAction(post.id, 'approve')}
+                    disabled={!!approveLoading}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-all"
+                  >
+                    {approveLoading === post.id + '_approve' ? (
+                      <div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleApproveAction(post.id, 'reject')}
+                    disabled={!!approveLoading}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 disabled:opacity-50 text-red-600 text-xs font-bold rounded-lg border border-red-200 transition-all"
+                  >
+                    {approveLoading === post.id + '_reject' ? (
+                      <div className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    )}
+                    Reject
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ══════════════════════════════════════════
+          Stats Row (existing)
+          ══════════════════════════════════════════ */}
       <div className="flex flex-wrap gap-3 mb-5">
         <div className="bg-white rounded-xl px-4 py-3 border border-slate-100 shadow-sm">
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Posts</span>
@@ -192,7 +366,7 @@ export default function AdminPostsPage() {
         </div>
       </div>
 
-      {/* Table */}
+      {/* All Posts Table (existing — unchanged) */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-8 space-y-3">
@@ -259,7 +433,6 @@ export default function AdminPostsPage() {
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-1.5">
-                          {/* Delete */}
                           <button
                             onClick={() => handleDelete(postId)}
                             disabled={actionLoading === postId + '_delete'}
