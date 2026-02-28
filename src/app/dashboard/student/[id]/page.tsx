@@ -211,17 +211,83 @@ export default function StudentDashboard() {
   const totalLikes = myPosts.reduce((sum, post) => sum + (post.likes?.length || 0), 0)
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 pt-28">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="mb-8">
-          <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
-            Welcome back, {displayName}! 👋
-          </h1>
-          <p className="text-gray-600 text-lg">Student Dashboard</p>
+    <div className="min-h-screen bg-gray-50 pt-20 pb-10">
+      <div className="max-w-lg mx-auto px-4 sm:max-w-2xl lg:max-w-4xl">
+
+        {/* Hero Card */}
+        <div className="relative bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-6 mb-6 text-white overflow-hidden shadow-xl">
+          <div className="relative z-10">
+            <h1 className="text-2xl sm:text-3xl font-extrabold mb-1">
+              Welcome back, {displayName}! 👋
+            </h1>
+            <p className="text-white/80 text-sm sm:text-base mb-5">Student Dashboard</p>
+            <Link
+              href="/post"
+              className="inline-flex items-center gap-2 bg-white text-primary font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors shadow-md"
+            >
+              ➕ Create New Post
+            </Link>
+          </div>
+          <div className="absolute -right-6 -bottom-6 text-[130px] opacity-10 select-none pointer-events-none">🏠</div>
         </div>
 
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-sm text-gray-400">Stats update each time someone views or likes your posts.</p>
+        {/* Action Cards */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <Link
+            href="/post"
+            className="bg-gradient-to-br from-primary to-primary-dark text-white rounded-2xl shadow-md p-4 hover:scale-105 transition-transform flex flex-col items-center text-center gap-1"
+          >
+            <div className="text-2xl">➕</div>
+            <div className="text-xs font-bold leading-tight">Create New Post</div>
+            <div className="text-xs opacity-80 hidden sm:block">Find a roommate or room</div>
+          </Link>
+
+          <Link
+            href="/properties"
+            className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl shadow-md p-4 hover:scale-105 transition-transform flex flex-col items-center text-center gap-1"
+          >
+            <div className="text-2xl">🏢</div>
+            <div className="text-xs font-bold leading-tight">Browse Properties</div>
+            <div className="text-xs opacity-80 hidden sm:block">Find your perfect place</div>
+          </Link>
+
+          <Link
+            href="/settings"
+            className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-2xl shadow-md p-4 hover:scale-105 transition-transform flex flex-col items-center text-center gap-1"
+          >
+            <div className="text-2xl">⚙️</div>
+            <div className="text-xs font-bold leading-tight">Settings</div>
+            <div className="text-xs opacity-80 hidden sm:block">Manage your account</div>
+          </Link>
+        </div>
+
+        {/* My Posts Navigation Card → /posts page */}
+        <Link
+          href={`/dashboard/student/${urlUserId}/posts`}
+          className="bg-white rounded-2xl shadow-md p-4 mb-6 flex items-center justify-between hover:shadow-lg transition-all group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">📝</div>
+            <div>
+              <div className="text-xs text-gray-400">Manage your listings</div>
+              <div className="font-extrabold text-gray-900 text-base">My Posts</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {loading ? (
+              <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+            ) : (
+              <span className="text-3xl font-extrabold text-primary">{totalPosts}</span>
+            )}
+            <svg className="w-5 h-5 text-gray-400 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </Link>
+
+        {/* Refresh hint */}
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-xs text-gray-400">Stats update each time someone views or likes your posts.</p>
           <button
             onClick={() => setStatsRefreshKey(k => k + 1)}
             className="flex items-center gap-1.5 text-xs text-primary hover:text-primary-dark font-semibold transition-colors"
@@ -233,155 +299,29 @@ export default function StudentDashboard() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-2xl shadow-md p-6">
-            <div className="text-4xl mb-2">📝</div>
-            <div className="text-3xl font-extrabold text-primary">{totalPosts}</div>
-            <div className="text-gray-600 font-semibold">My Posts</div>
+        {/* Stats Row — 3 compact cards */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-white rounded-2xl shadow-md p-4 text-center">
+            <div className="text-2xl mb-1">👁️</div>
+            <div className="text-2xl font-extrabold text-primary">{totalViews}</div>
+            <div className="text-xs text-gray-500 font-semibold">Total Views</div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-md p-6">
-            <div className="text-4xl mb-2">👁️</div>
-            <div className="text-3xl font-extrabold text-primary">{totalViews}</div>
-            <div className="text-gray-600 font-semibold">Total Views</div>
+          <div className="bg-white rounded-2xl shadow-md p-4 text-center">
+            <div className="text-2xl mb-1">❤️</div>
+            <div className="text-2xl font-extrabold text-primary">{totalLikes}</div>
+            <div className="text-gray-500 text-xs font-semibold">Total Likes</div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-md p-6">
-            <div className="text-4xl mb-2">❤️</div>
-            <div className="text-3xl font-extrabold text-primary">{totalLikes}</div>
-            <div className="text-gray-600 font-semibold">Total Likes</div>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-md p-6">
-            <div className="text-4xl mb-2">⭐</div>
-            <div className="text-3xl font-extrabold text-primary">
+          <div className="bg-white rounded-2xl shadow-md p-4 text-center">
+            <div className="text-2xl mb-1">⭐</div>
+            <div className="text-2xl font-extrabold text-primary">
               {totalPosts > 0 ? Math.round(totalViews / totalPosts) : 0}
             </div>
-            <div className="text-gray-600 font-semibold">Avg Views/Post</div>
+            <div className="text-gray-500 text-xs font-semibold">Avg Views/Post</div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Link
-            href="/post"
-            className="bg-gradient-to-br from-primary to-primary-dark text-white rounded-2xl shadow-lg p-6 hover:scale-105 transition-transform"
-          >
-            <div className="text-4xl mb-3">➕</div>
-            <div className="text-xl font-bold mb-2">Create New Post</div>
-            <div className="text-sm opacity-90">Find a roommate or room</div>
-          </Link>
-
-          <Link
-            href="/properties"
-            className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl shadow-lg p-6 hover:scale-105 transition-transform"
-          >
-            <div className="text-4xl mb-3">🏢</div>
-            <div className="text-xl font-bold mb-2">Browse Properties</div>
-            <div className="text-sm opacity-90">Find your perfect place</div>
-          </Link>
-
-          <Link
-            href="/settings"
-            className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-2xl shadow-lg p-6 hover:scale-105 transition-transform"
-          >
-            <div className="text-4xl mb-3">⚙️</div>
-            <div className="text-xl font-bold mb-2">Settings</div>
-            <div className="text-sm opacity-90">Manage your account</div>
-          </Link>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-md p-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-extrabold text-gray-900">My Active Posts</h2>
-            {totalPosts > 0 && (
-              <Link href="/post" className="btn btn-primary">
-                ➕ Create New
-              </Link>
-            )}
-          </div>
-
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading your posts...</p>
-            </div>
-          ) : myPosts.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📝</div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">No posts yet</h3>
-              <p className="text-gray-600 mb-6">Create your first post to get started!</p>
-              <Link href="/post" className="btn btn-primary">
-                Create Post
-              </Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {myPosts.map((post) => (
-                <div key={post.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow">
-                  <Link href={`/properties/${post.id}`} className="block relative h-48 bg-gray-200">
-                    {post.images && post.images.length > 0 ? (
-                      <Image
-                        src={post.images[0]}
-                        alt={post.title}
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-6xl">
-                        🏠
-                      </div>
-                    )}
-                    
-                    <div className="absolute top-3 left-3">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold text-white ${
-                        post.type === 'apartment' ? 'bg-blue-500' :
-                        post.type === 'room' ? 'bg-purple-500' :
-                        post.type === 'roommate' ? 'bg-green-500' :
-                        'bg-blue-500'
-                      }`}>
-                        {post.type === 'apartment' ? '🏢 Apartment' :
-                         post.type === 'room' ? '🛏️ Room' :
-                         post.type === 'roommate' ? '👥 Roommate' : '🏢 Apartment'}
-                      </span>
-                    </div>
-                  </Link>
-
-                  <div className="p-4">
-                    <Link href={`/properties/${post.id}`}>
-                      <h3 className="font-bold text-lg mb-2 hover:text-primary line-clamp-2">
-                        {post.title}
-                      </h3>
-                    </Link>
-
-                    <p className="text-sm text-gray-600 mb-3 flex items-center gap-1">
-                      📍 {post.location}
-                    </p>
-
-                    <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
-                      <span>👁️ {post.views || 0}</span>
-                      <span>❤️ {post.likes?.length || 0}</span>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Link
-                        href={`/properties/${post.id}/edit`}
-                        className="btn btn-outline text-sm flex-1"
-                      >
-                        ✏️ Edit
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(post.id)}
-                        className="btn btn-outline text-sm flex-1 text-red-600 border-red-600 hover:bg-red-50"
-                      >
-                        🗑️ Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
     </div>
   )
