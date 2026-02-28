@@ -5,30 +5,45 @@ const STATS_FILE = path.join(process.cwd(), 'data', 'property-stats.json')
 
 export type StatsEntry = { views: number; likes: string[] }
 
-// Module-level store — shared across ALL requests in the same Node.js process
-export const store: Record<string, StatsEntry> = {}
-let initialized = false
+// globalThis is shared across ALL Next.js route bundles in the same process.
+// Module-level variables are NOT shared between separate route handler bundles.
+declare global {
+  // eslint-disable-next-line no-var
+  var __propertyStats: Record<string, StatsEntry> | undefined
+  // eslint-disable-next-line no-var
+  var __propertyStatsInit: boolean | undefined
+}
+
+function getRawStore(): Record<string, StatsEntry> {
+  if (!globalThis.__propertyStats) globalThis.__propertyStats = {}
+  return globalThis.__propertyStats
+}
 
 export function ensureInitialized() {
-  if (initialized) return
+  if (globalThis.__propertyStatsInit) return
   try {
     if (fs.existsSync(STATS_FILE)) {
-      const data: Record<string, StatsEntry> = JSON.parse(fs.readFileSync(STATS_FILE, 'utf-8'))
-      Object.assign(store, data)
+      const data = JSON.parse(fs.readFileSync(STATS_FILE, 'utf-8')) as Record<string, StatsEntry>
+      Object.assign(getRawStore(), data)
     }
   } catch {
-    // If file read fails, start with empty store — writes will still work in memory
+    // file missing / corrupt — start fresh, still works in memory
   }
-  initialized = true
+  globalThis.__propertyStatsInit = true
+}
+
+export function getStore(): Record<string, StatsEntry> {
+  ensureInitialized()
+  return getRawStore()
 }
 
 export function persist() {
   try {
     const dir = path.dirname(STATS_FILE)
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
-    fs.writeFileSync(STATS_FILE, JSON.stringify(store, null, 2))
+    fs.writeFileSync(STATS_FILE, JSON.stringify(getRawStore(), null, 2))
   } catch (e) {
-    // File write failure is non-fatal — data is still in memory for this process lifetime
+    // non-fatal: data is still live in globalThis for this process lifetime
     console.error('Stats: file persist failed (data still in memory):', e)
   }
 }

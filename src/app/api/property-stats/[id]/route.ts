@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { store, ensureInitialized, persist } from '../store'
+import { getStore, persist } from '../store'
 
 export const dynamic = 'force-dynamic'
 
@@ -8,7 +8,7 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  ensureInitialized()
+  const store = getStore()
   const s = store[params.id] || { views: 0, likes: [] }
   return NextResponse.json({
     success: true,
@@ -25,7 +25,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    ensureInitialized()
+    const store = getStore()
     const body = await request.json()
 
     if (!store[params.id]) {
