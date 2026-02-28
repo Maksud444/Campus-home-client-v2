@@ -2,9 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
-import Image from 'next/image'
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
 
 interface User {
   _id: string
@@ -38,8 +35,6 @@ export default function AdminUsersPage() {
   const [editingRole, setEditingRole] = useState<string | null>(null)
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
 
-  const token = (session?.user as any)?.backendToken
-
   const showToast = (msg: string, type: 'success' | 'error') => {
     setToast({ msg, type })
     setTimeout(() => setToast(null), 3000)
@@ -48,15 +43,11 @@ export default function AdminUsersPage() {
   const fetchUsers = useCallback(async () => {
     setLoading(true)
     try {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (token) headers['Authorization'] = `Bearer ${token}`
-      if (process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY) headers['X-Admin-Key'] = process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY
-      const res = await fetch(`${API_URL}/api/admin/users`, { headers })
+      const res = await fetch('/api/admin/users')
       const data = await res.json()
       if (data.success && data.users) {
         setUsers(data.users)
       } else {
-        // Fallback: show empty with message
         setUsers([])
       }
     } catch (err) {
@@ -65,7 +56,7 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false)
     }
-  }, [token])
+  }, [])
 
   useEffect(() => { fetchUsers() }, [fetchUsers])
 
@@ -81,13 +72,13 @@ export default function AdminUsersPage() {
     setActionLoading(userId + '_role')
     setEditingRole(null)
     try {
-      const res = await fetch(`${API_URL}/api/admin/users/${userId}`, {
+      const res = await fetch(`/api/admin/users/${userId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...(process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY ? { 'X-Admin-Key': process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY } : {}) },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: newRole }),
       })
       const data = await res.json()
-      if (data.success || res.ok) {
+      if (data.success) {
         setUsers(prev => prev.map(u => u._id === userId ? { ...u, role: newRole } : u))
         showToast('Role updated successfully', 'success')
       } else {
@@ -104,12 +95,11 @@ export default function AdminUsersPage() {
     if (!confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) return
     setActionLoading(userId + '_delete')
     try {
-      const res = await fetch(`${API_URL}/api/admin/users/${userId}`, {
+      const res = await fetch(`/api/admin/users/${userId}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}`, ...(process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY ? { 'X-Admin-Key': process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY } : {}) },
       })
       const data = await res.json()
-      if (data.success || res.ok) {
+      if (data.success) {
         setUsers(prev => prev.filter(u => u._id !== userId))
         showToast('User deleted successfully', 'success')
       } else {
@@ -200,10 +190,10 @@ export default function AdminUsersPage() {
           <div className="py-20 text-center">
             {users.length === 0 ? (
               <>
-                <div className="text-5xl mb-3">🔐</div>
-                <p className="text-slate-700 font-bold mb-1">Admin endpoint required</p>
+                <div className="text-5xl mb-3">👥</div>
+                <p className="text-slate-700 font-bold mb-1">No users found</p>
                 <p className="text-slate-500 text-sm max-w-sm mx-auto">
-                  The backend needs a <code className="bg-slate-100 px-1 rounded">GET /api/admin/users</code> endpoint that requires admin authentication.
+                  No registered users in the database yet.
                 </p>
               </>
             ) : (
