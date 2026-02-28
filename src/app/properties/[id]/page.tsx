@@ -82,31 +82,18 @@ export default function PropertyDetailPage() {
       if (data.success && data.property) {
         setProperty(data.property)
 
-        // Load view/like counts from local stats API (persists on server)
-        try {
-          const statsRes = await fetch(`/api/property-stats/${propertyId}`)
-          const statsData = await statsRes.json()
-          if (statsData.success) {
-            setViewsCount(statsData.views || 0)
-            setLikesCount(statsData.likesCount || 0)
-          } else {
-            setViewsCount(data.property.views || 0)
-            setLikesCount(data.property.likes?.length || 0)
-          }
-        } catch {
-          setViewsCount(data.property.views || 0)
-          setLikesCount(data.property.likes?.length || 0)
-        }
+        // Initialize counts from backend data, optimistically include this visit
+        const currentViews = data.property.views || 0
+        const currentLikes = (data.property.likes || []) as string[]
+        setViewsCount(currentViews + 1)
+        setLikesCount(currentLikes.length)
 
-        // Increment view count via local stats API
-        fetch(`/api/property-stats/${propertyId}`, {
-          method: 'POST',
+        // Persist view increment to the backend database (fire-and-forget)
+        fetch(`${API_URL}/api/properties/${propertyId}`, {
+          method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'view' }),
-        })
-          .then(r => r.json())
-          .then(d => { if (typeof d.views === 'number') setViewsCount(d.views) })
-          .catch(() => setViewsCount(prev => prev + 1))
+          body: JSON.stringify({ views: currentViews + 1 }),
+        }).catch(() => {})
       } else {
         router.push('/properties')
       }
@@ -118,47 +105,45 @@ export default function PropertyDetailPage() {
     }
   }
 
-  // Initialise liked state from local stats API once session is ready
+  // Initialise liked state from backend property data once both property and session are available
   useEffect(() => {
-    if (!propertyId || propertyId === 'map' || !session?.user) return
-    const userKey = session.user.email
-      || (session.user as any)?.id
-      || session.user.name
+    if (!property || !session?.user) return
+    const userKey = session.user.email || (session.user as any)?.id || session.user.name
     if (!userKey) return
-    fetch(`/api/property-stats/${propertyId}`)
-      .then(r => r.json())
-      .then(d => {
-        if (d.success && Array.isArray(d.likes)) {
-          setLiked(d.likes.includes(userKey))
-          setLikesCount(d.likesCount || 0)
-        }
-      })
-      .catch(() => {})
-  }, [propertyId, session])
+    const likes = (property.likes || []) as string[]
+    setLiked(likes.includes(userKey))
+  }, [property, session])
 
   async function handleLike() {
     if (!session?.user) { router.push('/login'); return }
     if (likeLoading) return
     setLikeLoading(true)
+    const userKey = session.user.email || (session.user as any)?.id || session.user.name
+    if (!userKey) { setLikeLoading(false); return }
+
     const newLiked = !liked
     setLiked(newLiked)
     setLikesCount(prev => newLiked ? prev + 1 : Math.max(0, prev - 1))
-    // Use email, fall back to id, then a session-based key
-    const userKey = session.user.email
-      || (session.user as any)?.id
-      || session.user.name
+
+    // Build the updated likes array and persist to the backend database
+    const currentLikes = ((property?.likes || []) as string[]).filter(Boolean)
+    const newLikes = newLiked
+      ? [...currentLikes.filter(l => l !== userKey), userKey]
+      : currentLikes.filter(l => l !== userKey)
+
     try {
-      const res = await fetch(`/api/property-stats/${propertyId}`, {
-        method: 'POST',
+      const res = await fetch(`${API_URL}/api/properties/${propertyId}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'like', userEmail: userKey }),
+        body: JSON.stringify({ likes: newLikes }),
       })
       const d = await res.json()
-      if (d.success) {
-        if (typeof d.likesCount === 'number') setLikesCount(d.likesCount)
-        if (typeof d.liked === 'boolean') setLiked(d.liked)
+      if (d.success && d.property) {
+        const updatedLikes = (d.property.likes || []) as string[]
+        setLikesCount(updatedLikes.length)
+        setLiked(updatedLikes.includes(userKey))
+        setProperty(prev => prev ? { ...prev, likes: d.property.likes } : prev)
       }
-      // Keep optimistic update even if API has no success flag
     } catch {
       // Keep optimistic update on network error
     } finally {
