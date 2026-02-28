@@ -25,6 +25,27 @@ const handler = NextAuth({
 
           console.log('🔐 Attempting login for:', credentials.email)
 
+          // ── Local admin override (credentials from env vars) ──
+          const adminEmail = process.env.ADMIN_EMAIL
+          const adminPassword = process.env.ADMIN_PASSWORD
+          console.log('🔑 Admin check:', { hasEmail: !!adminEmail, hasPassword: !!adminPassword })
+          if (
+            adminEmail &&
+            adminPassword &&
+            credentials.email.toLowerCase() === adminEmail.toLowerCase() &&
+            credentials.password === adminPassword
+          ) {
+            console.log('✅ Admin override login successful')
+            return {
+              id: 'local-admin',
+              email: adminEmail,
+              name: process.env.ADMIN_NAME || 'Admin',
+              role: 'admin',
+              image: '',
+              token: '',
+            }
+          }
+
           // Try MongoDB direct lookup first (for credentials-based accounts)
           if (MONGODB_URI) {
             try {
