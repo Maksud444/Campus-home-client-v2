@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-// build: 2026-02-26
+// build: 2026-02-28
 const nextConfig = {
   images: {
     unoptimized: true, // Disable image optimization for external images
