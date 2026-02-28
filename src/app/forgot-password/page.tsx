@@ -2,12 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
 
 export default function ForgotPasswordPage() {
-  const router = useRouter()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -20,7 +16,7 @@ export default function ForgotPasswordPage() {
     setSuccess(false)
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+      const response = await fetch(`/api/auth/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
