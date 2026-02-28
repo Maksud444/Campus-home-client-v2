@@ -1,35 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
+import { store, ensureInitialized, persist } from '../store'
 
-const STATS_FILE = path.join(process.cwd(), 'data', 'property-stats.json')
-
-function readStats(): Record<string, { views: number; likes: string[] }> {
-  try {
-    if (!fs.existsSync(STATS_FILE)) return {}
-    return JSON.parse(fs.readFileSync(STATS_FILE, 'utf-8'))
-  } catch {
-    return {}
-  }
-}
-
-function writeStats(stats: Record<string, { views: number; likes: string[] }>) {
-  try {
-    const dir = path.dirname(STATS_FILE)
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
-    fs.writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2))
-  } catch (e) {
-    console.error('Error writing property stats:', e)
-  }
-}
+export const dynamic = 'force-dynamic'
 
 // GET - return stats for a single property
 export async function GET(
   _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const stats = readStats()
-  const s = stats[params.id] || { views: 0, likes: [] }
+  ensureInitialized()
+  const s = store[params.id] || { views: 0, likes: [] }
   return NextResponse.json({
     success: true,
     views: s.views,
@@ -45,18 +25,18 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    ensureInitialized()
     const body = await request.json()
-    const stats = readStats()
 
-    if (!stats[params.id]) {
-      stats[params.id] = { views: 0, likes: [] }
+    if (!store[params.id]) {
+      store[params.id] = { views: 0, likes: [] }
     }
 
-    const s = stats[params.id]
+    const s = store[params.id]
 
     if (body.action === 'view') {
       s.views += 1
-      writeStats(stats)
+      persist()
       return NextResponse.json({ success: true, views: s.views })
     }
 
@@ -72,7 +52,7 @@ export async function POST(
       } else {
         s.likes.splice(idx, 1)
       }
-      writeStats(stats)
+      persist()
       return NextResponse.json({ success: true, liked: isLiked, likesCount: s.likes.length })
     }
 
