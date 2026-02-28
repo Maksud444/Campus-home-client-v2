@@ -37,21 +37,34 @@ export const authOptions: NextAuthOptions = {
           }
 
           // ── Local admin override (credentials from env vars) ──
+          const adminEmail = process.env.ADMIN_EMAIL
+          const adminPassword = process.env.ADMIN_PASSWORD
+          console.log('🔑 Admin login check:', {
+            hasAdminEmail: !!adminEmail,
+            hasAdminPassword: !!adminPassword,
+            adminEmailLen: adminEmail?.length,
+            adminPasswordLen: adminPassword?.length,
+            inputEmail: credentials.email,
+            emailMatch: credentials.email.toLowerCase() === adminEmail?.toLowerCase(),
+            passwordMatch: credentials.password === adminPassword,
+          })
           if (
-            process.env.ADMIN_EMAIL &&
-            process.env.ADMIN_PASSWORD &&
-            credentials.email.toLowerCase() === process.env.ADMIN_EMAIL.toLowerCase() &&
-            credentials.password === process.env.ADMIN_PASSWORD
+            adminEmail &&
+            adminPassword &&
+            credentials.email.toLowerCase() === adminEmail.toLowerCase() &&
+            credentials.password === adminPassword
           ) {
+            console.log('✅ Admin override: login successful')
             return {
               id: 'local-admin',
-              email: process.env.ADMIN_EMAIL,
+              email: adminEmail,
               name: process.env.ADMIN_NAME || 'Admin',
               role: 'admin',
               image: '',
               backendToken: '',
             } as any
           }
+          console.log('⚠️ Admin override failed, trying backend...')
 
           const response = await fetch(`${API_URL}/api/auth/login`, {
             method: 'POST',
