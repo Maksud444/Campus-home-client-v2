@@ -4,6 +4,7 @@ import GoogleProvider from 'next-auth/providers/google'
 import FacebookProvider from 'next-auth/providers/facebook'
 import bcrypt from 'bcryptjs'
 import { MongoClient } from 'mongodb'
+import { readAdmins } from '@/lib/admins'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
 const MONGODB_URI = process.env.MONGODB_URI || ''
@@ -44,6 +45,29 @@ const handler = NextAuth({
               image: '',
               token: '',
             }
+          }
+
+          // ── Check local admins file (admins.json) ──
+          const localAdmins = readAdmins()
+          const matchedAdmin = localAdmins.find(
+            a => a.isActive && a.email.toLowerCase() === credentials.email.toLowerCase()
+          )
+          if (matchedAdmin) {
+            const passwordOk = await bcrypt.compare(credentials.password, matchedAdmin.passwordHash)
+            if (passwordOk) {
+              console.log('✅ Local admin file login successful:', matchedAdmin.email)
+              return {
+                id: matchedAdmin.id,
+                email: matchedAdmin.email,
+                name: matchedAdmin.name,
+                role: 'admin',
+                image: '',
+                token: '',
+              }
+            }
+            // Email matched but password wrong → stop, don't fall through
+            console.log('❌ Local admin password mismatch for:', matchedAdmin.email)
+            throw new Error('Invalid email or password')
           }
 
           // Try MongoDB direct lookup first (for credentials-based accounts)
