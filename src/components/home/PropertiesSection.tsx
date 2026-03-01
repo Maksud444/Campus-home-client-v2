@@ -74,7 +74,7 @@ export default function PropertiesSection() {
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6 gap-4">
-          <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+          <h2 className="text-2xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight whitespace-nowrap">
             {t('properties.latestBadge')}
           </h2>
           <Link href="/properties" className="group flex-shrink-0 flex items-center gap-3 text-slate-900 font-black hover:text-primary transition-all">

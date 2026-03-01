@@ -243,7 +243,7 @@ function PropertiesPageContent() {
               </Link>
             </div>
             {/* Row 2: Scrollable filter chips */}
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide py-3">
+            <div className="flex gap-2 overflow-x-auto pt-2 pb-4" style={{scrollbarWidth:'none',msOverflowStyle:'none'}}>
               <select
                 value={filters.city}
                 onChange={(e) => setFilters({ ...filters, city: e.target.value })}
@@ -450,8 +450,8 @@ function PropertiesPageContent() {
 
           {/* ── Area chips row (horizontal scroll) – inside sticky bar ── */}
           {areaCounts.length > 0 && (
-            <div className="py-4">
-              <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+            <div className="pt-4 pb-5">
+              <div className="flex gap-2 overflow-x-auto pb-2" style={{scrollbarWidth:'none',msOverflowStyle:'none'}}>
                 {/* "All" chip */}
                 <button
                   onClick={() => setFilters({ ...filters, city: '' })}
