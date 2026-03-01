@@ -55,6 +55,8 @@ function PropertiesPageContent() {
   const [showPriceDropdown, setShowPriceDropdown] = useState(false)
   const priceDropdownRef = useRef<HTMLDivElement>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const ITEMS_PER_PAGE = 10
   const [filters, setFilters] = useState({
     city: '',
     type: '',
@@ -187,6 +189,12 @@ function PropertiesPageContent() {
   }
 
   const hasActiveFilters = searchQuery || filters.city || filters.type || filters.minPrice || filters.maxPrice || filters.bedrooms
+
+  // Reset to page 1 whenever filters or search change
+  useEffect(() => { setCurrentPage(1) }, [searchQuery, filters.city, filters.type, filters.minPrice, filters.maxPrice, filters.bedrooms])
+
+  const totalPages = Math.ceil(filteredProperties.length / ITEMS_PER_PAGE)
+  const paginatedProperties = filteredProperties.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
 
   // Compute per-area property counts (from all properties, not filtered)
   const areaCounts = useMemo(() => {
@@ -495,6 +503,7 @@ function PropertiesPageContent() {
         {/* Results count */}
         <p className="text-sm text-gray-600 mb-4">
           <span className="font-bold text-primary">{filteredProperties.length}</span> {t('stats.properties').toLowerCase()} {t('propertiesPage.found')}
+          {totalPages > 1 && <span className="text-gray-400 ml-2">({(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredProperties.length)})</span>}
         </p>
 
         {/* Empty state */}
@@ -511,7 +520,7 @@ function PropertiesPageContent() {
 
           /* ── Bayut-style property cards ── */
           <div className="flex flex-col gap-4">
-            {filteredProperties.map((property) => {
+            {paginatedProperties.map((property) => {
               const isOwner = session?.user?.email === property.userId?.email
               const whatsappLink = property.whatsapp
                 ? `https://wa.me/${property.whatsapp.countryCode}${property.whatsapp.number}`
@@ -676,6 +685,56 @@ function PropertiesPageContent() {
                 </div>
               )
             })}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-1.5 mt-8 flex-wrap">
+            {/* Prev */}
+            <button
+              onClick={() => { setCurrentPage(p => p - 1); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+              disabled={currentPage === 1}
+              className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              ← Prev
+            </button>
+
+            {/* Page numbers */}
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+              .reduce<(number | 'dots')[]>((acc, p, idx, arr) => {
+                if (idx > 0 && (p as number) - (arr[idx - 1] as number) > 1) acc.push('dots')
+                acc.push(p)
+                return acc
+              }, [])
+              .map((item, idx) =>
+                item === 'dots' ? (
+                  <span key={`dots-${idx}`} className="px-2 text-gray-400">…</span>
+                ) : (
+                  <button
+                    key={item}
+                    onClick={() => { setCurrentPage(item as number); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+                    className={`w-9 h-9 rounded-lg text-sm font-semibold transition-colors ${
+                      currentPage === item
+                        ? 'bg-primary text-white shadow-sm'
+                        : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {item}
+                  </button>
+                )
+              )
+            }
+
+            {/* Next */}
+            <button
+              onClick={() => { setCurrentPage(p => p + 1); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+              disabled={currentPage === totalPages}
+              className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Next →
+            </button>
           </div>
         )}
       </div>
