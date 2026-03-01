@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -25,12 +25,50 @@ export default function CreatePostPage() {
 
   const [gpsLoading, setGpsLoading] = useState(false)
 
+  // Area Nominatim search
+  const [areaQuery, setAreaQuery] = useState('')
+  const [areaSuggestions, setAreaSuggestions] = useState<{ name: string; display: string }[]>([])
+  const [showAreaSuggestions, setShowAreaSuggestions] = useState(false)
+  const [areaSearching, setAreaSearching] = useState(false)
+  const areaTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const fetchAreaSuggestions = async (q: string) => {
+    if (!q.trim()) { setAreaSuggestions([]); return }
+    setAreaSearching(true)
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q + ' Cairo Egypt')}&countrycodes=EG&format=json&limit=6&addressdetails=1`,
+        { headers: { 'Accept-Language': 'en' } }
+      )
+      const data = await res.json()
+      setAreaSuggestions(data.map((r: any) => ({
+        name: r.name || r.display_name.split(',')[0],
+        display: r.display_name,
+      })))
+    } catch { } finally { setAreaSearching(false) }
+  }
+
+  const handleAreaInput = (val: string) => {
+    setAreaQuery(val)
+    setFormData(prev => ({ ...prev, selectedArea: val }))
+    setShowAreaSuggestions(true)
+    if (areaTimer.current) clearTimeout(areaTimer.current)
+    areaTimer.current = setTimeout(() => fetchAreaSuggestions(val), 400)
+  }
+
+  const selectArea = (name: string) => {
+    setAreaQuery(name)
+    setFormData(prev => ({ ...prev, selectedArea: name }))
+    setShowAreaSuggestions(false)
+    setAreaSuggestions([])
+  }
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     type: 'property',
     price: '',
-    city: '',
+    city: 'Cairo',
     selectedArea: '',
     addressDetails: '',
     latitude: '',
@@ -500,20 +538,46 @@ export default function CreatePostPage() {
                 <label className="block mb-2 font-semibold text-gray-700">
                   Area <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={formData.selectedArea}
-                  onChange={(e) => setFormData({ ...formData, selectedArea: e.target.value })}
-                  className="input"
-                  required
-                  disabled={loading || !formData.city}
-                >
-                  <option value="">
-                    {formData.city ? 'Select an area' : 'First select a city'}
-                  </option>
-                  {selectedCityAreas.map(area => (
-                    <option key={area} value={area}>{area}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={areaQuery}
+                    onChange={(e) => handleAreaInput(e.target.value)}
+                    onFocus={() => setShowAreaSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowAreaSuggestions(false), 200)}
+                    placeholder="Search area in Cairo..."
+                    className="input pr-8"
+                    required
+                    disabled={loading}
+                  />
+                  {areaSearching && (
+                    <svg className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                    </svg>
+                  )}
+                  {showAreaSuggestions && areaSuggestions.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-52 overflow-y-auto z-50">
+                      {areaSuggestions.map((r, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onMouseDown={() => selectArea(r.name)}
+                          className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center gap-2 border-b border-gray-50 last:border-0"
+                        >
+                          <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                          </svg>
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-gray-800 truncate">{r.name}</div>
+                            <div className="text-xs text-gray-400 truncate">{r.display}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

@@ -218,10 +218,10 @@ function PropertiesPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-3">
+    <div className="min-h-screen bg-gray-50 pt-3 md:pt-6">
 
       {/* ── Sticky filter bar + area chips ── */}
-      <div className="bg-white border-b border-gray-200 sticky top-16 z-30 shadow-sm">
+      <div className="bg-white border-b border-gray-200 sticky top-16 md:top-[68px] z-30 shadow-sm">
         <div className="max-w-7xl mx-auto px-3">
 
           {/* ── MOBILE layout: 2 rows ── */}
