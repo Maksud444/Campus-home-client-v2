@@ -211,7 +211,7 @@ export default function StudentDashboard() {
   const totalLikes = myPosts.reduce((sum, post) => sum + (post.likes?.length || 0), 0)
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20 pb-10">
+    <div className="min-h-screen bg-gray-50 pt-14 pb-10">
       <div className="max-w-lg mx-auto px-4 sm:max-w-2xl lg:max-w-4xl">
 
         {/* Hero Card */}
@@ -220,13 +220,7 @@ export default function StudentDashboard() {
             <h1 className="text-2xl sm:text-3xl font-extrabold mb-1">
               Welcome back, {displayName}! 👋
             </h1>
-            <p className="text-white/80 text-sm sm:text-base mb-5">Student Dashboard</p>
-            <Link
-              href="/post"
-              className="inline-flex items-center gap-2 bg-white text-primary font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors shadow-md"
-            >
-              ➕ Create New Post
-            </Link>
+            <p className="text-white/80 text-sm sm:text-base">Student Dashboard</p>
           </div>
           <div className="absolute -right-6 -bottom-6 text-[130px] opacity-10 select-none pointer-events-none">🏠</div>
         </div>
