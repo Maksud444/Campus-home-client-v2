@@ -73,17 +73,11 @@ export default function PropertiesSection() {
       <div className="container mx-auto px-4">
 
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
-          <div className="max-w-xl">
-            <span className="text-primary font-bold tracking-widest uppercase text-xs mb-1.5 block">{t('properties.latestBadge')}</span>
-            <h2 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight">
-              {t('properties.featuredPosts')}
-            </h2>
-            <p className="mt-2 text-slate-500 font-medium text-sm">
-              {t('properties.premiumDesc')}
-            </p>
-          </div>
-          <Link href="/properties" className="group flex items-center gap-3 text-slate-900 font-black hover:text-primary transition-all">
+        <div className="flex items-center justify-between mb-6 gap-4">
+          <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+            {t('properties.latestBadge')}
+          </h2>
+          <Link href="/properties" className="group flex-shrink-0 flex items-center gap-3 text-slate-900 font-black hover:text-primary transition-all">
             {t('properties.viewAll')} <FaArrowRight className="group-hover:translate-x-2 transition-transform" />
           </Link>
         </div>

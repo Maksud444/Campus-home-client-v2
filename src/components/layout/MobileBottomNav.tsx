@@ -55,7 +55,7 @@ export default function MobileBottomNav() {
     {
       key: 'create',
       label: 'Post',
-      href: session ? '/create-post' : '/login',
+      href: session ? '/post' : '/login',
       active: pathname === '/create-post',
       isCreate: true,
       icon: (

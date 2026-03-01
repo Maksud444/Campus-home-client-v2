@@ -243,7 +243,7 @@ function PropertiesPageContent() {
               </Link>
             </div>
             {/* Row 2: Scrollable filter chips */}
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2.5">
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide py-3">
               <select
                 value={filters.city}
                 onChange={(e) => setFilters({ ...filters, city: e.target.value })}
@@ -450,7 +450,7 @@ function PropertiesPageContent() {
 
           {/* ── Area chips row (horizontal scroll) – inside sticky bar ── */}
           {areaCounts.length > 0 && (
-            <div className="pb-2.5 pt-1">
+            <div className="py-4">
               <div className="flex gap-2 overflow-x-auto scrollbar-hide">
                 {/* "All" chip */}
                 <button

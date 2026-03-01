@@ -84,16 +84,30 @@ export default function NewProjectsSection() {
       <div className="max-w-7xl mx-auto px-4">
 
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
-          <div className="space-y-1.5">
+        <div className="flex items-center justify-between mb-6 gap-4">
+          {/* Title — always on left */}
+          <div className="space-y-1">
             <span className="text-primary font-bold tracking-widest uppercase text-xs">{t('newProjects.locationBadge')}</span>
             <h2 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">
               {t('newProjects.locationTitle')} <span className="text-primary">{t('newProjects.locationHighlight')}</span>
             </h2>
           </div>
 
-          {/* City Tabs - Pill Style */}
-          <div className="flex p-1.5 bg-white shadow-sm border border-slate-100 rounded-2xl overflow-x-auto no-scrollbar max-w-full">
+          {/* Mobile: native dropdown */}
+          <div className="md:hidden flex-shrink-0">
+            <select
+              value={activeCity}
+              onChange={(e) => setActiveCity(e.target.value)}
+              className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+            >
+              {cities.map((city) => (
+                <option key={city.id} value={city.id}>{city.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Desktop: pill tabs */}
+          <div className="hidden md:flex p-1.5 bg-white shadow-sm border border-slate-100 rounded-2xl overflow-x-auto no-scrollbar">
             {cities.map((city) => (
               <button
                 key={city.id}
