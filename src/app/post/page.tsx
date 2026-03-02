@@ -25,19 +25,31 @@ export default function CreatePostPage() {
 
   const [gpsLoading, setGpsLoading] = useState(false)
 
-  // Area Nominatim search
+  // Static area list + Nominatim search
+  const STATIC_AREAS = [
+    'ابو يوسف (تبة)', 'باب الشرعية', 'باب الفطور', 'بركات (دراسة)', 'تبة',
+    'التجمع الخامس', 'حي الثامن', 'حي العاشر', 'حي السابع', 'خان خليل',
+    'دراسة', 'دوية', 'دجلة المعادي', 'رمسيس', 'زهراء', 'زهراء المعادي',
+    'ميدان التحرير', 'سيدة عائشة', 'سيدة زينب', 'عتبة', 'عباسية',
+    'عبدي باشا', 'عباس العقاد', 'مستشفى حسين', 'مدينة البعوث', 'منهل',
+    'مكرم عبيد', 'مدينة نصر', 'مصطفى النحاس', 'مقطم', 'معادي', 'مهندسين', 'نادي غمالية', 'ميدان الغيش'
+  ]
   const [areaQuery, setAreaQuery] = useState('')
   const [areaSuggestions, setAreaSuggestions] = useState<{ name: string; display: string }[]>([])
   const [showAreaSuggestions, setShowAreaSuggestions] = useState(false)
   const [areaSearching, setAreaSearching] = useState(false)
   const areaTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const filteredStaticAreas = areaQuery.trim()
+    ? STATIC_AREAS.filter(a => a.includes(areaQuery.trim()))
+    : STATIC_AREAS
+
   const fetchAreaSuggestions = async (q: string) => {
     if (!q.trim()) { setAreaSuggestions([]); return }
     setAreaSearching(true)
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q + ' Cairo Egypt')}&countrycodes=EG&format=json&limit=6&addressdetails=1`,
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q + ' Cairo Egypt')}&countrycodes=EG&format=json&limit=5&addressdetails=1`,
         { headers: { 'Accept-Language': 'en' } }
       )
       const data = await res.json()
@@ -62,6 +74,8 @@ export default function CreatePostPage() {
     setShowAreaSuggestions(false)
     setAreaSuggestions([])
   }
+
+  const showAreaDropdown = showAreaSuggestions && (filteredStaticAreas.length > 0 || areaSuggestions.length > 0)
 
   const [formData, setFormData] = useState({
     title: '',
@@ -88,7 +102,6 @@ export default function CreatePostPage() {
   })
 
   const egyptCities = Object.keys(citiesWithAreas).sort()
-  const selectedCityAreas = formData.city ? citiesWithAreas[formData.city] || [] : []
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -556,25 +569,35 @@ export default function CreatePostPage() {
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
                     </svg>
                   )}
-                  {showAreaSuggestions && areaSuggestions.length > 0 && (
-                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-52 overflow-y-auto z-50">
-                      {areaSuggestions.map((r, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onMouseDown={() => selectArea(r.name)}
-                          className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center gap-2 border-b border-gray-50 last:border-0"
-                        >
+                  {showAreaDropdown && (
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto z-50">
+                      {filteredStaticAreas.map((loc) => (
+                        <button key={loc} type="button" onMouseDown={() => selectArea(loc)}
+                          className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2 border-b border-gray-50 last:border-0">
                           <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                           </svg>
-                          <div className="min-w-0">
-                            <div className="text-sm font-medium text-gray-800 truncate">{r.name}</div>
-                            <div className="text-xs text-gray-400 truncate">{r.display}</div>
-                          </div>
+                          <span className="text-sm text-gray-700">{loc}</span>
                         </button>
                       ))}
+                      {areaSuggestions.length > 0 && (
+                        <>
+                          <div className="px-4 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50 border-t border-gray-100">Search results</div>
+                          {areaSuggestions.map((r, i) => (
+                            <button key={`n-${i}`} type="button" onMouseDown={() => selectArea(r.name)}
+                              className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center gap-2 border-b border-gray-50 last:border-0">
+                              <svg className="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                              </svg>
+                              <div className="min-w-0">
+                                <div className="text-sm font-medium text-gray-800 truncate">{r.name}</div>
+                                <div className="text-xs text-gray-400 truncate">{r.display}</div>
+                              </div>
+                            </button>
+                          ))}
+                        </>
+                      )}
                     </div>
                   )}
                 </div>

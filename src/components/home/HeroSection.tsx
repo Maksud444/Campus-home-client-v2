@@ -5,6 +5,15 @@ import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/contexts/LanguageContext'
 import gsap from 'gsap'
 
+const STATIC_AREAS = [
+  'ابو يوسف (تبة)', 'باب الشرعية', 'باب الفطور', 'بركات (دراسة)', 'تبة',
+  'التجمع الخامس', 'حي الثامن', 'حي العاشر', 'حي السابع', 'خان خليل',
+  'دراسة', 'دوية', 'دجلة المعادي', 'رمسيس', 'زهراء', 'زهراء المعادي',
+  'ميدان التحرير', 'سيدة عائشة', 'سيدة زينب', 'عتبة', 'عباسية',
+  'عبدي باشا', 'عباس العقاد', 'مستشفى حسين', 'مدينة البعوث', 'منهل',
+  'مكرم عبيد', 'مدينة نصر', 'مصطفى النحاس', 'مقطم', 'معادي', 'مهندسين', 'نادي غمالية', 'ميدان الغيش'
+]
+
 const propertyTypes = ['Property', 'Room', 'Roommate']
 
 const priceRanges = [
@@ -32,27 +41,29 @@ export default function HeroSection() {
   const [showTypeDropdown, setShowTypeDropdown] = useState(false)
   const [showBudgetDropdown, setShowBudgetDropdown] = useState(false)
 
-  // Nominatim location search
+  // Location search: static list + Nominatim
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [nominatimResults, setNominatimResults] = useState<{ name: string; display: string }[]>([])
   const [nominatimLoading, setNominatimLoading] = useState(false)
   const nominatimTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const filteredStatic = searchText.trim()
+    ? STATIC_AREAS.filter(a => a.includes(searchText.trim()))
+    : STATIC_AREAS
 
   const fetchNominatim = async (query: string) => {
     if (!query.trim()) { setNominatimResults([]); return }
     setNominatimLoading(true)
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&countrycodes=EG&format=json&limit=6&addressdetails=1`,
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&countrycodes=EG&format=json&limit=5&addressdetails=1`,
         { headers: { 'Accept-Language': 'en' } }
       )
       const data = await res.json()
-      setNominatimResults(
-        data.map((r: any) => ({
-          name: r.name || r.display_name.split(',')[0],
-          display: r.display_name,
-        }))
-      )
+      setNominatimResults(data.map((r: any) => ({
+        name: r.name || r.display_name.split(',')[0],
+        display: r.display_name,
+      })))
     } catch { } finally { setNominatimLoading(false) }
   }
 
@@ -69,6 +80,8 @@ export default function HeroSection() {
     setShowSuggestions(false)
     setNominatimResults([])
   }
+
+  const showDropdown = showSuggestions && (filteredStatic.length > 0 || nominatimResults.length > 0)
 
   const bgRef = useRef<HTMLDivElement>(null)
   const circle1Ref = useRef<HTMLDivElement>(null)
@@ -190,25 +203,35 @@ export default function HeroSection() {
                 />
                 {nominatimLoading && <svg className="animate-spin w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>}
               </div>
-              {showSuggestions && nominatimResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl max-h-56 overflow-y-auto z-50">
-                  {nominatimResults.map((r, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onMouseDown={() => handleSelectSuggestion(r.name)}
-                      className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 border-b border-gray-50 last:border-0"
-                    >
-                      <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {showDropdown && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl max-h-64 overflow-y-auto z-50">
+                  {filteredStatic.map((loc) => (
+                    <button key={loc} type="button" onMouseDown={() => handleSelectSuggestion(loc)}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2 border-b border-gray-50 last:border-0">
+                      <svg className="w-3.5 h-3.5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-gray-800 truncate">{r.name}</div>
-                        <div className="text-xs text-gray-400 truncate">{r.display}</div>
-                      </div>
+                      <span className="text-sm text-gray-700">{loc}</span>
                     </button>
                   ))}
+                  {nominatimResults.length > 0 && (
+                    <>
+                      <div className="px-4 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50 border-t border-gray-100">Search results</div>
+                      {nominatimResults.map((r, i) => (
+                        <button key={`n-${i}`} type="button" onMouseDown={() => handleSelectSuggestion(r.name)}
+                          className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center gap-2 border-b border-gray-50 last:border-0">
+                          <svg className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-gray-800 truncate">{r.name}</div>
+                            <div className="text-xs text-gray-400 truncate">{r.display}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -313,25 +336,35 @@ export default function HeroSection() {
                 />
                 {nominatimLoading && <svg className="animate-spin w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>}
               </div>
-              {showSuggestions && nominatimResults.length > 0 && (
-                <div className="absolute left-0 right-0 top-full z-50 bg-white border border-gray-200 rounded-2xl shadow-2xl max-h-52 overflow-y-auto">
-                  {nominatimResults.map((r, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onMouseDown={() => handleSelectSuggestion(r.name)}
-                      className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 border-b border-gray-50 last:border-0"
-                    >
+              {showDropdown && (
+                <div className="absolute left-0 right-0 top-full z-50 bg-white border border-gray-200 rounded-2xl shadow-2xl max-h-60 overflow-y-auto">
+                  {filteredStatic.map((loc) => (
+                    <button key={loc} type="button" onMouseDown={() => handleSelectSuggestion(loc)}
+                      className="w-full text-left px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 border-b border-gray-50 last:border-0">
                       <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      <div className="min-w-0">
-                        <div className="font-medium truncate">{r.name}</div>
-                        <div className="text-xs text-gray-400 truncate">{r.display}</div>
-                      </div>
+                      <span>{loc}</span>
                     </button>
                   ))}
+                  {nominatimResults.length > 0 && (
+                    <>
+                      <div className="px-5 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50 border-t border-gray-100">Search results</div>
+                      {nominatimResults.map((r, i) => (
+                        <button key={`n-${i}`} type="button" onMouseDown={() => handleSelectSuggestion(r.name)}
+                          className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 border-b border-gray-50 last:border-0">
+                          <svg className="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                          <div className="min-w-0">
+                            <div className="font-medium truncate">{r.name}</div>
+                            <div className="text-xs text-gray-400 truncate">{r.display}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
             </div>
