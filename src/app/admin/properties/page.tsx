@@ -51,9 +51,11 @@ function PropertiesContent() {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
       if (token) headers['Authorization'] = `Bearer ${token}`
       if (process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY) headers['X-Admin-Key'] = process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY
-      const res = await fetch(`${API_URL}/api/properties?limit=200`, { headers })
+      const adminSecret = process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY
+      if (adminSecret) headers['X-Admin-Key'] = adminSecret
+      const res = await fetch(`${API_URL}/api/admin/properties?limit=200`, { headers })
       const data = await res.json()
-      if (data.success && data.properties) setProperties(data.properties)
+      if (data.success) setProperties(data.data?.properties || data.properties || [])
     } catch (err) {
       console.error('Error:', err)
     } finally {
@@ -71,13 +73,19 @@ function PropertiesContent() {
     return matchStatus && matchSearch
   })
 
+  const adminHeaders = () => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+    ...(process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY ? { 'X-Admin-Key': process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY } : {}),
+  })
+
   const handleApprove = async (id: string) => {
     setActionLoading(id + '_approve')
     try {
-      const res = await fetch(`${API_URL}/api/properties/${id}`, {
+      const res = await fetch(`${API_URL}/api/admin/properties/${id}/approve`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...(process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY ? { 'X-Admin-Key': process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY } : {}) },
-        body: JSON.stringify({ status: 'active' }),
+        headers: adminHeaders(),
+        body: JSON.stringify({}),
       })
       const data = await res.json()
       if (data.success || res.ok) {
@@ -96,10 +104,10 @@ function PropertiesContent() {
   const handleReject = async (id: string) => {
     setActionLoading(id + '_reject')
     try {
-      const res = await fetch(`${API_URL}/api/properties/${id}`, {
+      const res = await fetch(`${API_URL}/api/admin/properties/${id}/reject`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...(process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY ? { 'X-Admin-Key': process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY } : {}) },
-        body: JSON.stringify({ status: 'rejected' }),
+        headers: adminHeaders(),
+        body: JSON.stringify({}),
       })
       const data = await res.json()
       if (data.success || res.ok) {
@@ -119,9 +127,9 @@ function PropertiesContent() {
     if (!confirm('Are you sure you want to permanently delete this property?')) return
     setActionLoading(id + '_delete')
     try {
-      const res = await fetch(`${API_URL}/api/properties/${id}`, {
+      const res = await fetch(`${API_URL}/api/admin/properties/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}`, ...(process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY ? { 'X-Admin-Key': process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY } : {}) },
+        headers: adminHeaders(),
       })
       const data = await res.json()
       if (data.success || res.ok) {
