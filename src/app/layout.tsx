@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/layout/Navbar'
+import Footer from '@/components/layout/Footer'
 import MobileBottomNav from '@/components/layout/MobileBottomNav'
 import SessionProvider from '@/components/SessionProvider'
 import { LanguageProvider } from '@/contexts/LanguageContext'
@@ -33,6 +34,7 @@ export default function RootLayout({
             <main className="pt-16 min-h-screen pb-16 md:pb-0">
               {children}
             </main>
+            <Footer />
           </LanguageProvider>
         </SessionProvider>
       </body>

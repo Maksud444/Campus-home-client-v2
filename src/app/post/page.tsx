@@ -893,53 +893,6 @@ export default function CreatePostPage() {
             )}
           </div>
 
-          {/* Videos */}
-          <div className="mb-8">
-            <label className="block mb-3 font-semibold text-gray-700">
-              Property Videos <span className="text-gray-500">(Optional)</span>
-            </label>
-            
-            <div className="mb-4">
-              <input
-                type="file"
-                accept="video/*"
-                multiple
-                onChange={(e) => handleMediaUpload(e, 'video')}
-                className="hidden"
-                id="video-upload"
-                disabled={loading || uploadingMedia}
-              />
-              <label
-                htmlFor="video-upload"
-                className={`btn btn-outline inline-block cursor-pointer ${
-                  (loading || uploadingMedia) ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-              >
-                {uploadingMedia ? 'Uploading...' : '🎥 Upload Videos'}
-              </label>
-            </div>
-
-            {formData.videos.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {formData.videos.map((video, index) => (
-                  <div key={index} className="relative group">
-                    <video
-                      src={video}
-                      className="w-full h-32 object-cover rounded-lg"
-                      controls
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeMedia(index, 'video')}
-                      className="absolute top-2 right-2 bg-red-500 text-white w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
 
           {/* Submit */}
           <div className="flex gap-4">
