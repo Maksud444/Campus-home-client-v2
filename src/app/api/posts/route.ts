@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type')
     const userId = searchParams.get('userId')
+    const userEmail = searchParams.get('userEmail')
     const limit = searchParams.get('limit')
     const isAdmin = searchParams.get('admin') === 'true'
     const statusFilter = searchParams.get('status')
@@ -43,6 +44,19 @@ export async function GET(request: NextRequest) {
     posts.sort((a: any, b: any) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
+
+    // If userEmail provided (for user's own dashboard), verify session and return all their posts
+    if (userEmail && !isAdmin) {
+      const session = await getServerSession(authOptions)
+      if (session?.user?.email?.toLowerCase() === userEmail.toLowerCase()) {
+        posts = posts.filter((post: any) => post.userEmail?.toLowerCase() === userEmail.toLowerCase())
+        if (statusFilter) posts = posts.filter((post: any) => post.status === statusFilter)
+        if (limit) posts = posts.slice(0, parseInt(limit))
+        return NextResponse.json({ success: true, posts })
+      }
+      // Session email doesn't match — return nothing
+      return NextResponse.json({ success: true, posts: [] })
+    }
 
     if (!isAdmin) {
       posts = posts.filter((post: any) => post.status === 'approved')

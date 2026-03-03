@@ -34,6 +34,10 @@
   .btn-outline {
     @apply border-2 border-primary text-primary hover:bg-primary hover:text-white;
   }
+
+  .btn-accent {
+    @apply bg-accent text-white hover:bg-accent-dark shadow-lg hover:shadow-xl hover:-translate-y-0.5;
+  }
   
   .card {
     @apply bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300;

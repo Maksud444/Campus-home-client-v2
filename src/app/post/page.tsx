@@ -110,8 +110,9 @@ export default function CreatePostPage() {
   }, [status, router])
 
   const amenitiesList = [
-    'WiFi', 'AC', 'Parking', 'Elevator', 'Security', 'Gym', 
-    'Pool', 'Garden', 'Balcony', 'Kitchen', 'Washing Machine', 'Furnished'
+    'WiFi', 'AC', 'Parking', 'Elevator', 'Security',
+    'Balcony', 'Washing Machine', 'Furnished',
+    'Refrigerator', 'Burner Stove', 'Sofa', 'Wardrobe', 'Water Heater', 'Bed'
   ]
 
   const toggleAmenity = (amenity: string) => {
