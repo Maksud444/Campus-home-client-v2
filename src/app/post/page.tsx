@@ -346,7 +346,8 @@ export default function CreatePostPage() {
           userName: session?.user?.name || 'Anonymous',
           userEmail: session?.user?.email,
           userImage: session?.user?.image,
-          userRole: (session?.user as any)?.role || 'student'
+          userRole: (session?.user as any)?.role || 'student',
+          status: 'pending'
         })
       })
 
@@ -357,12 +358,12 @@ export default function CreatePostPage() {
       }
 
       console.log('✅ Property created:', data.property)
-      setSuccess('Property created successfully! Redirecting...')
-      
+      setSuccess('Your post has been submitted and is pending admin approval. You will see it live once approved.')
+
       setTimeout(() => {
-        router.push('/properties')
+        router.push('/')
         router.refresh()
-      }, 1500)
+      }, 3000)
     } catch (err: any) {
       console.error('❌ Error:', err)
       setError(err.message || 'Failed to create property')

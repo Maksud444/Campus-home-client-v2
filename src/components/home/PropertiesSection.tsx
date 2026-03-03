@@ -36,8 +36,12 @@ export default function PropertiesSection() {
       clearTimeout(timeoutId)
       const data = await response.json()
       if (data.success && data.properties) {
-        // Sort by newest first
-        const sorted = [...data.properties].sort((a: any, b: any) =>
+        // Only show active/approved, sort by newest first
+        const active = data.properties.filter((p: any) => {
+          const s = (p.status || 'active').toLowerCase()
+          return s === 'active' || s === 'approved'
+        })
+        const sorted = [...active].sort((a: any, b: any) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         )
         setProperties(sorted)

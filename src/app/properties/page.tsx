@@ -139,6 +139,10 @@ function PropertiesPageContent() {
   }
 
   const filteredProperties = properties.filter(property => {
+    // Only show active/approved properties (hide pending & rejected)
+    const s = (property.status || 'active').toLowerCase()
+    if (s !== 'active' && s !== 'approved') return false
+
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
       const title = property.title?.toLowerCase() || ''
