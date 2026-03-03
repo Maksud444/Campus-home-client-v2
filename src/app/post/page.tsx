@@ -125,7 +125,7 @@ export default function CreatePostPage() {
 
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.')
+      alert(t('post.geoNotSupported'))
       return
     }
     setGpsLoading(true)
@@ -150,7 +150,7 @@ export default function CreatePostPage() {
         setGpsLoading(false)
       },
       () => {
-        alert('Unable to get your location. Please check permissions.')
+        alert(t('post.geoError'))
         setGpsLoading(false)
       },
       { timeout: 10000 }
@@ -167,7 +167,7 @@ export default function CreatePostPage() {
   if (type === 'image') {
     const remaining = MAX_IMAGES - formData.images.length
     if (remaining <= 0) {
-      setError(`Maximum ${MAX_IMAGES} images allowed. Please remove some before uploading more.`)
+      setError(t('post.maxImagesError'))
       e.target.value = ''
       return
     }
@@ -292,19 +292,19 @@ export default function CreatePostPage() {
     try {
       // Validate WhatsApp number
       if (!formData.whatsappNumber) {
-        throw new Error('WhatsApp number is required')
+        throw new Error(t('post.whatsappRequired'))
       }
 
       if (formData.whatsappNumber.length < 10 || formData.whatsappNumber.length > 11) {
-        throw new Error('WhatsApp number must be 10-11 digits')
+        throw new Error(t('post.whatsappLength'))
       }
 
       // Validate images count (min 3, max 6)
       if (formData.images.length < 3) {
-        throw new Error('Please upload at least 3 images')
+        throw new Error(t('post.minImages'))
       }
       if (formData.images.length > MAX_IMAGES) {
-        throw new Error(`Maximum ${MAX_IMAGES} images allowed`)
+        throw new Error(t('post.maxImagesError'))
       }
 
       // Submit to local API for admin approval before going live
@@ -353,7 +353,7 @@ export default function CreatePostPage() {
       }
 
       console.log('✅ Property created:', data.property)
-      setSuccess('Your post has been submitted and is pending admin approval. You will see it live once approved.')
+      setSuccess(t('post.successMessage'))
 
       setTimeout(() => {
         router.push('/')
@@ -385,20 +385,20 @@ export default function CreatePostPage() {
     <div className="min-h-screen bg-gray-50 py-8 pt-28">
       <div className="max-w-4xl mx-auto px-4">
         <div className="mb-8">
-          <Link 
+          <Link
             href="/"
             className="flex items-center gap-2 text-primary hover:text-primary-dark mb-4 font-semibold"
           >
-            ← Back to Home
+            {t('post.backToHome')}
           </Link>
           <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
-            {userRole === 'owner' ? 'List Your Property' :
-             userRole === 'agent' ? 'Add Property Listing' :
+            {userRole === 'owner' ? t('post.listYourProperty') :
+             userRole === 'agent' ? t('post.addPropertyListing') :
              t('post.title')}
           </h1>
           <p className="text-gray-600 text-lg">
-            {userRole === 'owner' ? 'List your property for rent' :
-             userRole === 'agent' ? 'Add a new property to your listings' :
+            {userRole === 'owner' ? t('post.listYourPropertySub') :
+             userRole === 'agent' ? t('post.addPropertyListingSub') :
              t('post.subtitle')}
           </p>
         </div>
@@ -479,7 +479,7 @@ export default function CreatePostPage() {
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               className="input"
-              placeholder="e.g., Modern 2BR Apartment in Nasr City"
+              placeholder={t('post.titlePh')}
               required
               disabled={loading}
             />
@@ -505,14 +505,14 @@ export default function CreatePostPage() {
           {(formData.type === 'roommate' || formData.type === 'room') && (
             <div className="mb-6">
               <label className="block mb-2 font-semibold text-gray-700">
-                Preferences / Requirements
+                {t('post.preferences')}
               </label>
               <textarea
                 value={formData.preferences}
                 onChange={(e) => setFormData({ ...formData, preferences: e.target.value })}
                 className="input resize-none"
                 rows={3}
-                placeholder="e.g., Only Indonesian/Malaysia/Uzbekistan/Bangladeshi students, Quiet environment, etc."
+                placeholder={t('post.preferencesPh')}
                 disabled={loading}
               />
             </div>
@@ -523,12 +523,12 @@ export default function CreatePostPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block mb-2 font-semibold text-gray-700">
-                  City <span className="text-red-500">*</span>
+                  {t('post.city')} <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.city}
-                  onChange={(e) => setFormData({ 
-                    ...formData, 
+                  onChange={(e) => setFormData({
+                    ...formData,
                     city: e.target.value,
                     selectedArea: ''
                   })}
@@ -536,7 +536,7 @@ export default function CreatePostPage() {
                   required
                   disabled={loading}
                 >
-                  <option value="">Select a city</option>
+                  <option value="">{t('post.selectCity')}</option>
                   {egyptCities.map(city => (
                     <option key={city} value={city}>{city}</option>
                   ))}
@@ -545,7 +545,7 @@ export default function CreatePostPage() {
 
               <div>
                 <label className="block mb-2 font-semibold text-gray-700">
-                  Area <span className="text-red-500">*</span>
+                  {t('post.areaLabel')} <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -554,7 +554,7 @@ export default function CreatePostPage() {
                     onChange={(e) => handleAreaInput(e.target.value)}
                     onFocus={() => setShowAreaSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowAreaSuggestions(false), 200)}
-                    placeholder="Search area in Cairo..."
+                    placeholder={t('post.searchArea')}
                     className="input pr-8"
                     required
                     disabled={loading}
@@ -579,7 +579,7 @@ export default function CreatePostPage() {
                       ))}
                       {areaSuggestions.length > 0 && (
                         <>
-                          <div className="px-4 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50 border-t border-gray-100">Search results</div>
+                          <div className="px-4 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50 border-t border-gray-100">{t('post.searchResults')}</div>
                           {areaSuggestions.map((r, i) => (
                             <button key={`n-${i}`} type="button" onMouseDown={() => selectArea(r.name)}
                               className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center gap-2 border-b border-gray-50 last:border-0">
@@ -604,7 +604,7 @@ export default function CreatePostPage() {
           {/* Address Details */}
           <div className="mb-6">
             <label className="block mb-2 font-semibold text-gray-700">
-              Additional Address Details
+              {t('post.addressDetails')}
             </label>
             <div className="flex gap-2">
               <input
@@ -612,7 +612,7 @@ export default function CreatePostPage() {
                 value={formData.addressDetails}
                 onChange={(e) => setFormData({ ...formData, addressDetails: e.target.value })}
                 className="input flex-1"
-                placeholder="e.g., Street 9, Near Cairo Festival City Mall"
+                placeholder={t('post.addressPh')}
                 disabled={loading}
               />
               <button
@@ -633,13 +633,13 @@ export default function CreatePostPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 )}
-                <span className="hidden sm:inline">{gpsLoading ? 'Getting...' : 'Live Location'}</span>
+                <span className="hidden sm:inline">{gpsLoading ? t('post.gettingLocation') : t('post.liveLocation')}</span>
               </button>
             </div>
             {formData.latitude && formData.longitude && (
               <p className="text-xs text-green-600 mt-1.5 flex items-center gap-1">
                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
-                Location captured ({parseFloat(formData.latitude).toFixed(4)}, {parseFloat(formData.longitude).toFixed(4)})
+                {t('post.locationCaptured')} ({parseFloat(formData.latitude).toFixed(4)}, {parseFloat(formData.longitude).toFixed(4)})
               </p>
             )}
           </div>
@@ -647,7 +647,7 @@ export default function CreatePostPage() {
           {/* WhatsApp Number with Country Code */}
           <div className="mb-6">
             <label className="block mb-2 font-semibold text-gray-700">
-              WhatsApp Number <span className="text-red-500">*</span>
+              {t('post.whatsapp')} <span className="text-red-500">*</span>
             </label>
             <PhoneInput
               country={'eg'}
@@ -684,21 +684,21 @@ export default function CreatePostPage() {
               dropdownStyle={{ zIndex: 9999 }}
             />
             <p className="mt-1 text-xs text-gray-500">
-              Select your country flag then enter your number.
+              {t('post.whatsappHint')}
             </p>
           </div>
 
           {/* Price */}
           <div className="mb-6">
             <label className="block mb-2 font-semibold text-gray-700">
-              Monthly Rent (EGP)
+              {t('post.monthlyRent')}
             </label>
             <input
               type="number"
               value={formData.price}
               onChange={(e) => setFormData({ ...formData, price: e.target.value })}
               className="input"
-              placeholder="e.g., 3500"
+              placeholder={t('post.rentPh')}
               disabled={loading}
             />
           </div>
@@ -708,7 +708,7 @@ export default function CreatePostPage() {
             <>
               <div className="mb-6">
                 <label className="block mb-2 font-semibold text-gray-700">
-                  Property Type
+                  {t('post.propertyTypeLabel')}
                 </label>
                 <select
                   value={formData.propertyType}
@@ -727,7 +727,7 @@ export default function CreatePostPage() {
               {(userRole === 'agent' || userRole === 'owner') && (
                 <div className="mb-6">
                   <label className="block mb-3 font-semibold text-gray-700">
-                    Target Audience <span className="text-red-500">*</span>
+                    {t('post.targetAudience')} <span className="text-red-500">*</span>
                   </label>
                   <div className="grid grid-cols-2 gap-4">
                     <button
@@ -740,7 +740,7 @@ export default function CreatePostPage() {
                       }`}
                     >
                       <div className="text-3xl mb-2">👨‍👩‍👧‍👦</div>
-                      <div className="font-bold">For Family</div>
+                      <div className="font-bold">{t('post.forFamily')}</div>
                     </button>
 
                     <button
@@ -753,7 +753,7 @@ export default function CreatePostPage() {
                       }`}
                     >
                       <div className="text-3xl mb-2">🎓</div>
-                      <div className="font-bold">For Students</div>
+                      <div className="font-bold">{t('post.forStudents')}</div>
                     </button>
                   </div>
                 </div>
@@ -761,7 +761,7 @@ export default function CreatePostPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div>
-                  <label className="block mb-2 font-semibold text-gray-700">Bedrooms</label>
+                  <label className="block mb-2 font-semibold text-gray-700">{t('post.bedrooms')}</label>
                   <input
                     type="number"
                     value={formData.bedrooms}
@@ -772,7 +772,7 @@ export default function CreatePostPage() {
                   />
                 </div>
                 <div>
-                  <label className="block mb-2 font-semibold text-gray-700">Bathrooms</label>
+                  <label className="block mb-2 font-semibold text-gray-700">{t('post.bathrooms')}</label>
                   <input
                     type="number"
                     value={formData.bathrooms}
@@ -783,7 +783,7 @@ export default function CreatePostPage() {
                   />
                 </div>
                 <div>
-                  <label className="block mb-2 font-semibold text-gray-700">Area (sqm)</label>
+                  <label className="block mb-2 font-semibold text-gray-700">{t('post.areaSqm')}</label>
                   <input
                     type="number"
                     value={formData.area}
@@ -804,12 +804,12 @@ export default function CreatePostPage() {
                     className="w-5 h-5 text-primary rounded"
                     disabled={loading}
                   />
-                  <span className="font-semibold text-gray-700">Furnished</span>
+                  <span className="font-semibold text-gray-700">{t('post.furnished')}</span>
                 </label>
               </div>
 
               <div className="mb-6">
-                <label className="block mb-3 font-semibold text-gray-700">Amenities</label>
+                <label className="block mb-3 font-semibold text-gray-700">{t('post.amenities')}</label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {amenitiesList.map(amenity => (
                     <button
@@ -834,7 +834,7 @@ export default function CreatePostPage() {
           {/* Images */}
           <div className="mb-6">
             <label className="block mb-3 font-semibold text-gray-700">
-              Property Images <span className="text-red-500">* (Min 3 — Max 6)</span>
+              {t('post.images')} <span className="text-red-500">* (Min 3 — Max 6)</span>
             </label>
 
             <div className="mb-4">
@@ -855,15 +855,15 @@ export default function CreatePostPage() {
                     : 'cursor-pointer'
                 }`}
               >
-                {uploadingMedia ? 'Uploading...' :
-                  formData.images.length >= MAX_IMAGES ? '✅ Max images reached' : '📷 Upload Images'}
+                {uploadingMedia ? t('post.uploading') :
+                  formData.images.length >= MAX_IMAGES ? t('post.maxImagesReached') : t('post.uploadImages')}
               </label>
             </div>
 
             {formData.images.length > 0 && (
               <div>
                 <p className="text-sm font-semibold mb-2 text-gray-700">
-                  Uploaded: {formData.images.length} / {MAX_IMAGES} (minimum 3 required)
+                  {t('post.uploaded')} {formData.images.length} / {MAX_IMAGES} (minimum 3 required)
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {formData.images.map((image, index) => (
@@ -897,19 +897,19 @@ export default function CreatePostPage() {
               disabled={loading || uploadingMedia || formData.images.length < 3}
               className="btn btn-primary flex-1"
             >
-              {loading ? 'Creating...' : '🚀 Create Post'}
+              {loading ? t('post.creating') : t('post.createBtn')}
             </button>
             <Link
               href="/"
               className="btn btn-outline flex-1 text-center"
             >
-              Cancel
+              {t('post.cancel')}
             </Link>
           </div>
 
           {formData.images.length < 3 && (
             <p className="text-sm text-red-600 mt-4 text-center">
-              ⚠️ Please upload at least 3 images
+              ⚠️ {t('post.minImages')}
             </p>
           )}
         </form>
