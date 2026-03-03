@@ -186,7 +186,7 @@ export default function PropertiesSection() {
 
         {/* View All Button */}
         <div className="mt-8 flex justify-center">
-          <Link href="/properties" className="px-8 py-3 bg-accent hover:bg-accent-dark text-white rounded-full font-bold text-sm transition-all shadow-lg flex items-center gap-3 group">
+          <Link href="/properties" className="px-8 py-3 bg-slate-900 text-white rounded-full font-bold text-sm hover:bg-primary transition-all shadow-lg flex items-center gap-3 group">
             {t('properties.exploreAll')}
             <FaArrowRight className="group-hover:translate-x-2 transition-transform" />
           </Link>

@@ -61,7 +61,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             </div>
             
             <div className="flex gap-2">
-              <button className="btn btn-accent text-sm">
+              <button className="btn btn-primary text-sm">
                 View
               </button>
             </div>

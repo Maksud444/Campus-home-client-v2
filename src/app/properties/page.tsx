@@ -665,7 +665,7 @@ function PropertiesPageContent() {
                       ) : (
                         <Link
                           href={`/properties/${property._id}`}
-                          className="btn btn-accent flex-1 text-sm text-center"
+                          className="btn btn-primary flex-1 text-sm text-center"
                         >
                           {t('propertiesPage.viewDetails')}
                         </Link>
