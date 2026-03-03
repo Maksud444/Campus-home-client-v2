@@ -2,19 +2,20 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
+import Link from 'next/link'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
 
-interface Post {
-  id: string
-  _id?: string
+interface Property {
+  _id: string
   title: string
-  type: string
+  description: string
   price: number | null
-  location: string | { city?: string; area?: string }
-  images: any[]
-  views: number
-  likes: any[]
+  location: { city: string; area: string; address?: string }
+  propertyType: string
+  type: string
+  bedrooms?: number
+  images: Array<{ url: string } | string>
   status: string
   createdAt: string
   userId?: { name: string; email: string } | string
@@ -27,31 +28,31 @@ interface LocalPost {
   price: number | null
   location: string | { city?: string; area?: string; address?: string }
   images: any[]
-  views: number
-  likes: any[]
-  status: 'pending' | 'approved' | 'rejected' | string
+  status: string
   createdAt: string
   userEmail: string
   userName: string
   rejectionReason?: string | null
 }
 
+type StatusFilter = 'all' | 'active' | 'pending' | 'rejected'
+
 export default function AdminPostsPage() {
   const { data: session } = useSession()
 
-  // ── External backend posts ──
-  const [posts, setPosts] = useState<Post[]>([])
+  // ── External backend properties ──
+  const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [search, setSearch] = useState('')
-  const [typeFilter, setTypeFilter] = useState('all')
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
 
   // ── Local pending posts ──
   const [pendingPosts, setPendingPosts] = useState<LocalPost[]>([])
   const [pendingLoading, setPendingLoading] = useState(true)
   const [approveLoading, setApproveLoading] = useState<string | null>(null)
-  const [actionLoading, setActionLoading] = useState<string | null>(null)
 
-  // ── Rejection modal ──
+  // ── Rejection modal (for local pending posts) ──
   const [rejectModal, setRejectModal] = useState<{ postId: string; postTitle: string } | null>(null)
   const [rejectReason, setRejectReason] = useState('')
 
@@ -64,22 +65,34 @@ export default function AdminPostsPage() {
     setTimeout(() => setToast(null), 3500)
   }
 
-  const fetchPosts = useCallback(async () => {
+  const adminHeaders = () => ({
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...(process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY ? { 'X-Admin-Key': process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY } : {}),
+  })
+
+  // Fetch all properties from external backend
+  const fetchProperties = useCallback(async () => {
     setLoading(true)
     try {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (token) headers['Authorization'] = `Bearer ${token}`
-      if (process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY) headers['X-Admin-Key'] = process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY
-      const res = await fetch(`${API_URL}/api/admin/posts`, { headers })
+      const res = await fetch(`${API_URL}/api/admin/properties?limit=500`, { headers: adminHeaders() })
       const data = await res.json()
-      if (data.success && data.data?.posts) setPosts(data.data.posts)
+      if (data.success) {
+        setProperties(data.data?.properties || data.properties || [])
+      } else {
+        // Fallback to public endpoint
+        const res2 = await fetch(`${API_URL}/api/properties?limit=500`, { cache: 'no-store' })
+        const data2 = await res2.json()
+        if (data2.success) setProperties(data2.properties || [])
+      }
     } catch (err) {
-      console.error('Error:', err)
+      console.error('Error fetching properties:', err)
     } finally {
       setLoading(false)
     }
   }, [token])
 
+  // Fetch local pending posts
   const fetchPendingPosts = useCallback(async () => {
     setPendingLoading(true)
     try {
@@ -94,11 +107,12 @@ export default function AdminPostsPage() {
   }, [])
 
   useEffect(() => {
-    fetchPosts()
+    fetchProperties()
     fetchPendingPosts()
-  }, [fetchPosts, fetchPendingPosts])
+  }, [fetchProperties, fetchPendingPosts])
 
-  const handleApprove = async (postId: string) => {
+  // ── Local pending post actions ──
+  const handleApproveLocal = async (postId: string) => {
     setApproveLoading(postId + '_approve')
     try {
       const res = await fetch(`/api/posts/${postId}/approve`, {
@@ -110,8 +124,7 @@ export default function AdminPostsPage() {
       if (data.success) {
         setPendingPosts(prev => prev.filter(p => p.id !== postId))
         showToast('✅ Post approved and published. Approval email sent.', 'success')
-        // Refresh external posts after a short delay
-        setTimeout(fetchPosts, 1500)
+        setTimeout(fetchProperties, 2000)
       } else {
         showToast(data.message || 'Approval failed', 'error')
       }
@@ -127,12 +140,8 @@ export default function AdminPostsPage() {
     setRejectModal({ postId, postTitle })
   }
 
-  const handleReject = async () => {
-    if (!rejectModal) return
-    if (!rejectReason.trim()) {
-      showToast('Please enter a rejection reason', 'error')
-      return
-    }
+  const handleRejectLocal = async () => {
+    if (!rejectModal || !rejectReason.trim()) return
     const { postId } = rejectModal
     setApproveLoading(postId + '_reject')
     setRejectModal(null)
@@ -157,17 +166,21 @@ export default function AdminPostsPage() {
     }
   }
 
-  const handleDelete = async (postId: string) => {
-    if (!confirm('Are you sure you want to permanently delete this post?')) return
-    setActionLoading(postId + '_delete')
+  // ── External backend property actions ──
+  const handleApproveProperty = async (id: string) => {
+    setActionLoading(id + '_approve')
     try {
-      const res = await fetch(`/api/posts/${postId}`, { method: 'DELETE' })
+      const res = await fetch(`${API_URL}/api/admin/properties/${id}/approve`, {
+        method: 'PUT',
+        headers: adminHeaders(),
+        body: JSON.stringify({}),
+      })
       const data = await res.json()
       if (data.success || res.ok) {
-        setPosts(prev => prev.filter(p => (p.id || p._id) !== postId))
-        showToast('Post deleted successfully', 'success')
+        setProperties(prev => prev.map(p => p._id === id ? { ...p, status: 'active' } : p))
+        showToast('Property approved successfully', 'success')
       } else {
-        showToast(data.message || 'Failed to delete post', 'error')
+        showToast(data.message || 'Failed to approve', 'error')
       }
     } catch {
       showToast('Network error', 'error')
@@ -176,19 +189,54 @@ export default function AdminPostsPage() {
     }
   }
 
-  const filtered = posts.filter(p => {
-    const matchType = typeFilter === 'all' || p.type?.toLowerCase() === typeFilter
-    const loc = typeof p.location === 'string' ? p.location : `${(p.location as any)?.area || ''} ${(p.location as any)?.city || ''}`.trim()
-    const matchSearch = !search ||
-      p.title?.toLowerCase().includes(search.toLowerCase()) ||
-      loc.toLowerCase().includes(search.toLowerCase())
-    return matchType && matchSearch
-  })
+  const handleRejectProperty = async (id: string) => {
+    setActionLoading(id + '_reject')
+    try {
+      const res = await fetch(`${API_URL}/api/admin/properties/${id}/reject`, {
+        method: 'PUT',
+        headers: adminHeaders(),
+        body: JSON.stringify({}),
+      })
+      const data = await res.json()
+      if (data.success || res.ok) {
+        setProperties(prev => prev.map(p => p._id === id ? { ...p, status: 'rejected' } : p))
+        showToast('Property rejected', 'success')
+      } else {
+        showToast(data.message || 'Failed to reject', 'error')
+      }
+    } catch {
+      showToast('Network error', 'error')
+    } finally {
+      setActionLoading(null)
+    }
+  }
 
-  const getImgUrl = (img: any): string => {
-    if (!img) return ''
-    if (typeof img === 'string') return img
-    return img.url || ''
+  const handleDeleteProperty = async (id: string) => {
+    if (!confirm('Are you sure you want to permanently delete this post?')) return
+    setActionLoading(id + '_delete')
+    try {
+      const res = await fetch(`${API_URL}/api/admin/properties/${id}`, {
+        method: 'DELETE',
+        headers: adminHeaders(),
+      })
+      const data = await res.json()
+      if (data.success || res.ok) {
+        setProperties(prev => prev.filter(p => p._id !== id))
+        showToast('Post deleted successfully', 'success')
+      } else {
+        showToast(data.message || 'Failed to delete', 'error')
+      }
+    } catch {
+      showToast('Network error', 'error')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const getImgUrl = (images: any[]): string => {
+    if (!images?.length) return ''
+    const first = images[0]
+    return typeof first === 'string' ? first : first?.url || ''
   }
 
   const getLocation = (loc: any): string => {
@@ -197,30 +245,31 @@ export default function AdminPostsPage() {
     return [loc.area, loc.city].filter(Boolean).join(', ') || 'N/A'
   }
 
-  const getAuthor = (userId: Post['userId']) => {
-    if (!userId) return 'Unknown'
-    if (typeof userId === 'string') return userId.slice(-8)
-    return userId.name || userId.email || 'Unknown'
-  }
-
-  const typeCounts = posts.reduce((acc, p) => {
-    const t = p.type?.toLowerCase() || 'other'
-    acc[t] = (acc[t] || 0) + 1
-    return acc
-  }, {} as Record<string, number>)
-
-  const uniqueTypes = Array.from(new Set(posts.map(p => p.type?.toLowerCase()).filter(Boolean)))
-
   const getStatusBadge = (status: string) => {
     const map: Record<string, string> = {
       active: 'bg-emerald-100 text-emerald-700',
-      available: 'bg-emerald-100 text-emerald-700',
       approved: 'bg-emerald-100 text-emerald-700',
       pending: 'bg-amber-100 text-amber-700',
       rejected: 'bg-red-100 text-red-700',
       rented: 'bg-slate-100 text-slate-600',
     }
     return map[status?.toLowerCase()] || 'bg-slate-100 text-slate-600'
+  }
+
+  const filtered = properties.filter(p => {
+    const matchStatus = statusFilter === 'all' || (p.status || 'active').toLowerCase() === statusFilter
+    const matchSearch = !search ||
+      p.title?.toLowerCase().includes(search.toLowerCase()) ||
+      p.location?.city?.toLowerCase().includes(search.toLowerCase()) ||
+      p.location?.area?.toLowerCase().includes(search.toLowerCase())
+    return matchStatus && matchSearch
+  })
+
+  const tabCounts = {
+    all: properties.length,
+    active: properties.filter(p => ['active', 'approved'].includes((p.status || 'active').toLowerCase())).length,
+    pending: properties.filter(p => (p.status || '').toLowerCase() === 'pending').length,
+    rejected: properties.filter(p => (p.status || '').toLowerCase() === 'rejected').length,
   }
 
   return (
@@ -234,7 +283,7 @@ export default function AdminPostsPage() {
         </div>
       )}
 
-      {/* Rejection Reason Modal */}
+      {/* Rejection Modal */}
       {rejectModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
@@ -249,20 +298,15 @@ export default function AdminPostsPage() {
                 <p className="text-xs text-slate-500 truncate max-w-[260px]">{rejectModal.postTitle}</p>
               </div>
             </div>
-
-            <p className="text-sm text-slate-600 mb-3">
-              The user will receive an email with this reason. Please be clear and helpful.
-            </p>
-
+            <p className="text-sm text-slate-600 mb-3">The user will receive an email with this reason.</p>
             <textarea
               value={rejectReason}
               onChange={e => setRejectReason(e.target.value)}
-              placeholder="e.g. Images are unclear, please upload higher quality photos. Also the price field was left empty."
+              placeholder="e.g. Images are unclear, please upload higher quality photos."
               rows={4}
               className="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:border-red-400 resize-none"
               autoFocus
             />
-
             <div className="flex gap-3 mt-4">
               <button
                 onClick={() => setRejectModal(null)}
@@ -271,7 +315,7 @@ export default function AdminPostsPage() {
                 Cancel
               </button>
               <button
-                onClick={handleReject}
+                onClick={handleRejectLocal}
                 disabled={!rejectReason.trim()}
                 className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 disabled:opacity-40 text-white text-sm font-bold transition-all"
               >
@@ -286,10 +330,10 @@ export default function AdminPostsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900">Posts Management</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Review and manage all user posts</p>
+          <p className="text-slate-500 text-sm mt-0.5">Manage all posts — approve, reject, or delete</p>
         </div>
         <button
-          onClick={() => { fetchPosts(); fetchPendingPosts() }}
+          onClick={() => { fetchProperties(); fetchPendingPosts() }}
           className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all shadow-sm"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -300,7 +344,7 @@ export default function AdminPostsPage() {
       </div>
 
       {/* ══ Pending Posts — Approval Section ══ */}
-      <div className="bg-white rounded-2xl border border-amber-200 shadow-sm mb-8 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-amber-200 shadow-sm mb-6 overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 bg-amber-50 border-b border-amber-100">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center">
@@ -309,12 +353,12 @@ export default function AdminPostsPage() {
               </svg>
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-slate-900">Pending Posts</h2>
-              <p className="text-xs text-slate-500">Awaiting admin approval — user gets an email on decision</p>
+              <h2 className="text-base font-extrabold text-slate-900">Pending Approval</h2>
+              <p className="text-xs text-slate-500">New posts awaiting review — user gets email on decision</p>
             </div>
           </div>
           {!pendingLoading && (
-            <span className="bg-amber-500 text-white text-xs font-extrabold px-3 py-1 rounded-full">
+            <span className={`text-xs font-extrabold px-3 py-1 rounded-full ${pendingPosts.length > 0 ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-500'}`}>
               {pendingPosts.length} pending
             </span>
           )}
@@ -325,43 +369,36 @@ export default function AdminPostsPage() {
             {[1, 2].map(i => <div key={i} className="h-20 bg-slate-100 rounded-xl animate-pulse" />)}
           </div>
         ) : pendingPosts.length === 0 ? (
-          <div className="py-12 text-center">
-            <div className="text-4xl mb-2">✅</div>
+          <div className="py-10 text-center">
+            <div className="text-3xl mb-2">✅</div>
             <p className="text-slate-500 font-medium text-sm">No pending posts — all clear!</p>
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
             {pendingPosts.map(post => (
               <div key={post.id} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50/60 transition-colors">
-                {/* Thumbnail */}
-                {getImgUrl(post.images?.[0]) ? (
-                  <img src={getImgUrl(post.images[0])} alt="" className="w-16 h-14 rounded-xl object-cover flex-shrink-0" />
+                {getImgUrl(post.images) ? (
+                  <img src={getImgUrl(post.images)} alt="" className="w-16 h-14 rounded-xl object-cover flex-shrink-0" />
                 ) : (
                   <div className="w-16 h-14 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0 text-2xl">🏠</div>
                 )}
-
-                {/* Info */}
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-slate-900 text-sm truncate">{post.title}</p>
                   <p className="text-xs text-slate-500 mt-0.5">
                     by <span className="font-semibold">{post.userName || post.userEmail}</span>
                     {' · '}{getLocation(post.location)}
-                    {' · '}{post.price ? `${Number(post.price).toLocaleString()} EGP` : 'Free'}
+                    {post.price ? ` · ${Number(post.price).toLocaleString()} EGP` : ''}
                   </p>
                   <p className="text-xs text-slate-400 mt-0.5">
                     {new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
-
-                {/* Type badge */}
                 <span className="hidden sm:inline text-xs font-semibold bg-violet-100 text-violet-700 px-2.5 py-1 rounded-lg capitalize flex-shrink-0">
                   {post.type}
                 </span>
-
-                {/* Action buttons */}
                 <div className="flex gap-2 flex-shrink-0">
                   <button
-                    onClick={() => handleApprove(post.id)}
+                    onClick={() => handleApproveLocal(post.id)}
                     disabled={!!approveLoading}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-all"
                   >
@@ -379,13 +416,6 @@ export default function AdminPostsPage() {
                     disabled={!!approveLoading}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 disabled:opacity-50 text-red-600 text-xs font-bold rounded-lg border border-red-200 transition-all"
                   >
-                    {approveLoading === post.id + '_reject' ? (
-                      <div className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    )}
                     Reject
                   </button>
                 </div>
@@ -395,28 +425,8 @@ export default function AdminPostsPage() {
         )}
       </div>
 
-      {/* Stats Row */}
-      <div className="flex flex-wrap gap-3 mb-5">
-        <div className="bg-white rounded-xl px-4 py-3 border border-slate-100 shadow-sm">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Posts</span>
-          <p className="text-2xl font-extrabold text-slate-900 mt-0.5">{posts.length}</p>
-        </div>
-        <div className="bg-white rounded-xl px-4 py-3 border border-slate-100 shadow-sm">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Views</span>
-          <p className="text-2xl font-extrabold text-slate-900 mt-0.5">
-            {posts.reduce((s, p) => s + (p.views || 0), 0).toLocaleString()}
-          </p>
-        </div>
-        <div className="bg-white rounded-xl px-4 py-3 border border-slate-100 shadow-sm">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Likes</span>
-          <p className="text-2xl font-extrabold text-slate-900 mt-0.5">
-            {posts.reduce((s, p) => s + (p.likes?.length || 0), 0).toLocaleString()}
-          </p>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-5 flex flex-col md:flex-row gap-3">
+      {/* ══ All Published Posts ══ */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-4 flex flex-col md:flex-row gap-3">
         <div className="relative flex-1">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -429,33 +439,28 @@ export default function AdminPostsPage() {
             className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-primary"
           />
         </div>
-        <div className="flex gap-1.5 bg-slate-100 p-1 rounded-xl">
-          <button
-            onClick={() => setTypeFilter('all')}
-            className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${typeFilter === 'all' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-          >
-            All ({posts.length})
-          </button>
-          {uniqueTypes.map(t => (
+        <div className="flex gap-1.5 bg-slate-100 p-1 rounded-xl overflow-x-auto">
+          {(['all', 'active', 'pending', 'rejected'] as StatusFilter[]).map(s => (
             <button
-              key={t}
-              onClick={() => setTypeFilter(t)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-bold capitalize transition-all ${typeFilter === t ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-bold capitalize whitespace-nowrap transition-all ${
+                statusFilter === s ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
             >
-              {t} ({typeCounts[t] || 0})
+              {s} ({tabCounts[s]})
             </button>
           ))}
         </div>
       </div>
 
-      {/* All Posts Table */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-8 space-y-3">
             {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-16 bg-slate-100 rounded-xl animate-pulse" />)}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="py-20 text-center">
+          <div className="py-16 text-center">
             <div className="text-5xl mb-3">📝</div>
             <p className="text-slate-500 font-medium">No posts found</p>
           </div>
@@ -465,69 +470,110 @@ export default function AdminPostsPage() {
               <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
                   <th className="text-left text-xs font-bold text-slate-500 uppercase tracking-wider px-5 py-3">Post</th>
-                  <th className="text-left text-xs font-bold text-slate-500 uppercase tracking-wider px-5 py-3">Author</th>
-                  <th className="text-left text-xs font-bold text-slate-500 uppercase tracking-wider px-5 py-3">Type</th>
                   <th className="text-left text-xs font-bold text-slate-500 uppercase tracking-wider px-5 py-3">Location</th>
                   <th className="text-left text-xs font-bold text-slate-500 uppercase tracking-wider px-5 py-3">Price</th>
-                  <th className="text-left text-xs font-bold text-slate-500 uppercase tracking-wider px-5 py-3">Views</th>
+                  <th className="text-left text-xs font-bold text-slate-500 uppercase tracking-wider px-5 py-3">Type</th>
                   <th className="text-left text-xs font-bold text-slate-500 uppercase tracking-wider px-5 py-3">Status</th>
                   <th className="text-left text-xs font-bold text-slate-500 uppercase tracking-wider px-5 py-3">Date</th>
                   <th className="text-left text-xs font-bold text-slate-500 uppercase tracking-wider px-5 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {filtered.map(post => {
-                  const postId = post.id || post._id || ''
-                  const imgSrc = getImgUrl(post.images?.[0])
+                {filtered.map(prop => {
+                  const imgUrl = getImgUrl(prop.images as any[])
+                  const status = (prop.status || 'active').toLowerCase()
                   return (
-                    <tr key={postId} className="hover:bg-slate-50/50 transition-colors">
+                    <tr key={prop._id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
-                          {imgSrc ? (
-                            <img src={imgSrc} alt="" className="w-12 h-10 rounded-lg object-cover flex-shrink-0" />
+                          {imgUrl ? (
+                            <img src={imgUrl} alt="" className="w-12 h-10 rounded-lg object-cover flex-shrink-0" />
                           ) : (
                             <div className="w-12 h-10 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
                               <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                               </svg>
                             </div>
                           )}
                           <div>
-                            <p className="font-semibold text-slate-900 text-sm line-clamp-1 max-w-[160px]">{post.title}</p>
-                            <p className="text-[11px] text-slate-400">{postId.slice(-6)}</p>
+                            <p className="font-semibold text-slate-900 text-sm line-clamp-1 max-w-[150px]">{prop.title}</p>
+                            <p className="text-[11px] text-slate-400">{prop._id.slice(-6)}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-3 text-sm text-slate-600">{getAuthor(post.userId)}</td>
+                      <td className="px-5 py-3 text-sm text-slate-600">{[prop.location?.area, prop.location?.city].filter(Boolean).join(', ') || 'N/A'}</td>
+                      <td className="px-5 py-3 text-sm font-semibold text-slate-900">{prop.price ? `${prop.price.toLocaleString()} EGP` : 'N/A'}</td>
                       <td className="px-5 py-3">
-                        <span className="text-xs font-semibold bg-violet-100 text-violet-700 px-2.5 py-1 rounded-lg capitalize">{post.type || 'N/A'}</span>
+                        <span className="text-xs font-semibold bg-violet-100 text-violet-700 px-2.5 py-1 rounded-lg capitalize">{prop.propertyType || prop.type || 'N/A'}</span>
                       </td>
-                      <td className="px-5 py-3 text-sm text-slate-500">{getLocation(post.location)}</td>
-                      <td className="px-5 py-3 text-sm font-semibold text-slate-900">{post.price ? `${post.price.toLocaleString()} EGP` : 'N/A'}</td>
-                      <td className="px-5 py-3 text-sm text-slate-500">{(post.views || 0).toLocaleString()}</td>
                       <td className="px-5 py-3">
-                        <span className={`text-xs font-bold px-2.5 py-1 rounded-lg capitalize ${getStatusBadge(post.status)}`}>
-                          {post.status || 'active'}
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-lg capitalize ${getStatusBadge(prop.status)}`}>
+                          {prop.status || 'active'}
                         </span>
                       </td>
                       <td className="px-5 py-3 text-xs text-slate-400 whitespace-nowrap">
-                        {post.createdAt ? new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                        {prop.createdAt ? new Date(prop.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
                       </td>
                       <td className="px-5 py-3">
-                        <button
-                          onClick={() => handleDelete(postId)}
-                          disabled={actionLoading === postId + '_delete'}
-                          className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center transition-all disabled:opacity-50"
-                          title="Delete post"
-                        >
-                          {actionLoading === postId + '_delete' ? (
-                            <div className="w-3 h-3 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                          ) : (
-                            <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        <div className="flex items-center gap-1.5">
+                          <Link
+                            href={`/properties/${prop._id}`}
+                            target="_blank"
+                            className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-all"
+                            title="View"
+                          >
+                            <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                             </svg>
+                          </Link>
+                          {status !== 'active' && status !== 'approved' && (
+                            <button
+                              onClick={() => handleApproveProperty(prop._id)}
+                              disabled={actionLoading === prop._id + '_approve'}
+                              className="w-8 h-8 rounded-lg bg-emerald-100 hover:bg-emerald-200 flex items-center justify-center transition-all disabled:opacity-50"
+                              title="Approve"
+                            >
+                              {actionLoading === prop._id + '_approve' ? (
+                                <div className="w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </button>
                           )}
-                        </button>
+                          {status !== 'rejected' && (
+                            <button
+                              onClick={() => handleRejectProperty(prop._id)}
+                              disabled={actionLoading === prop._id + '_reject'}
+                              className="w-8 h-8 rounded-lg bg-amber-100 hover:bg-amber-200 flex items-center justify-center transition-all disabled:opacity-50"
+                              title="Reject"
+                            >
+                              {actionLoading === prop._id + '_reject' ? (
+                                <div className="w-3 h-3 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                </svg>
+                              )}
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeleteProperty(prop._id)}
+                            disabled={actionLoading === prop._id + '_delete'}
+                            className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center transition-all disabled:opacity-50"
+                            title="Delete"
+                          >
+                            {actionLoading === prop._id + '_delete' ? (
+                              <div className="w-3 h-3 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -538,7 +584,7 @@ export default function AdminPostsPage() {
         )}
         {!loading && filtered.length > 0 && (
           <div className="px-5 py-3 border-t border-slate-100 bg-slate-50 text-xs font-medium text-slate-500">
-            Showing {filtered.length} of {posts.length} posts
+            Showing {filtered.length} of {properties.length} posts
           </div>
         )}
       </div>
