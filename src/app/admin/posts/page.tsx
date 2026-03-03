@@ -12,7 +12,7 @@ interface Post {
   type: string
   price: number | null
   location: string | { city?: string; area?: string }
-  images: string[]
+  images: any[]
   views: number
   likes: any[]
   status: string
@@ -25,44 +25,45 @@ interface LocalPost {
   title: string
   type: string
   price: number | null
-  location: string
-  images: string[]
+  location: string | { city?: string; area?: string; address?: string }
+  images: any[]
   views: number
   likes: any[]
   status: 'pending' | 'approved' | 'rejected' | string
   createdAt: string
   userEmail: string
   userName: string
-  approved_by?: string | null
-  approved_by_name?: string | null
-  approved_at?: string | null
+  rejectionReason?: string | null
 }
 
 export default function AdminPostsPage() {
   const { data: session } = useSession()
 
-  // ── External backend posts (existing) ──
+  // ── External backend posts ──
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
 
-  // ── Local pending posts (approval system) ──
+  // ── Local pending posts ──
   const [pendingPosts, setPendingPosts] = useState<LocalPost[]>([])
   const [pendingLoading, setPendingLoading] = useState(true)
   const [approveLoading, setApproveLoading] = useState<string | null>(null)
-
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+
+  // ── Rejection modal ──
+  const [rejectModal, setRejectModal] = useState<{ postId: string; postTitle: string } | null>(null)
+  const [rejectReason, setRejectReason] = useState('')
+
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
 
   const token = (session?.user as any)?.backendToken
 
   const showToast = (msg: string, type: 'success' | 'error') => {
     setToast({ msg, type })
-    setTimeout(() => setToast(null), 3000)
+    setTimeout(() => setToast(null), 3500)
   }
 
-  // Fetch external backend posts (unchanged)
   const fetchPosts = useCallback(async () => {
     setLoading(true)
     try {
@@ -79,7 +80,6 @@ export default function AdminPostsPage() {
     }
   }, [token])
 
-  // Fetch local pending posts
   const fetchPendingPosts = useCallback(async () => {
     setPendingLoading(true)
     try {
@@ -98,24 +98,22 @@ export default function AdminPostsPage() {
     fetchPendingPosts()
   }, [fetchPosts, fetchPendingPosts])
 
-  // Approve or reject a local post
-  const handleApproveAction = async (postId: string, action: 'approve' | 'reject') => {
-    setApproveLoading(postId + '_' + action)
+  const handleApprove = async (postId: string) => {
+    setApproveLoading(postId + '_approve')
     try {
       const res = await fetch(`/api/posts/${postId}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action: 'approve' }),
       })
       const data = await res.json()
       if (data.success) {
         setPendingPosts(prev => prev.filter(p => p.id !== postId))
-        showToast(
-          action === 'approve' ? '✅ Post approved and is now live.' : '🗑️ Post rejected.',
-          'success'
-        )
+        showToast('✅ Post approved and published. Approval email sent.', 'success')
+        // Refresh external posts after a short delay
+        setTimeout(fetchPosts, 1500)
       } else {
-        showToast(data.message || 'Action failed', 'error')
+        showToast(data.message || 'Approval failed', 'error')
       }
     } catch {
       showToast('Network error', 'error')
@@ -124,14 +122,40 @@ export default function AdminPostsPage() {
     }
   }
 
-  const filtered = posts.filter(p => {
-    const matchType = typeFilter === 'all' || p.type?.toLowerCase() === typeFilter
-    const loc = typeof p.location === 'string' ? p.location : `${p.location?.area || ''} ${p.location?.city || ''}`.trim()
-    const matchSearch = !search ||
-      p.title?.toLowerCase().includes(search.toLowerCase()) ||
-      loc.toLowerCase().includes(search.toLowerCase())
-    return matchType && matchSearch
-  })
+  const openRejectModal = (postId: string, postTitle: string) => {
+    setRejectReason('')
+    setRejectModal({ postId, postTitle })
+  }
+
+  const handleReject = async () => {
+    if (!rejectModal) return
+    if (!rejectReason.trim()) {
+      showToast('Please enter a rejection reason', 'error')
+      return
+    }
+    const { postId } = rejectModal
+    setApproveLoading(postId + '_reject')
+    setRejectModal(null)
+    try {
+      const res = await fetch(`/api/posts/${postId}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reject', reason: rejectReason.trim() }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setPendingPosts(prev => prev.filter(p => p.id !== postId))
+        showToast('🗑️ Post rejected. Rejection email sent to user.', 'success')
+      } else {
+        showToast(data.message || 'Rejection failed', 'error')
+      }
+    } catch {
+      showToast('Network error', 'error')
+    } finally {
+      setApproveLoading(null)
+      setRejectReason('')
+    }
+  }
 
   const handleDelete = async (postId: string) => {
     if (!confirm('Are you sure you want to permanently delete this post?')) return
@@ -152,7 +176,22 @@ export default function AdminPostsPage() {
     }
   }
 
-  const getLocation = (loc: Post['location']) => {
+  const filtered = posts.filter(p => {
+    const matchType = typeFilter === 'all' || p.type?.toLowerCase() === typeFilter
+    const loc = typeof p.location === 'string' ? p.location : `${(p.location as any)?.area || ''} ${(p.location as any)?.city || ''}`.trim()
+    const matchSearch = !search ||
+      p.title?.toLowerCase().includes(search.toLowerCase()) ||
+      loc.toLowerCase().includes(search.toLowerCase())
+    return matchType && matchSearch
+  })
+
+  const getImgUrl = (img: any): string => {
+    if (!img) return ''
+    if (typeof img === 'string') return img
+    return img.url || ''
+  }
+
+  const getLocation = (loc: any): string => {
     if (!loc) return 'N/A'
     if (typeof loc === 'string') return loc
     return [loc.area, loc.city].filter(Boolean).join(', ') || 'N/A'
@@ -180,7 +219,6 @@ export default function AdminPostsPage() {
       pending: 'bg-amber-100 text-amber-700',
       rejected: 'bg-red-100 text-red-700',
       rented: 'bg-slate-100 text-slate-600',
-      sold: 'bg-slate-100 text-slate-600',
     }
     return map[status?.toLowerCase()] || 'bg-slate-100 text-slate-600'
   }
@@ -193,6 +231,54 @@ export default function AdminPostsPage() {
           toast.type === 'success' ? 'bg-emerald-500' : 'bg-red-500'
         }`}>
           {toast.msg}
+        </div>
+      )}
+
+      {/* Rejection Reason Modal */}
+      {rejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-extrabold text-slate-900 text-base">Reject Post</h3>
+                <p className="text-xs text-slate-500 truncate max-w-[260px]">{rejectModal.postTitle}</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-slate-600 mb-3">
+              The user will receive an email with this reason. Please be clear and helpful.
+            </p>
+
+            <textarea
+              value={rejectReason}
+              onChange={e => setRejectReason(e.target.value)}
+              placeholder="e.g. Images are unclear, please upload higher quality photos. Also the price field was left empty."
+              rows={4}
+              className="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:border-red-400 resize-none"
+              autoFocus
+            />
+
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => setRejectModal(null)}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReject}
+                disabled={!rejectReason.trim()}
+                className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 disabled:opacity-40 text-white text-sm font-bold transition-all"
+              >
+                Send Rejection
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -213,9 +299,7 @@ export default function AdminPostsPage() {
         </button>
       </div>
 
-      {/* ══════════════════════════════════════════
-          PENDING POSTS — Approval Section
-          ══════════════════════════════════════════ */}
+      {/* ══ Pending Posts — Approval Section ══ */}
       <div className="bg-white rounded-2xl border border-amber-200 shadow-sm mb-8 overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 bg-amber-50 border-b border-amber-100">
           <div className="flex items-center gap-3">
@@ -226,7 +310,7 @@ export default function AdminPostsPage() {
             </div>
             <div>
               <h2 className="text-base font-extrabold text-slate-900">Pending Posts</h2>
-              <p className="text-xs text-slate-500">Awaiting admin approval before going live</p>
+              <p className="text-xs text-slate-500">Awaiting admin approval — user gets an email on decision</p>
             </div>
           </div>
           {!pendingLoading && (
@@ -250,8 +334,8 @@ export default function AdminPostsPage() {
             {pendingPosts.map(post => (
               <div key={post.id} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50/60 transition-colors">
                 {/* Thumbnail */}
-                {post.images?.[0] ? (
-                  <img src={post.images[0]} alt="" className="w-16 h-14 rounded-xl object-cover flex-shrink-0" />
+                {getImgUrl(post.images?.[0]) ? (
+                  <img src={getImgUrl(post.images[0])} alt="" className="w-16 h-14 rounded-xl object-cover flex-shrink-0" />
                 ) : (
                   <div className="w-16 h-14 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0 text-2xl">🏠</div>
                 )}
@@ -261,8 +345,8 @@ export default function AdminPostsPage() {
                   <p className="font-bold text-slate-900 text-sm truncate">{post.title}</p>
                   <p className="text-xs text-slate-500 mt-0.5">
                     by <span className="font-semibold">{post.userName || post.userEmail}</span>
-                    {' · '}{post.location}
-                    {' · '}{post.price ? `${post.price.toLocaleString()} EGP` : 'Free'}
+                    {' · '}{getLocation(post.location)}
+                    {' · '}{post.price ? `${Number(post.price).toLocaleString()} EGP` : 'Free'}
                   </p>
                   <p className="text-xs text-slate-400 mt-0.5">
                     {new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
@@ -277,7 +361,7 @@ export default function AdminPostsPage() {
                 {/* Action buttons */}
                 <div className="flex gap-2 flex-shrink-0">
                   <button
-                    onClick={() => handleApproveAction(post.id, 'approve')}
+                    onClick={() => handleApprove(post.id)}
                     disabled={!!approveLoading}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-all"
                   >
@@ -291,7 +375,7 @@ export default function AdminPostsPage() {
                     Approve
                   </button>
                   <button
-                    onClick={() => handleApproveAction(post.id, 'reject')}
+                    onClick={() => openRejectModal(post.id, post.title)}
                     disabled={!!approveLoading}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 disabled:opacity-50 text-red-600 text-xs font-bold rounded-lg border border-red-200 transition-all"
                   >
@@ -311,9 +395,7 @@ export default function AdminPostsPage() {
         )}
       </div>
 
-      {/* ══════════════════════════════════════════
-          Stats Row (existing)
-          ══════════════════════════════════════════ */}
+      {/* Stats Row */}
       <div className="flex flex-wrap gap-3 mb-5">
         <div className="bg-white rounded-xl px-4 py-3 border border-slate-100 shadow-sm">
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Posts</span>
@@ -366,7 +448,7 @@ export default function AdminPostsPage() {
         </div>
       </div>
 
-      {/* All Posts Table (existing — unchanged) */}
+      {/* All Posts Table */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-8 space-y-3">
@@ -396,13 +478,13 @@ export default function AdminPostsPage() {
               <tbody className="divide-y divide-slate-50">
                 {filtered.map(post => {
                   const postId = post.id || post._id || ''
-                  const imgUrl = post.images?.[0]
+                  const imgSrc = getImgUrl(post.images?.[0])
                   return (
                     <tr key={postId} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
-                          {imgUrl ? (
-                            <img src={imgUrl} alt="" className="w-12 h-10 rounded-lg object-cover flex-shrink-0" />
+                          {imgSrc ? (
+                            <img src={imgSrc} alt="" className="w-12 h-10 rounded-lg object-cover flex-shrink-0" />
                           ) : (
                             <div className="w-12 h-10 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
                               <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -432,22 +514,20 @@ export default function AdminPostsPage() {
                         {post.createdAt ? new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
                       </td>
                       <td className="px-5 py-3">
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => handleDelete(postId)}
-                            disabled={actionLoading === postId + '_delete'}
-                            className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center transition-all disabled:opacity-50"
-                            title="Delete post"
-                          >
-                            {actionLoading === postId + '_delete' ? (
-                              <div className="w-3 h-3 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                              <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            )}
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => handleDelete(postId)}
+                          disabled={actionLoading === postId + '_delete'}
+                          className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center transition-all disabled:opacity-50"
+                          title="Delete post"
+                        >
+                          {actionLoading === postId + '_delete' ? (
+                            <div className="w-3 h-3 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          )}
+                        </button>
                       </td>
                     </tr>
                   )

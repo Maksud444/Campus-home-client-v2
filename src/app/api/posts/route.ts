@@ -10,16 +10,12 @@ function readPosts() {
   try {
     if (!fs.existsSync(POSTS_FILE)) {
       const dataDir = path.join(process.cwd(), 'data')
-      if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true })
-      }
+      if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true })
       fs.writeFileSync(POSTS_FILE, JSON.stringify([], null, 2))
       return []
     }
-    const data = fs.readFileSync(POSTS_FILE, 'utf-8')
-    return JSON.parse(data)
-  } catch (error) {
-    console.error('Error reading posts:', error)
+    return JSON.parse(fs.readFileSync(POSTS_FILE, 'utf-8'))
+  } catch {
     return []
   }
 }
@@ -39,150 +35,82 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type')
     const userId = searchParams.get('userId')
     const limit = searchParams.get('limit')
-
     const isAdmin = searchParams.get('admin') === 'true'
     const statusFilter = searchParams.get('status')
 
     let posts = readPosts()
 
-    // Sort by most recent first
     posts.sort((a: any, b: any) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
 
-    // Public: only show approved posts. Admin: show all or filter by status.
     if (!isAdmin) {
       posts = posts.filter((post: any) => post.status === 'approved')
     } else if (statusFilter) {
       posts = posts.filter((post: any) => post.status === statusFilter)
     }
 
-    // Filter by type
-    if (type) {
-      posts = posts.filter((post: any) => post.type === type)
-    }
-
-    // Filter by user
-    if (userId) {
-      posts = posts.filter((post: any) => post.userId === userId)
-    }
-
-    // Limit results
-    if (limit) {
-      posts = posts.slice(0, parseInt(limit))
-    }
+    if (type) posts = posts.filter((post: any) => post.type === type)
+    if (userId) posts = posts.filter((post: any) => post.userId === userId)
+    if (limit) posts = posts.slice(0, parseInt(limit))
 
     return NextResponse.json({ success: true, posts })
   } catch (error) {
     console.error('Error fetching posts:', error)
-    return NextResponse.json(
-      { success: false, message: 'Failed to fetch posts' },
-      { status: 500 }
-    )
+    return NextResponse.json({ success: false, message: 'Failed to fetch posts' }, { status: 500 })
   }
 }
 
-// POST - Create new post
+// POST - Submit new post for admin approval
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
-    const {
-      title,
-      description,
-      type,
-      price,
-      location,
-      city,
-      addressDetails,
-      whatsappNumber,
-      bedrooms,
-      bathrooms,
-      area,
-      amenities,
-      images,
-      videos,
-      propertyType,
-      furnished,
-      preferences,
-      targetAudience
-    } = body
 
-    // Validation
-    if (!title || !description || !type || !city || !addressDetails || !whatsappNumber) {
-      return NextResponse.json(
-        { success: false, message: 'Missing required fields' },
-        { status: 400 }
-      )
-    }
-
-    if (!images || images.length < 3) {
-      return NextResponse.json(
-        { success: false, message: 'Minimum 3 images required' },
-        { status: 400 }
-      )
+    // Validate images (accept both string[] and {url}[] formats)
+    const images = body.images || []
+    if (images.length < 3) {
+      return NextResponse.json({ success: false, message: 'Minimum 3 images required' }, { status: 400 })
     }
 
     const posts = readPosts()
 
     const newPost = {
       id: Date.now().toString(),
-      userId: (session.user as any).id || session.user.email.split('@')[0],
+      // Store raw body exactly as it would be sent to external backend
+      ...body,
+      // Override / ensure these fields
       userEmail: session.user.email,
-      userName: session.user.name || 'User',
-      userImage: session.user.image || '',
-      userRole: (session.user as any).role || 'student',
-      title,
-      description,
-      type,
-      price: price || null,
-      location: location || `${city}, ${addressDetails}`,
-      city,
-      addressDetails,
-      whatsappNumber,
-      bedrooms: bedrooms || null,
-      bathrooms: bathrooms || null,
-      area: area || null,
-      amenities: amenities || [],
-      images: images || [],
-      videos: videos || [],
-      propertyType: propertyType || 'apartment',
-      furnished: furnished || false,
-      preferences: preferences || '',
-      targetAudience: targetAudience || 'students',
-      likes: [],
-      views: 0,
+      userName: session.user.name || body.userName || 'User',
+      userImage: session.user.image || body.userImage || '',
       status: 'pending',
+      rejectionReason: null,
       approved_by: null,
       approved_by_name: null,
       approved_at: null,
+      likes: [],
+      views: 0,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     }
 
     posts.push(newPost)
     writePosts(posts)
 
-    console.log('✅ Post created:', newPost.id)
+    console.log('✅ Post queued for approval:', newPost.id)
 
     return NextResponse.json({
       success: true,
-      message: 'Post created successfully',
+      message: 'Post submitted for admin approval',
       post: newPost
     })
   } catch (error) {
     console.error('Error creating post:', error)
-    return NextResponse.json(
-      { success: false, message: 'Failed to create post' },
-      { status: 500 }
-    )
+    return NextResponse.json({ success: false, message: 'Failed to create post' }, { status: 500 })
   }
 }

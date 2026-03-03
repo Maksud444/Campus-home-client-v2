@@ -307,14 +307,10 @@ export default function CreatePostPage() {
         throw new Error(`Maximum ${MAX_IMAGES} images allowed`)
       }
 
-      const token = (session as any)?.accessToken
-
-      const response = await fetch(`${API_URL}/api/properties`, {
+      // Submit to local API for admin approval before going live
+      const response = await fetch('/api/posts', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: formData.title,
           description: formData.description,
@@ -346,8 +342,7 @@ export default function CreatePostPage() {
           userName: session?.user?.name || 'Anonymous',
           userEmail: session?.user?.email,
           userImage: session?.user?.image,
-          userRole: (session?.user as any)?.role || 'student',
-          status: 'pending'
+          userRole: (session?.user as any)?.role || 'student'
         })
       })
 
