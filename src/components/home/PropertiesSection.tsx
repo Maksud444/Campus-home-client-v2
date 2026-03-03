@@ -142,25 +142,34 @@ export default function PropertiesSection() {
 
                   {/* Amenities */}
                   <div className="mt-auto grid grid-cols-3 gap-2 pt-3 border-t border-slate-50 text-slate-600">
-                    <div className="flex flex-col items-center gap-0.5">
-                      <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                        <FaBed size={14} />
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors flex-shrink-0">
+                        <FaBed size={13} />
                       </div>
-                      <span className="text-[10px] font-bold uppercase tracking-tighter opacity-60">{property.bedrooms || 0}</span>
+                      <div className="flex flex-col">
+                        <span className="text-[11px] font-bold text-slate-800 leading-none">{property.bedrooms || 0}</span>
+                        <span className="text-[9px] text-slate-400 uppercase tracking-wide leading-none mt-0.5">Beds</span>
+                      </div>
                     </div>
 
-                    <div className="flex flex-col items-center gap-0.5">
-                      <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                        <FaBath size={14} />
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors flex-shrink-0">
+                        <FaBath size={13} />
                       </div>
-                      <span className="text-[10px] font-bold uppercase tracking-tighter opacity-60">{property.bathrooms || 0}</span>
+                      <div className="flex flex-col">
+                        <span className="text-[11px] font-bold text-slate-800 leading-none">{property.bathrooms || 0}</span>
+                        <span className="text-[9px] text-slate-400 uppercase tracking-wide leading-none mt-0.5">Baths</span>
+                      </div>
                     </div>
 
-                    <div className="flex flex-col items-center gap-0.5">
-                      <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                        <FaRulerCombined size={13} />
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors flex-shrink-0">
+                        <FaRulerCombined size={12} />
                       </div>
-                      <span className="text-[10px] font-bold uppercase tracking-tighter opacity-60">{property.area || 0}m²</span>
+                      <div className="flex flex-col">
+                        <span className="text-[11px] font-bold text-slate-800 leading-none">{property.area || 0}</span>
+                        <span className="text-[9px] text-slate-400 uppercase tracking-wide leading-none mt-0.5">m²</span>
+                      </div>
                     </div>
                   </div>
                 </div>
