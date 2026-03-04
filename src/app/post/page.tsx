@@ -9,6 +9,7 @@ import { citiesWithAreas } from '@/data/cities'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useNotifications } from '@/contexts/NotificationContext'
 import Toast from '@/components/ui/Toast'
+import imageCompression from 'browser-image-compression'
 import PhoneInput from 'react-phone-input-2'
 import 'react-phone-input-2/lib/style.css'
 
@@ -168,7 +169,6 @@ export default function CreatePostPage() {
   const files = e.target.files
   if (!files || files.length === 0) return
 
-  // Enforce max 6 images
   if (type === 'image') {
     const remaining = MAX_IMAGES - formData.images.length
     if (remaining <= 0) {
@@ -187,34 +187,37 @@ export default function CreatePostPage() {
   setError('')
 
   try {
-    console.log(`📤 Uploading ${files.length} ${type}(s)...`)
     const uploadedUrls: string[] = []
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
-      
-      // Calculate file size
-      const fileSizeKB = file.size / 1024
-      const fileSizeMB = file.size / (1024 * 1024)
-      
-      console.log(`📊 File ${i + 1}: ${file.name}`)
-      console.log(`📏 Size: ${fileSizeKB.toFixed(0)} KB (${fileSizeMB.toFixed(2)} MB)`)
 
-      // Validate file type and size
+      let fileToUpload: File | Blob = file
+
       if (type === 'image') {
         if (!file.type.startsWith('image/')) {
           throw new Error(`File ${i + 1} "${file.name}": Only image files are allowed`)
         }
-        
-        // CRITICAL: 1MB = 1024 * 1024 bytes
-        if (file.size > 1024 * 1024) {
-          throw new Error(`❌ "${file.name}" is too large (${fileSizeMB.toFixed(2)} MB).\n\n📏 Maximum size: 1MB\n💡 Recommended: 400-600 KB\n\nPlease compress the image before uploading.`)
-        }
-        
-        // Warn if larger than recommended
-        if (file.size > 600 * 1024) {
-          console.warn(`⚠️ "${file.name}" is ${fileSizeKB.toFixed(0)} KB. Recommended: 400-600 KB for faster loading`)
-        }
+
+        // ── Compression ──────────────────────────────────────────────
+        // Budget: total 250 KB across all 6 images → ~40 KB per image
+        const totalAfterUpload = formData.images.length + files.length
+        const perImageKB = Math.max(30, Math.floor(250 / Math.max(totalAfterUpload, 1)))
+
+        setSuccess(`Compressing image ${i + 1}/${files.length}...`)
+
+        fileToUpload = await imageCompression(file, {
+          maxSizeMB: perImageKB / 1024,      // e.g. 40 KB → 0.039 MB
+          maxWidthOrHeight: 1280,
+          useWebWorker: true,
+          fileType: 'image/jpeg',
+          initialQuality: 0.8,
+        })
+
+        const compressedKB = (fileToUpload.size / 1024).toFixed(1)
+        const originalKB   = (file.size / 1024).toFixed(1)
+        console.log(`✅ ${file.name}: ${originalKB} KB → ${compressedKB} KB`)
+        // ─────────────────────────────────────────────────────────────
       } else {
         if (!file.type.startsWith('video/')) {
           throw new Error(`File ${i + 1} "${file.name}": Only video files are allowed`)
@@ -224,20 +227,17 @@ export default function CreatePostPage() {
         }
       }
 
-      console.log(`📤 Uploading ${type} ${i + 1}/${files.length}:`, file.name)
+      setSuccess(`Uploading ${i + 1}/${files.length}...`)
 
-      // Create FormData
       const uploadFormData = new FormData()
-      uploadFormData.append('file', file)
+      uploadFormData.append('file', fileToUpload)
 
-      // Upload to BACKEND
       const uploadResponse = await fetch(`${API_URL}/api/upload`, {
         method: 'POST',
         body: uploadFormData
       })
 
       const uploadResult = await uploadResponse.json()
-      console.log(`📥 Upload response ${i + 1}:`, uploadResult)
 
       if (!uploadResponse.ok || !uploadResult.success) {
         throw new Error(uploadResult.message || `Failed to upload ${type} ${i + 1}`)
@@ -245,24 +245,15 @@ export default function CreatePostPage() {
 
       if (uploadResult.url) {
         uploadedUrls.push(uploadResult.url)
-        console.log(`✅ ${type} ${i + 1} uploaded:`, uploadResult.url)
       }
     }
 
-    // Update state with uploaded URLs
     if (type === 'image') {
-      setFormData(prev => ({
-        ...prev,
-        images: [...prev.images, ...uploadedUrls]
-      }))
+      setFormData(prev => ({ ...prev, images: [...prev.images, ...uploadedUrls] }))
     } else {
-      setFormData(prev => ({
-        ...prev,
-        videos: [...prev.videos, ...uploadedUrls]
-      }))
+      setFormData(prev => ({ ...prev, videos: [...prev.videos, ...uploadedUrls] }))
     }
 
-    console.log(`✅ All ${uploadedUrls.length} ${type}(s) uploaded successfully`)
     setSuccess(`${uploadedUrls.length} ${type}(s) uploaded successfully!`)
     setTimeout(() => setSuccess(''), 3000)
 
