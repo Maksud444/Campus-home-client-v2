@@ -54,7 +54,43 @@ export default function PropertyDetailPage() {
   const { data: session } = useSession()
   const router = useRouter()
   const params = useParams()
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
+
+  const [translated, setTranslated] = useState<{ title?: string; description?: string } | null>(null)
+  const [translating, setTranslating] = useState(false)
+  const translationCache = useRef<{ title?: string; description?: string } | null>(null)
+
+  const langCodeMap: Record<string, string> = {
+    ar: 'ar', bn: 'bn', id: 'id', uz: 'uz', ru: 'ru', fr: 'fr', kk: 'kk', ms: 'ms'
+  }
+
+  const handleTranslate = async () => {
+    if (!property) return
+    if (translationCache.current) { setTranslated(translationCache.current); return }
+    const targetLang = langCodeMap[language]
+    if (!targetLang) return
+    setTranslating(true)
+    try {
+      const [titleRes, descRes] = await Promise.all([
+        fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(property.title)}&langpair=en|${targetLang}`),
+        property.description ? fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(property.description.slice(0, 500))}&langpair=en|${targetLang}`) : null
+      ])
+      const titleData = await titleRes.json()
+      const descData = descRes ? await descRes.json() : null
+      const result = {
+        title: titleData?.responseData?.translatedText || property.title,
+        description: descData?.responseData?.translatedText || property.description
+      }
+      translationCache.current = result
+      setTranslated(result)
+    } catch { /* ignore */ }
+    finally { setTranslating(false) }
+  }
+
+  useEffect(() => {
+    setTranslated(null)
+    translationCache.current = null
+  }, [language])
   const propertyId = params.id as string
 
   const [property, setProperty] = useState<Property | null>(null)
@@ -553,9 +589,25 @@ export default function PropertyDetailPage() {
               </div>
 
               {/* Title */}
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 leading-tight">
-                {property.title}
-              </h1>
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight flex-1">
+                  {translated?.title || property.title}
+                </h1>
+                {language !== 'en' && langCodeMap[language] && (
+                  <button
+                    onClick={handleTranslate}
+                    disabled={translating}
+                    className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-xs font-semibold transition-colors"
+                  >
+                    {translating ? (
+                      <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    ) : (
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" /></svg>
+                    )}
+                    {translated ? 'Translated' : 'Translate'}
+                  </button>
+                )}
+              </div>
 
               {/* Location — click opens Google Maps */}
               <a
@@ -675,7 +727,12 @@ export default function PropertyDetailPage() {
             {/* Description */}
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h2 className="text-xl font-bold text-gray-900 mb-4">{t('detail.description')}</h2>
-              <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{property.description}</p>
+              <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">
+                {translated?.description || property.description}
+              </p>
+              {translated && (
+                <button onClick={() => setTranslated(null)} className="mt-2 text-xs text-gray-400 hover:text-gray-600 underline">Show original</button>
+              )}
             </div>
 
             {/* Amenities */}

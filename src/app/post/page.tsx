@@ -7,6 +7,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { citiesWithAreas } from '@/data/cities'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useNotifications } from '@/contexts/NotificationContext'
+import Toast from '@/components/ui/Toast'
 import PhoneInput from 'react-phone-input-2'
 import 'react-phone-input-2/lib/style.css'
 
@@ -18,6 +20,8 @@ export default function CreatePostPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t } = useLanguage()
+  const { addNotification } = useNotifications()
+  const [showToast, setShowToast] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -355,6 +359,8 @@ export default function CreatePostPage() {
 
       console.log('✅ Property created:', data.property)
       setSuccess(t('post.successMessage'))
+      setShowToast(true)
+      addNotification(t('post.toastSuccess'), 'success')
 
       setTimeout(() => {
         router.push('/')
@@ -384,6 +390,13 @@ export default function CreatePostPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 pt-28">
+      {showToast && (
+        <Toast
+          message={t('post.toastSuccess')}
+          type="success"
+          onClose={() => setShowToast(false)}
+        />
+      )}
       <div className="max-w-4xl mx-auto px-4">
         <div className="mb-8">
           <Link
