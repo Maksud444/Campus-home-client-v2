@@ -10,6 +10,8 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { useNotifications } from '@/contexts/NotificationContext'
 import Toast from '@/components/ui/Toast'
 import imageCompression from 'browser-image-compression'
+import { FFmpeg } from '@ffmpeg/ffmpeg'
+import { fetchFile, toBlobURL } from '@ffmpeg/util'
 import PhoneInput from 'react-phone-input-2'
 import 'react-phone-input-2/lib/style.css'
 
@@ -27,6 +29,9 @@ export default function CreatePostPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [uploadingMedia, setUploadingMedia] = useState(false)
+  const [mediaTab, setMediaTab] = useState<'images' | 'video'>('images')
+  const [videoProgress, setVideoProgress] = useState(0)
+  const ffmpegRef = useRef<FFmpeg | null>(null)
 
   const [gpsLoading, setGpsLoading] = useState(false)
 
@@ -165,6 +170,48 @@ export default function CreatePostPage() {
 
   const MAX_IMAGES = 6
 
+  // ── Video compression with ffmpeg.wasm (CDN-loaded, single-threaded) ───
+  const getFFmpeg = async (): Promise<FFmpeg> => {
+    if (ffmpegRef.current?.loaded) return ffmpegRef.current
+    const ff = new FFmpeg()
+    const base = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd'
+    setSuccess('Loading video compressor...')
+    await ff.load({
+      coreURL: await toBlobURL(`${base}/ffmpeg-core.js`, 'text/javascript'),
+      wasmURL: await toBlobURL(`${base}/ffmpeg-core.wasm`, 'application/wasm'),
+    })
+    ff.on('progress', ({ progress }) => setVideoProgress(Math.round(progress * 100)))
+    ffmpegRef.current = ff
+    return ff
+  }
+
+  const compressVideo = async (file: File): Promise<File> => {
+    const ff = await getFFmpeg()
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'mp4'
+    const inputName = `input.${ext}`
+    setSuccess('Compressing video...')
+    setVideoProgress(0)
+    await ff.writeFile(inputName, await fetchFile(file))
+    // 480p max, 600kbps video, 64kbps audio → ~5-8MB for 1-min video
+    await ff.exec([
+      '-i', inputName,
+      '-vf', 'scale=-2:min(480\\,ih)',
+      '-c:v', 'libx264', '-b:v', '600k', '-preset', 'fast',
+      '-c:a', 'aac', '-b:a', '64k',
+      '-movflags', '+faststart',
+      '-y', 'output.mp4'
+    ])
+    const data = await ff.readFile('output.mp4') as Uint8Array<ArrayBuffer>
+    await ff.deleteFile(inputName)
+    await ff.deleteFile('output.mp4')
+    const originalMB = (file.size / 1024 / 1024).toFixed(1)
+    const compressedMB = (data.byteLength / 1024 / 1024).toFixed(1)
+    console.log(`🎥 Video: ${originalMB}MB → ${compressedMB}MB`)
+    setVideoProgress(0)
+    return new File([data], 'video.mp4', { type: 'video/mp4' })
+  }
+  // ───────────────────────────────────────────────────────────────────────
+
  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video') => {
   const files = e.target.files
   if (!files || files.length === 0) return
@@ -222,9 +269,11 @@ export default function CreatePostPage() {
         if (!file.type.startsWith('video/')) {
           throw new Error(`File ${i + 1} "${file.name}": Only video files are allowed`)
         }
-        if (file.size > 50 * 1024 * 1024) {
-          throw new Error(`Video ${i + 1}: File size must be less than 50MB`)
+        if (file.size > 200 * 1024 * 1024) {
+          throw new Error(`Video must be less than 200MB`)
         }
+        fileToUpload = await compressVideo(file)
+        setSuccess('Uploading compressed video...')
       }
 
       setSuccess(`Uploading ${i + 1}/${files.length}...`)
@@ -295,8 +344,8 @@ export default function CreatePostPage() {
         throw new Error(t('post.whatsappLength'))
       }
 
-      // Validate images count (min 3, max 6)
-      if (formData.images.length < 3) {
+      // Validate: need at least 3 images OR 1 video
+      if (formData.images.length < 3 && formData.videos.length === 0) {
         throw new Error(t('post.minImages'))
       }
       if (formData.images.length > MAX_IMAGES) {
@@ -836,70 +885,155 @@ export default function CreatePostPage() {
             </>
           )}
 
-          {/* Images */}
+          {/* Photos or Video — tab toggle */}
           <div className="mb-6">
             <label className="block mb-3 font-semibold text-gray-700">
-              {t('post.images')} <span className="text-red-500">* (Min 3 — Max 6)</span>
+              Photos or Video <span className="text-red-500">*</span>
             </label>
 
-            <div className="mb-4">
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => handleMediaUpload(e, 'image')}
-                className="hidden"
-                id="image-upload"
-                disabled={loading || uploadingMedia || formData.images.length >= MAX_IMAGES}
-              />
-              <label
-                htmlFor={formData.images.length >= MAX_IMAGES ? undefined : 'image-upload'}
-                className={`btn btn-outline inline-block ${
-                  (loading || uploadingMedia || formData.images.length >= MAX_IMAGES)
-                    ? 'opacity-50 cursor-not-allowed'
-                    : 'cursor-pointer'
+            {/* Tab Switcher */}
+            <div className="flex rounded-xl border border-gray-200 overflow-hidden mb-4 w-fit">
+              <button
+                type="button"
+                onClick={() => setMediaTab('images')}
+                className={`px-5 py-2.5 text-sm font-semibold transition-all ${
+                  mediaTab === 'images' ? 'bg-primary text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                {uploadingMedia ? t('post.uploading') :
-                  formData.images.length >= MAX_IMAGES ? t('post.maxImagesReached') : t('post.uploadImages')}
-              </label>
+                📷 {t('post.images')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMediaTab('video')}
+                className={`px-5 py-2.5 text-sm font-semibold transition-all ${
+                  mediaTab === 'video' ? 'bg-primary text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                🎥 Video
+              </button>
             </div>
 
-            {formData.images.length > 0 && (
-              <div>
-                <p className="text-sm font-semibold mb-2 text-gray-700">
-                  {t('post.uploaded')} {formData.images.length} / {MAX_IMAGES} (minimum 3 required)
-                </p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {formData.images.map((image, index) => (
-                    <div key={index} className="relative group">
-                      <Image
-                        src={image}
-                        alt={`Upload ${index + 1}`}
-                        width={200}
-                        height={200}
-                        className="w-full h-32 object-cover rounded-lg"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeMedia(index, 'image')}
-                        className="absolute top-2 right-2 bg-red-500 text-white w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
+            {/* ── Images Tab ─────────────────────────────── */}
+            {mediaTab === 'images' && (
+              <>
+                <p className="text-xs text-gray-500 mb-3">Min 3 photos required · Max {MAX_IMAGES}</p>
+                <div className="mb-4">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => handleMediaUpload(e, 'image')}
+                    className="hidden"
+                    id="image-upload"
+                    disabled={loading || uploadingMedia || formData.images.length >= MAX_IMAGES}
+                  />
+                  <label
+                    htmlFor={formData.images.length >= MAX_IMAGES ? undefined : 'image-upload'}
+                    className={`btn btn-outline inline-block ${
+                      (loading || uploadingMedia || formData.images.length >= MAX_IMAGES)
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'cursor-pointer'
+                    }`}
+                  >
+                    {uploadingMedia ? t('post.uploading') :
+                      formData.images.length >= MAX_IMAGES ? t('post.maxImagesReached') : t('post.uploadImages')}
+                  </label>
                 </div>
-              </div>
+
+                {formData.images.length > 0 && (
+                  <div>
+                    <p className="text-sm font-semibold mb-2 text-gray-700">
+                      {t('post.uploaded')} {formData.images.length} / {MAX_IMAGES}
+                    </p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {formData.images.map((image, index) => (
+                        <div key={index} className="relative group">
+                          <Image
+                            src={image}
+                            alt={`Upload ${index + 1}`}
+                            width={200}
+                            height={200}
+                            className="w-full h-32 object-cover rounded-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeMedia(index, 'image')}
+                            className="absolute top-2 right-2 bg-red-500 text-white w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* ── Video Tab ──────────────────────────────── */}
+            {mediaTab === 'video' && (
+              <>
+                <p className="text-xs text-gray-500 mb-3">Upload one video · it will be compressed automatically</p>
+                {formData.videos.length === 0 ? (
+                  <div>
+                    <input
+                      type="file"
+                      accept="video/*"
+                      onChange={(e) => handleMediaUpload(e, 'video')}
+                      className="hidden"
+                      id="video-upload"
+                      disabled={loading || uploadingMedia}
+                    />
+                    <label
+                      htmlFor="video-upload"
+                      className={`btn btn-outline inline-block ${
+                        (loading || uploadingMedia) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                      }`}
+                    >
+                      {uploadingMedia ? 'Processing video...' : 'Upload Video'}
+                    </label>
+
+                    {/* Compression progress bar */}
+                    {uploadingMedia && videoProgress > 0 && (
+                      <div className="mt-4">
+                        <div className="flex justify-between text-xs text-gray-600 mb-1">
+                          <span>Compressing...</span>
+                          <span>{videoProgress}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-primary h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${videoProgress}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="relative inline-block">
+                    <video
+                      src={formData.videos[0]}
+                      controls
+                      className="w-full max-w-sm rounded-xl border border-gray-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeMedia(0, 'video')}
+                      className="absolute top-2 right-2 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm shadow"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
-
 
           {/* Submit */}
           <div className="flex gap-4">
             <button
               type="submit"
-              disabled={loading || uploadingMedia || formData.images.length < 3}
+              disabled={loading || uploadingMedia || (formData.images.length < 3 && formData.videos.length === 0)}
               className="btn btn-primary flex-1"
             >
               {loading ? t('post.creating') : t('post.createBtn')}
@@ -912,9 +1046,9 @@ export default function CreatePostPage() {
             </Link>
           </div>
 
-          {formData.images.length < 3 && (
+          {(formData.images.length < 3 && formData.videos.length === 0) && (
             <p className="text-sm text-red-600 mt-4 text-center">
-              ⚠️ {t('post.minImages')}
+              ⚠️ {mediaTab === 'images' ? t('post.minImages') : 'Please upload at least one video'}
             </p>
           )}
         </form>
