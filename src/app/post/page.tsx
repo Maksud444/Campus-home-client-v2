@@ -10,8 +10,6 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { useNotifications } from '@/contexts/NotificationContext'
 import Toast from '@/components/ui/Toast'
 import imageCompression from 'browser-image-compression'
-import { FFmpeg } from '@ffmpeg/ffmpeg'
-import { fetchFile, toBlobURL } from '@ffmpeg/util'
 import PhoneInput from 'react-phone-input-2'
 import 'react-phone-input-2/lib/style.css'
 
@@ -31,7 +29,6 @@ export default function CreatePostPage() {
   const [uploadingMedia, setUploadingMedia] = useState(false)
   const [mediaTab, setMediaTab] = useState<'images' | 'video'>('images')
   const [videoProgress, setVideoProgress] = useState(0)
-  const ffmpegRef = useRef<FFmpeg | null>(null)
 
   const [gpsLoading, setGpsLoading] = useState(false)
 
@@ -170,45 +167,43 @@ export default function CreatePostPage() {
 
   const MAX_IMAGES = 6
 
-  // ── Video compression with ffmpeg.wasm (CDN-loaded, single-threaded) ───
-  const getFFmpeg = async (): Promise<FFmpeg> => {
-    if (ffmpegRef.current?.loaded) return ffmpegRef.current
-    const ff = new FFmpeg()
-    const base = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd'
-    setSuccess('Loading video compressor...')
-    await ff.load({
-      coreURL: await toBlobURL(`${base}/ffmpeg-core.js`, 'text/javascript'),
-      wasmURL: await toBlobURL(`${base}/ffmpeg-core.wasm`, 'application/wasm'),
-    })
-    ff.on('progress', ({ progress }) => setVideoProgress(Math.round(progress * 100)))
-    ffmpegRef.current = ff
-    return ff
-  }
+  // ── Direct upload to Cloudflare R2 via presigned URL ──────────────────
+  const uploadVideoToR2 = async (file: File): Promise<string> => {
+    setVideoProgress(0)
+    setSuccess('Preparing upload...')
 
-  const compressVideo = async (file: File): Promise<File> => {
-    const ff = await getFFmpeg()
-    const ext = file.name.split('.').pop()?.toLowerCase() || 'mp4'
-    const inputName = `input.${ext}`
-    setSuccess('Compressing video...')
-    setVideoProgress(0)
-    await ff.writeFile(inputName, await fetchFile(file))
-    // 480p max, 600kbps video, 64kbps audio → ~5-8MB for 1-min video
-    await ff.exec([
-      '-i', inputName,
-      '-vf', 'scale=-2:min(480\\,ih)',
-      '-c:v', 'libx264', '-b:v', '600k', '-preset', 'fast',
-      '-c:a', 'aac', '-b:a', '64k',
-      '-movflags', '+faststart',
-      '-y', 'output.mp4'
-    ])
-    const data = await ff.readFile('output.mp4') as Uint8Array<ArrayBuffer>
-    await ff.deleteFile(inputName)
-    await ff.deleteFile('output.mp4')
-    const originalMB = (file.size / 1024 / 1024).toFixed(1)
-    const compressedMB = (data.byteLength / 1024 / 1024).toFixed(1)
-    console.log(`🎥 Video: ${originalMB}MB → ${compressedMB}MB`)
-    setVideoProgress(0)
-    return new File([data], 'video.mp4', { type: 'video/mp4' })
+    // 1. Get presigned URL from our API
+    const res = await fetch('/api/upload-video', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: file.name, contentType: file.type, fileSize: file.size }),
+    })
+    if (!res.ok) {
+      const err = await res.json()
+      throw new Error(err.error || 'Failed to get upload URL')
+    }
+    const { presignedUrl, publicUrl } = await res.json()
+
+    // 2. Upload directly to R2 with XHR so we can track progress
+    await new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          setVideoProgress(Math.round((e.loaded / e.total) * 100))
+        }
+      })
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve()
+        else reject(new Error(`Upload failed (${xhr.status})`))
+      })
+      xhr.addEventListener('error', () => reject(new Error('Network error during upload')))
+      xhr.open('PUT', presignedUrl)
+      xhr.setRequestHeader('Content-Type', file.type)
+      xhr.send(file)
+    })
+
+    setVideoProgress(100)
+    return publicUrl
   }
   // ───────────────────────────────────────────────────────────────────────
 
@@ -269,11 +264,13 @@ export default function CreatePostPage() {
         if (!file.type.startsWith('video/')) {
           throw new Error(`File ${i + 1} "${file.name}": Only video files are allowed`)
         }
-        if (file.size > 200 * 1024 * 1024) {
-          throw new Error(`Video must be less than 200MB`)
+        if (file.size > 500 * 1024 * 1024) {
+          throw new Error('Video must be less than 500MB')
         }
-        fileToUpload = await compressVideo(file)
-        setSuccess('Uploading compressed video...')
+        // Upload directly to Cloudflare R2 (no compression, no backend bottleneck)
+        const videoUrl = await uploadVideoToR2(file)
+        uploadedUrls.push(videoUrl)
+        continue
       }
 
       setSuccess(`Uploading ${i + 1}/${files.length}...`)
@@ -973,7 +970,7 @@ export default function CreatePostPage() {
             {/* ── Video Tab ──────────────────────────────── */}
             {mediaTab === 'video' && (
               <>
-                <p className="text-xs text-gray-500 mb-3">Upload one video · it will be compressed automatically</p>
+                <p className="text-xs text-gray-500 mb-3">Upload one video (max 500MB) · uploads directly to cloud storage</p>
                 {formData.videos.length === 0 ? (
                   <div>
                     <input
@@ -990,14 +987,14 @@ export default function CreatePostPage() {
                         (loading || uploadingMedia) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
                       }`}
                     >
-                      {uploadingMedia ? 'Processing video...' : 'Upload Video'}
+                      {uploadingMedia ? `Uploading${videoProgress > 0 ? ` ${videoProgress}%` : '...'}` : 'Upload Video'}
                     </label>
 
-                    {/* Compression progress bar */}
+                    {/* Upload progress bar */}
                     {uploadingMedia && videoProgress > 0 && (
                       <div className="mt-4">
                         <div className="flex justify-between text-xs text-gray-600 mb-1">
-                          <span>Compressing...</span>
+                          <span>Uploading...</span>
                           <span>{videoProgress}%</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
