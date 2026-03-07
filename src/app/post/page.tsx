@@ -367,7 +367,7 @@ export default function CreatePostPage() {
     setTimeout(() => setSuccess(''), 3000)
 
   } catch (err: any) {
-    console.error(`❌ Upload error:`, err)
+    setSuccess('')
     setError(err.message || `Failed to upload ${type}s`)
   } finally {
     setUploadingMedia(false)
@@ -1032,7 +1032,6 @@ export default function CreatePostPage() {
             {/* ── Video Tab ──────────────────────────────── */}
             {mediaTab === 'video' && (
               <>
-                <p className="text-xs text-gray-500 mb-3">Upload one video (max 500MB) · uploads directly to cloud storage</p>
                 {formData.videos.length === 0 ? (
                   <div>
                     <input
@@ -1049,14 +1048,16 @@ export default function CreatePostPage() {
                         (loading || uploadingMedia) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
                       }`}
                     >
-                      {uploadingMedia ? `Uploading${videoProgress > 0 ? ` ${videoProgress}%` : '...'}` : 'Upload Video'}
+                      {uploadingMedia
+                        ? (videoProgress < 60 ? `Compressing... ${videoProgress}%` : `Uploading... ${videoProgress}%`)
+                        : 'Upload Video'}
                     </label>
 
                     {/* Upload progress bar */}
                     {uploadingMedia && videoProgress > 0 && (
                       <div className="mt-4">
                         <div className="flex justify-between text-xs text-gray-600 mb-1">
-                          <span>Uploading...</span>
+                          <span>{videoProgress < 60 ? 'Compressing...' : 'Uploading...'}</span>
                           <span>{videoProgress}%</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
