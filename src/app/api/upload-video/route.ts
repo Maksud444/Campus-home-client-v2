@@ -1,5 +1,4 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
@@ -19,32 +18,36 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { filename, contentType, fileSize } = await request.json()
+  const formData = await request.formData()
+  const file = formData.get('file') as File | null
 
-  if (!filename || !contentType) {
-    return NextResponse.json({ error: 'filename and contentType are required' }, { status: 400 })
+  if (!file) {
+    return NextResponse.json({ error: 'No file provided' }, { status: 400 })
   }
 
-  if (!contentType.startsWith('video/')) {
+  if (!file.type.startsWith('video/')) {
     return NextResponse.json({ error: 'Only video files are allowed' }, { status: 400 })
   }
 
-  const MAX_VIDEO_SIZE = 500 * 1024 * 1024 // 500 MB
-  if (fileSize && fileSize > MAX_VIDEO_SIZE) {
-    return NextResponse.json({ error: 'Video must be less than 500MB' }, { status: 400 })
+  const MAX_VIDEO_SIZE = 200 * 1024 * 1024 // 200 MB
+  if (file.size > MAX_VIDEO_SIZE) {
+    return NextResponse.json({ error: 'Video must be less than 200MB' }, { status: 400 })
   }
 
-  const ext = filename.split('.').pop()?.toLowerCase() || 'mp4'
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'webm'
   const key = `videos/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+
+  const buffer = Buffer.from(await file.arrayBuffer())
 
   const command = new PutObjectCommand({
     Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME!,
     Key: key,
-    ContentType: contentType,
+    ContentType: file.type,
+    Body: buffer,
   })
 
-  const presignedUrl = await getSignedUrl(r2, command, { expiresIn: 3600 })
-  const publicUrl = `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${key}`
+  await r2.send(command)
 
-  return NextResponse.json({ presignedUrl, publicUrl })
+  const publicUrl = `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${key}`
+  return NextResponse.json({ url: publicUrl })
 }

@@ -167,44 +167,22 @@ export default function CreatePostPage() {
 
   const MAX_IMAGES = 6
 
-  // ── Direct upload to Cloudflare R2 via presigned URL ──────────────────
+  // ── Upload compressed video to R2 via server-side proxy (no CORS needed) ──
   const uploadVideoToR2 = async (file: File): Promise<string> => {
-    setVideoProgress(0)
-    setSuccess('Preparing upload...')
+    setVideoProgress(62)
+    setSuccess('Uploading video...')
 
-    // 1. Get presigned URL from our API
-    const res = await fetch('/api/upload-video', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ filename: file.name, contentType: file.type, fileSize: file.size }),
-    })
+    const body = new FormData()
+    body.append('file', file)
+
+    const res = await fetch('/api/upload-video', { method: 'POST', body })
     if (!res.ok) {
       const err = await res.json()
-      throw new Error(err.error || 'Failed to get upload URL')
+      throw new Error(err.error || 'Upload failed')
     }
-    const { presignedUrl, publicUrl } = await res.json()
-
-    // 2. Upload directly to R2 with XHR so we can track progress
-    await new Promise<void>((resolve, reject) => {
-      const xhr = new XMLHttpRequest()
-      xhr.upload.addEventListener('progress', (e) => {
-        if (e.lengthComputable) {
-          // 60–100% range is for upload phase (0–60% was compression)
-          setVideoProgress(60 + Math.round((e.loaded / e.total) * 40))
-        }
-      })
-      xhr.addEventListener('load', () => {
-        if (xhr.status >= 200 && xhr.status < 300) resolve()
-        else reject(new Error(`Upload failed (${xhr.status})`))
-      })
-      xhr.addEventListener('error', () => reject(new Error('Network error during upload')))
-      xhr.open('PUT', presignedUrl)
-      xhr.setRequestHeader('Content-Type', file.type)
-      xhr.send(file)
-    })
-
+    const { url } = await res.json()
     setVideoProgress(100)
-    return publicUrl
+    return url
   }
   // ───────────────────────────────────────────────────────────────────────
 

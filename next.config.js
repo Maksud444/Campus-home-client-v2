@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 // build: 2026-02-28
 const nextConfig = {
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '200mb',
+    },
+  },
   images: {
     unoptimized: true, // Disable image optimization for external images
     remotePatterns: [
