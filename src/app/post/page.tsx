@@ -189,7 +189,8 @@ export default function CreatePostPage() {
       const xhr = new XMLHttpRequest()
       xhr.upload.addEventListener('progress', (e) => {
         if (e.lengthComputable) {
-          setVideoProgress(Math.round((e.loaded / e.total) * 100))
+          // 60–100% range is for upload phase (0–60% was compression)
+          setVideoProgress(60 + Math.round((e.loaded / e.total) * 40))
         }
       })
       xhr.addEventListener('load', () => {
@@ -204,6 +205,68 @@ export default function CreatePostPage() {
 
     setVideoProgress(100)
     return publicUrl
+  }
+  // ───────────────────────────────────────────────────────────────────────
+
+  // ── Browser-native video compression via MediaRecorder ────────────────
+  const compressVideo = (file: File, onProgress: (p: number) => void): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file)
+      const video = document.createElement('video')
+      video.src = url
+      video.muted = true
+      video.playsInline = true
+
+      video.onloadedmetadata = () => {
+        const MAX_DIM = 854 // ~480p wide
+        const scale = Math.min(1, MAX_DIM / Math.max(video.videoWidth, video.videoHeight))
+        const w = Math.round(video.videoWidth * scale)
+        const h = Math.round(video.videoHeight * scale)
+
+        const canvas = document.createElement('canvas')
+        canvas.width = w
+        canvas.height = h
+        const ctx = canvas.getContext('2d')!
+
+        const stream = canvas.captureStream(30)
+
+        // Keep original audio if available
+        const audioTracks = (video as HTMLVideoElement & { captureStream?: () => MediaStream }).captureStream?.()?.getAudioTracks() ?? []
+        audioTracks.forEach(t => stream.addTrack(t))
+
+        const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+          ? 'video/webm;codecs=vp9,opus'
+          : MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
+          ? 'video/webm;codecs=vp8,opus'
+          : 'video/webm'
+
+        const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 600_000 })
+        const chunks: Blob[] = []
+
+        recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data) }
+        recorder.onstop = () => {
+          URL.revokeObjectURL(url)
+          const blob = new Blob(chunks, { type: mimeType })
+          const ext = mimeType.includes('webm') ? 'webm' : 'mp4'
+          resolve(new File([blob], file.name.replace(/\.[^.]+$/, `.${ext}`), { type: mimeType }))
+        }
+        recorder.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Video compression failed')) }
+
+        recorder.start(100)
+        video.play()
+
+        const drawFrame = () => {
+          if (video.paused || video.ended) { recorder.stop(); return }
+          ctx.drawImage(video, 0, 0, w, h)
+          onProgress(video.currentTime / (video.duration || 1))
+          requestAnimationFrame(drawFrame)
+        }
+        video.onplay = drawFrame
+        video.onended = () => recorder.stop()
+      }
+
+      video.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Failed to load video')) }
+    })
   }
   // ───────────────────────────────────────────────────────────────────────
 
@@ -256,9 +319,6 @@ export default function CreatePostPage() {
           initialQuality: 0.8,
         })
 
-        const compressedKB = (fileToUpload.size / 1024).toFixed(1)
-        const originalKB   = (file.size / 1024).toFixed(1)
-        console.log(`✅ ${file.name}: ${originalKB} KB → ${compressedKB} KB`)
         // ─────────────────────────────────────────────────────────────
       } else {
         if (!file.type.startsWith('video/')) {
@@ -267,8 +327,11 @@ export default function CreatePostPage() {
         if (file.size > 500 * 1024 * 1024) {
           throw new Error('Video must be less than 500MB')
         }
-        // Upload directly to Cloudflare R2 (no compression, no backend bottleneck)
-        const videoUrl = await uploadVideoToR2(file)
+        setSuccess(`Compressing video...`)
+        const compressed = await compressVideo(file, (p) => {
+          setVideoProgress(Math.round(p * 0.6)) // 0–60% = compression phase
+        })
+        const videoUrl = await uploadVideoToR2(compressed)
         uploadedUrls.push(videoUrl)
         continue
       }
@@ -394,7 +457,6 @@ export default function CreatePostPage() {
         throw new Error(data.message || 'Failed to create property')
       }
 
-      console.log('✅ Property created:', data.property)
       setSuccess(t('post.successMessage'))
       setShowToast(true)
       addNotification(t('post.toastSuccess'), 'success')
@@ -1043,11 +1105,6 @@ export default function CreatePostPage() {
             </Link>
           </div>
 
-          {(formData.images.length < 3 && formData.videos.length === 0) && (
-            <p className="text-sm text-red-600 mt-4 text-center">
-              ⚠️ {mediaTab === 'images' ? t('post.minImages') : 'Please upload at least one video'}
-            </p>
-          )}
         </form>
       </div>
     </div>
