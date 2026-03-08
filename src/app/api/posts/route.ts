@@ -86,10 +86,11 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
 
-    // Validate images (accept both string[] and {url}[] formats)
+    // Validate media: need at least 3 images OR 1 video
     const images = body.images || []
-    if (images.length < 3) {
-      return NextResponse.json({ success: false, message: 'Minimum 3 images required' }, { status: 400 })
+    const videos = body.videos || []
+    if (images.length < 3 && videos.length === 0) {
+      return NextResponse.json({ success: false, message: 'Please upload at least 3 images or 1 video' }, { status: 400 })
     }
 
     const posts = readPosts()
