@@ -177,8 +177,9 @@ export default function CreatePostPage() {
 
     const res = await fetch('/api/upload-video', { method: 'POST', body })
     if (!res.ok) {
-      const err = await res.json()
-      throw new Error(err.error || 'Upload failed')
+      let msg = `Upload failed (HTTP ${res.status})`
+      try { const err = await res.json(); msg = err.error || msg } catch {}
+      throw new Error(msg)
     }
     const { url } = await res.json()
     setVideoProgress(100)
