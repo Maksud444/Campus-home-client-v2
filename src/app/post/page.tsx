@@ -943,6 +943,7 @@ export default function CreatePostPage() {
                 }`}
               >
                 📷 {t('post.images')}
+                {formData.images.length >= 3 && <span className="ml-1 text-green-400">✓</span>}
               </button>
               <button
                 type="button"
@@ -952,13 +953,18 @@ export default function CreatePostPage() {
                 }`}
               >
                 🎥 {t('post.videoTab')}
+                {formData.videos.length > 0 && <span className="ml-1 text-green-400">✓</span>}
               </button>
             </div>
 
             {/* ── Images Tab ─────────────────────────────── */}
             {mediaTab === 'images' && (
               <>
-                <p className="text-xs text-gray-500 mb-3">{t('post.minPhotosHint')} {MAX_IMAGES}</p>
+                {formData.videos.length > 0 ? (
+                  <p className="text-xs text-green-600 font-medium mb-3">✅ {t('post.imagesOptional')}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mb-3">{t('post.minPhotosHint')} {MAX_IMAGES}</p>
+                )}
                 <div className="mb-4">
                   <input
                     type="file"
@@ -1087,7 +1093,17 @@ export default function CreatePostPage() {
             )}
           </div>
 
-          {/* Submit */}
+          {/* Media status + Submit */}
+          {(formData.images.length >= 3 || formData.videos.length > 0) && (
+            <p className="text-sm text-green-600 font-medium mb-3">
+              ✅ {t('post.mediaReady')}
+            </p>
+          )}
+          {formData.images.length < 3 && formData.videos.length === 0 && (
+            <p className="text-sm text-orange-500 mb-3">
+              ⚠️ {t('post.minMedia')}
+            </p>
+          )}
           <div className="flex gap-4">
             <button
               type="submit"
