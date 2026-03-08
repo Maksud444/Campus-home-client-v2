@@ -43,8 +43,7 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
   },
   verification: {
-    // Add your Google Search Console verification token here:
-    // google: 'your-verification-token',
+    google: 'OJzX_z6TELYWg-MgnmkkYT74kvQVwzzadFW5nbg4LAg',
   },
 }
 
