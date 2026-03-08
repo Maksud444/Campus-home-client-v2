@@ -21,7 +21,8 @@ export default function Navbar() {
   const [isNotifOpen, setIsNotifOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const notifRef = useRef<HTMLDivElement>(null)
+  const notifRefDesktop = useRef<HTMLDivElement>(null)
+  const notifRefMobile = useRef<HTMLDivElement>(null)
   const [userName, setUserName] = useState('')
   const [userImage, setUserImage] = useState('')
 
@@ -69,7 +70,9 @@ export default function Navbar() {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) setIsProfileOpen(false)
-      if (notifRef.current && !notifRef.current.contains(event.target as Node)) setIsNotifOpen(false)
+      const inDesktop = notifRefDesktop.current?.contains(event.target as Node)
+      const inMobile = notifRefMobile.current?.contains(event.target as Node)
+      if (!inDesktop && !inMobile) setIsNotifOpen(false)
     }
     if (isProfileOpen || isNotifOpen) document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -88,9 +91,9 @@ export default function Navbar() {
   const getDashboardUrl = () => {
     if (!session?.user) return '/dashboard'
     const role = (session.user as any).role || 'student'
-    if (role === 'admin') return '/admin'
+    if (role === 'admin') return '/admin/posts'
     const userId = (session.user as any).id || session.user.email?.split('@')[0]
-    return `/dashboard/${role}/${userId}`
+    return `/dashboard/${role}/${userId}/posts`
   }
 
   const userRole = (session?.user as any)?.role || 'student'
@@ -107,9 +110,80 @@ export default function Navbar() {
     return `${Math.floor(h / 24)}d ago`
   }
 
-  // Bell icon component (reused in mobile + desktop)
-  const BellButton = ({ className = '' }: { className?: string }) => (
-    <div className={`relative ${className}`} ref={notifRef}>
+  // Notification dropdown content (shared)
+  const NotifDropdown = () => (
+    <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+        <span className="font-bold text-gray-900 text-sm">Notifications</span>
+        {unreadCount > 0 && (
+          <button
+            onClick={(e) => { e.stopPropagation(); markAllRead() }}
+            className="text-xs text-primary hover:underline font-medium"
+          >
+            Mark all read
+          </button>
+        )}
+      </div>
+
+      <div className="max-h-80 overflow-y-auto">
+        {notifications.length === 0 ? (
+          <div className="py-8 text-center text-gray-400 text-sm">
+            <div className="text-3xl mb-2">🔔</div>
+            No notifications yet
+          </div>
+        ) : (
+          notifications.slice(0, 10).map(n => {
+            const dotClass = `w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
+              n.type === 'success' ? 'bg-green-500' :
+              n.type === 'error'   ? 'bg-red-500'   : 'bg-primary'
+            } ${n.read ? 'opacity-0' : ''}`
+            const rowClass = `flex items-start gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-50 transition-colors ${!n.read ? 'bg-blue-50/50' : ''}`
+            if (n.link) {
+              return (
+                <Link
+                  key={n.id}
+                  href={n.link}
+                  onClick={() => { markRead(n.id); setIsNotifOpen(false) }}
+                  className={rowClass}
+                >
+                  <span className={dotClass} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-800 hover:text-primary line-clamp-2">{n.message}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{formatTime(n.createdAt)}</p>
+                  </div>
+                </Link>
+              )
+            }
+            return (
+              <div key={n.id} onClick={() => markRead(n.id)} className={`${rowClass} cursor-pointer`}>
+                <span className={dotClass} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-gray-800 line-clamp-2">{n.message}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{formatTime(n.createdAt)}</p>
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
+
+      {notifications.length > 0 && (
+        <div className="px-4 py-2 border-t border-gray-100">
+          <Link
+            href={getDashboardUrl()}
+            onClick={() => setIsNotifOpen(false)}
+            className="text-xs text-primary hover:underline font-medium"
+          >
+            View all in dashboard →
+          </Link>
+        </div>
+      )}
+    </div>
+  )
+
+  // Bell icon — desktop version
+  const BellDesktop = () => (
+    <div className="relative" ref={notifRefDesktop}>
       <button
         onClick={() => { setIsNotifOpen(!isNotifOpen); setIsProfileOpen(false) }}
         className="relative p-2 rounded-xl hover:bg-gray-100 transition-colors"
@@ -125,62 +199,29 @@ export default function Navbar() {
           </span>
         )}
       </button>
+      {isNotifOpen && <NotifDropdown />}
+    </div>
+  )
 
-      {/* Notification Dropdown */}
-      {isNotifOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-            <span className="font-bold text-gray-900 text-sm">Notifications</span>
-            {unreadCount > 0 && (
-              <button onClick={markAllRead} className="text-xs text-primary hover:underline font-medium">
-                Mark all read
-              </button>
-            )}
-          </div>
-
-          <div className="max-h-80 overflow-y-auto">
-            {notifications.length === 0 ? (
-              <div className="py-8 text-center text-gray-400 text-sm">
-                <div className="text-3xl mb-2">🔔</div>
-                No notifications yet
-              </div>
-            ) : (
-              notifications.slice(0, 10).map(n => (
-                <div
-                  key={n.id}
-                  onClick={() => markRead(n.id)}
-                  className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 transition-colors ${!n.read ? 'bg-blue-50/50' : ''}`}
-                >
-                  <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-                    n.type === 'success' ? 'bg-green-500' :
-                    n.type === 'error'   ? 'bg-red-500'   : 'bg-primary'
-                  } ${n.read ? 'opacity-0' : ''}`} />
-                  <div className="flex-1 min-w-0">
-                    {n.link ? (
-                      <Link href={n.link} className="text-sm text-gray-800 hover:text-primary line-clamp-2">{n.message}</Link>
-                    ) : (
-                      <p className="text-sm text-gray-800 line-clamp-2">{n.message}</p>
-                    )}
-                    <p className="text-xs text-gray-400 mt-0.5">{formatTime(n.createdAt)}</p>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          {notifications.length > 0 && (
-            <div className="px-4 py-2 border-t border-gray-100">
-              <Link
-                href={getDashboardUrl()}
-                onClick={() => setIsNotifOpen(false)}
-                className="text-xs text-primary hover:underline font-medium"
-              >
-                View all in dashboard →
-              </Link>
-            </div>
-          )}
-        </div>
-      )}
+  // Bell icon — mobile version
+  const BellMobile = () => (
+    <div className="relative" ref={notifRefMobile}>
+      <button
+        onClick={() => { setIsNotifOpen(!isNotifOpen); setIsProfileOpen(false) }}
+        className="relative p-2 rounded-xl hover:bg-gray-100 transition-colors"
+        aria-label="Notifications"
+      >
+        <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
+        {unreadCount > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
+      </button>
+      {isNotifOpen && <NotifDropdown />}
     </div>
   )
 
@@ -192,7 +233,7 @@ export default function Navbar() {
         <div className="flex items-center">
           {/* Logo - LEFT */}
           <Link href="/" className="flex-shrink-0 flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xl transition-all bg-primary text-white">B</div>
+            <Image src="/logo.svg" alt="Baytino Logo" width={40} height={40} priority />
             <span className="text-2xl font-bold text-primary">Baytino</span>
           </Link>
 
@@ -224,7 +265,7 @@ export default function Navbar() {
             )}
 
             {/* Bell icon — desktop (only when logged in) */}
-            {session && <BellButton />}
+            {session && <BellDesktop />}
 
             {session ? (
               <div className="relative" ref={dropdownRef}>
@@ -302,7 +343,7 @@ export default function Navbar() {
           {/* Mobile: Bell icon (next to logo, before hamburger) — only when logged in */}
           {session && (
             <div className="md:hidden ml-auto mr-2">
-              <BellButton />
+              <BellMobile />
             </div>
           )}
 

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <!-- House roof -->
+  <polyline points="10,58 60,12 110,58" stroke="#219ebc" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Chimney -->
+  <rect x="75" y="24" width="13" height="20" rx="3" fill="#219ebc"/>
+  <!-- Location pin (replaces house body) -->
+  <path d="M60 38 C46,38 35,49 35,62 C35,78 60,100 60,100 C60,100 85,78 85,62 C85,49 74,38 60,38 Z" fill="#219ebc"/>
+  <!-- Inner white ring -->
+  <circle cx="60" cy="61" r="12" fill="white"/>
+  <!-- Inner dot -->
+  <circle cx="60" cy="61" r="5" fill="#219ebc"/>
+</svg>

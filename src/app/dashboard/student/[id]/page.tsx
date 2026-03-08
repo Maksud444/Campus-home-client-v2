@@ -122,30 +122,27 @@ export default function StudentDashboard() {
         return
       }
 
-      // Fetch properties and local stats in parallel
-      // Backend is primary source; local stats (globalThis) are fallback for likes
-      const [response, statsRes] = await Promise.all([
+      const [response, statsRes, localRes] = await Promise.all([
         fetch(`${API_URL}/api/properties?userEmail=${userEmail}`, {
           cache: 'no-store',
           headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
         }),
-        fetch('/api/property-stats', { cache: 'no-store' }).catch(() => null)
+        fetch('/api/property-stats', { cache: 'no-store' }).catch(() => null),
+        fetch(`/api/posts?userEmail=${encodeURIComponent(userEmail)}`, { cache: 'no-store' }).catch(() => null),
       ])
 
       const data = await response.json()
       const statsData = statsRes ? await statsRes.json().catch(() => ({ stats: {} })) : { stats: {} }
       const localStats: Record<string, { views: number; likes: string[] }> = statsData.stats || {}
 
+      let posts: Post[] = []
+
       if (data.success && data.properties) {
-        // Client-side filter: only show this user's own posts.
-        // Posts without userEmail (older data) pass through since the backend
-        // already filtered by userEmail query param.
         const userOwnedProps = data.properties.filter((prop: any) =>
           !prop.userEmail || prop.userEmail.toLowerCase() === userEmail.toLowerCase()
         )
-        const posts = userOwnedProps.map((prop: any) => {
+        posts = userOwnedProps.map((prop: any) => {
           const s = localStats[prop._id] || { views: 0, likes: [] }
-          // Prefer backend for views (PUT persists there), prefer whichever is larger for likes
           const backendLikes: string[] = (prop.likes || []).filter(Boolean)
           const localLikes: string[] = s.likes || []
           const bestLikes = backendLikes.length >= localLikes.length ? backendLikes : localLikes
@@ -162,8 +159,32 @@ export default function StudentDashboard() {
             createdAt: prop.createdAt
           }
         })
-        setMyPosts(posts)
       }
+
+      // Merge local posts (pending/approved/rejected) not already in backend list
+      if (localRes?.ok) {
+        const localData = await localRes.json()
+        if (localData.success && localData.posts?.length) {
+          const backendIds = new Set(posts.map(p => p.id))
+          const localPosts = localData.posts
+            .filter((p: any) => !p.backendId || !backendIds.has(p.backendId))
+            .map((p: any) => ({
+              id: p.id,
+              title: p.title || 'Untitled',
+              type: p.type || 'apartment',
+              price: p.price || null,
+              location: typeof p.location === 'string' ? p.location : `${p.location?.area || ''}, ${p.location?.city || ''}`,
+              images: (p.images || []).map((img: any) => typeof img === 'string' ? img : img.url || ''),
+              views: p.views || 0,
+              likes: p.likes || [],
+              status: p.status,
+              createdAt: p.createdAt,
+            }))
+          posts = [...posts, ...localPosts]
+        }
+      }
+
+      setMyPosts(posts)
     } catch (error) {
       console.error('Error fetching posts:', error)
     } finally {

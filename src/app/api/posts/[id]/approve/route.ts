@@ -68,7 +68,7 @@ function getLocationText(loc: any): string {
   return [loc.area, loc.city].filter(Boolean).join(', ')
 }
 
-async function sendApprovalEmail(post: any) {
+async function sendApprovalEmail(post: any, postId?: string | null) {
   const transporter = getEmailTransporter()
   if (!transporter) {
     console.warn('⚠️ Email not configured — skipping approval email')
@@ -123,7 +123,7 @@ async function sendApprovalEmail(post: any) {
                   <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
                       <td align="center" style="padding-bottom:28px;">
-                        <a href="${APP_URL}/properties"
+                        <a href="${postId ? `${APP_URL}/properties/${postId}` : `${APP_URL}/properties`}"
                            style="display:inline-block;background:linear-gradient(135deg,#219ebc,#1a7a91);color:#fff;text-decoration:none;font-weight:700;font-size:15px;padding:14px 36px;border-radius:10px;box-shadow:0 4px 14px rgba(33,158,188,0.35);">
                           View Your Post
                         </a>
@@ -320,9 +320,10 @@ export async function POST(
       }
       writePosts(posts)
 
-      // 3. Send approval email
+      // 3. Send approval email (with direct post link)
+      const postId = backendId || post.id
       try {
-        await sendApprovalEmail(post)
+        await sendApprovalEmail(post, postId)
         console.log('📧 Approval email sent to:', post.userEmail)
       } catch (emailErr) {
         console.error('⚠️ Approval email failed:', emailErr)
@@ -334,7 +335,7 @@ export async function POST(
           post.userEmail,
           `✅ Your post "${post.title}" has been approved and is now live!`,
           'success',
-          '/properties'
+          `/properties/${postId}`
         )
       }
 

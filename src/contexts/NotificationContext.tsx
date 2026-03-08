@@ -45,7 +45,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     } catch { /* ignore */ }
   }, [storageKey])
 
-  // Fetch server-side notifications (from approve/reject actions) and merge
+  // Fetch server-side notifications (from approve/reject/delete actions) and merge
   const fetchServerNotifications = useCallback(async () => {
     if (!session?.user?.email) return
     try {
@@ -55,9 +55,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       const serverNotifs: Notification[] = data.notifications || []
       if (serverNotifs.length === 0) return
       setNotifications(prev => {
-        const existingIds = new Set(prev.map(n => n.id))
-        const newOnes = serverNotifs.filter(n => !existingIds.has(n.id))
+        const existingMap = new Map(prev.map(n => [n.id, n]))
+        const newOnes = serverNotifs.filter(n => !existingMap.has(n.id))
         if (newOnes.length === 0) return prev
+        // Preserve local read state for existing notifications
         return [...newOnes, ...prev].slice(0, 50)
       })
     } catch { /* ignore */ }
