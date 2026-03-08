@@ -53,9 +53,51 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const jsonLdWebSite = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Baytino',
+    url: 'https://baytino.com',
+    description: 'Find affordable student housing, apartments, and roommates in Egypt.',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: { '@type': 'EntryPoint', urlTemplate: 'https://baytino.com/properties?q={search_term_string}' },
+      'query-input': 'required name=search_term_string',
+    },
+  }
+
+  const jsonLdOrg = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Baytino',
+    url: 'https://baytino.com',
+    logo: 'https://baytino.com/logo.png',
+    sameAs: [],
+    contactPoint: {
+      '@type': 'ContactPoint',
+      contactType: 'customer support',
+      availableLanguage: ['English', 'Arabic'],
+    },
+  }
+
   return (
     <html lang="en">
       <head>
+        {/* Preconnect to external origins */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://student-housing-backend.vercel.app" />
+
+        {/* JSON-LD: WebSite + Organization */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdWebSite) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdOrg) }}
+        />
+
         {/* Google Analytics 4 */}
         {GA_ID && (
           <>
