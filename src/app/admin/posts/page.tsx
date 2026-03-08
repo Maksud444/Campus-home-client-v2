@@ -58,6 +58,9 @@ export default function AdminPostsPage() {
   const [search, setSearch] = useState('')
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
+  // All local posts (pending + approved + rejected from posts.json)
+  const [localPosts, setLocalPosts] = useState<LocalPost[]>([])
+
   const [pendingPosts, setPendingPosts] = useState<LocalPost[]>([])
   const [pendingLoading, setPendingLoading] = useState(true)
   const [approveLoading, setApproveLoading] = useState<string | null>(null)
@@ -106,9 +109,14 @@ export default function AdminPostsPage() {
   const fetchPendingPosts = useCallback(async () => {
     setPendingLoading(true)
     try {
-      const res = await fetch('/api/posts?admin=true&status=pending', { cache: 'no-store' })
-      const data = await res.json()
-      if (data.success) setPendingPosts(data.posts || [])
+      const [pendingRes, allRes] = await Promise.all([
+        fetch('/api/posts?admin=true&status=pending', { cache: 'no-store' }),
+        fetch('/api/posts?admin=true', { cache: 'no-store' }),
+      ])
+      const pendingData = await pendingRes.json()
+      const allData = await allRes.json()
+      if (pendingData.success) setPendingPosts(pendingData.posts || [])
+      if (allData.success) setLocalPosts(allData.posts || [])
     } catch (err) {
       console.error('Error fetching pending posts:', err)
     } finally {
@@ -133,6 +141,7 @@ export default function AdminPostsPage() {
       const data = await res.json()
       if (data.success) {
         setPendingPosts(prev => prev.filter(p => p.id !== postId))
+        setLocalPosts(prev => prev.map(p => p.id === postId ? { ...p, status: 'approved' } : p))
         if (viewPost?.id === postId) setViewPost(null)
         showToast('✅ Post approved and published. Approval email sent.', 'success')
         setTimeout(fetchProperties, 2000)
@@ -165,6 +174,7 @@ export default function AdminPostsPage() {
       const data = await res.json()
       if (data.success) {
         setPendingPosts(prev => prev.filter(p => p.id !== postId))
+        setLocalPosts(prev => prev.map(p => p.id === postId ? { ...p, status: 'rejected' } : p))
         if (viewPost?.id === postId) setViewPost(null)
         showToast('🗑️ Post rejected. Rejection email sent to user.', 'success')
       } else {
@@ -273,20 +283,48 @@ export default function AdminPostsPage() {
     return map[status?.toLowerCase()] || 'bg-slate-100 text-slate-600'
   }
 
-  const filtered = properties.filter(p => {
-    const matchStatus = statusFilter === 'all' || (p.status || 'active').toLowerCase() === statusFilter
+  // Convert local non-pending posts into Property shape for the table
+  // Skip ones that were successfully forwarded to external backend (backendId matches an external _id)
+  const externalIds = new Set(properties.map(p => p._id))
+  const localAsProps: Property[] = localPosts
+    .filter(lp => lp.status !== 'pending') // pending already shown in pending section
+    .filter(lp => !(lp as any).backendId || !externalIds.has((lp as any).backendId))
+    .map(lp => {
+      const loc = typeof lp.location === 'string'
+        ? { city: lp.location, area: '' }
+        : { city: (lp.location as any)?.city || '', area: (lp.location as any)?.area || '' }
+      return {
+        _id: lp.id,
+        title: lp.title,
+        description: lp.description || '',
+        price: lp.price,
+        location: loc,
+        propertyType: lp.propertyType || lp.type || '',
+        type: lp.type,
+        bedrooms: lp.bedrooms ?? undefined,
+        images: lp.images,
+        status: lp.status === 'approved' ? 'active' : lp.status,
+        createdAt: lp.createdAt,
+      } as Property
+    })
+
+  const allPosts = [...localAsProps, ...properties]
+
+  const filtered = allPosts.filter(p => {
+    const s = (p.status || 'active').toLowerCase()
+    const matchStatus = statusFilter === 'all' || s === statusFilter || (statusFilter === 'active' && s === 'approved')
     const matchSearch = !search ||
       p.title?.toLowerCase().includes(search.toLowerCase()) ||
-      p.location?.city?.toLowerCase().includes(search.toLowerCase()) ||
-      p.location?.area?.toLowerCase().includes(search.toLowerCase())
+      (p.location as any)?.city?.toLowerCase().includes(search.toLowerCase()) ||
+      (p.location as any)?.area?.toLowerCase().includes(search.toLowerCase())
     return matchStatus && matchSearch
   })
 
   const tabCounts = {
-    all: properties.length,
-    active: properties.filter(p => ['active', 'approved'].includes((p.status || 'active').toLowerCase())).length,
-    pending: properties.filter(p => (p.status || '').toLowerCase() === 'pending').length,
-    rejected: properties.filter(p => (p.status || '').toLowerCase() === 'rejected').length,
+    all: allPosts.length,
+    active: allPosts.filter(p => ['active', 'approved'].includes((p.status || 'active').toLowerCase())).length,
+    pending: allPosts.filter(p => (p.status || '').toLowerCase() === 'pending').length,
+    rejected: allPosts.filter(p => (p.status || '').toLowerCase() === 'rejected').length,
   }
 
   return (

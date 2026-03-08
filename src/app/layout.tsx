@@ -88,16 +88,6 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://student-housing-backend.vercel.app" />
 
-        {/* JSON-LD: WebSite + Organization */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdWebSite) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdOrg) }}
-        />
-
         {/* Google Analytics 4 */}
         {GA_ID && (
           <>
@@ -130,6 +120,9 @@ export default function RootLayout({
         )}
       </head>
       <body className={inter.className}>
+        {/* JSON-LD: WebSite + Organization schemas */}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdWebSite) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdOrg) }} />
         <SessionProvider>
           <LanguageProvider>
             <NotificationProvider>

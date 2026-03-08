@@ -91,13 +91,25 @@ export default function MyPostsPage() {
         setActivePosts(posts)
       }
 
-      // Local pending/rejected posts
+      // Local pending/rejected/approved posts
       const localData = await localRes.json()
       if (localData.success && localData.posts) {
         const pending = localData.posts.filter((p: any) => p.status === 'pending').map(mapLocalPost)
         const rejected = localData.posts.filter((p: any) => p.status === 'rejected').map(mapLocalPost)
         setPendingPosts(pending)
         setRejectedPosts(rejected)
+
+        // Approved local posts (may not yet be in external backend) → show in active section
+        const localApproved = localData.posts
+          .filter((p: any) => p.status === 'approved')
+          .map(mapLocalPost)
+        if (localApproved.length > 0) {
+          setActivePosts(prev => {
+            const existingIds = new Set(prev.map((a: any) => a.id))
+            const newOnes = localApproved.filter((p: any) => !existingIds.has(p.id))
+            return [...prev, ...newOnes]
+          })
+        }
       }
     } catch (error) {
       console.error('Error fetching posts:', error)
