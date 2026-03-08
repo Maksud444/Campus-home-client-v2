@@ -166,6 +166,7 @@ export default function CreatePostPage() {
   }
 
   const MAX_IMAGES = 6
+  const MAX_VIDEOS = 3
 
   // ── Upload compressed video to R2 via server-side proxy (no CORS needed) ──
   const uploadVideoToR2 = async (file: File): Promise<string> => {
@@ -302,6 +303,9 @@ export default function CreatePostPage() {
       } else {
         if (!file.type.startsWith('video/')) {
           throw new Error(`File ${i + 1} "${file.name}": Only video files are allowed`)
+        }
+        if (formData.videos.length >= MAX_VIDEOS) {
+          throw new Error(t('post.maxVideosError'))
         }
         if (file.size > 500 * 1024 * 1024) {
           throw new Error('Video must be less than 500MB')
@@ -1011,7 +1015,37 @@ export default function CreatePostPage() {
             {/* ── Video Tab ──────────────────────────────── */}
             {mediaTab === 'video' && (
               <>
-                {formData.videos.length === 0 ? (
+                <p className="text-xs text-gray-500 mb-3">{t('post.videoHint')}</p>
+
+                {/* Uploaded videos list */}
+                {formData.videos.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-sm font-semibold mb-2 text-gray-700">
+                      {t('post.uploaded')} {formData.videos.length} / {MAX_VIDEOS}
+                    </p>
+                    <div className="flex flex-col gap-3">
+                      {formData.videos.map((url, index) => (
+                        <div key={index} className="relative inline-block">
+                          <video
+                            src={url}
+                            controls
+                            className="w-full max-w-sm rounded-xl border border-gray-200"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeMedia(index, 'video')}
+                            className="absolute top-2 right-2 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm shadow"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Upload button — shown while under the limit */}
+                {formData.videos.length < MAX_VIDEOS && (
                   <div>
                     <input
                       type="file"
@@ -1022,7 +1056,7 @@ export default function CreatePostPage() {
                       disabled={loading || uploadingMedia}
                     />
                     <label
-                      htmlFor="video-upload"
+                      htmlFor={uploadingMedia ? undefined : 'video-upload'}
                       className={`btn btn-outline inline-block ${
                         (loading || uploadingMedia) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
                       }`}
@@ -1047,21 +1081,6 @@ export default function CreatePostPage() {
                         </div>
                       </div>
                     )}
-                  </div>
-                ) : (
-                  <div className="relative inline-block">
-                    <video
-                      src={formData.videos[0]}
-                      controls
-                      className="w-full max-w-sm rounded-xl border border-gray-200"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeMedia(0, 'video')}
-                      className="absolute top-2 right-2 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm shadow"
-                    >
-                      ✕
-                    </button>
                   </div>
                 )}
               </>
