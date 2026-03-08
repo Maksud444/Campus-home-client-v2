@@ -33,9 +33,46 @@ export default function NewProjectsSection() {
     const fetchProperties = async () => {
       try {
         setLoading(true)
-        const response = await fetch(`${API_URL}/api/properties?limit=12`)
-        const data = await response.json()
-        if (data.success && data.properties) setProjects(data.properties)
+        const [extRes, localRes] = await Promise.all([
+          fetch(`${API_URL}/api/properties?limit=12`).catch(() => null),
+          fetch('/api/posts', { cache: 'no-store' }).catch(() => null),
+        ])
+
+        let all: Property[] = []
+
+        if (extRes?.ok) {
+          const data = await extRes.json()
+          if (data.success && data.properties) all = data.properties
+        }
+
+        if (localRes?.ok) {
+          const localData = await localRes.json()
+          if (localData.success && localData.posts?.length) {
+            const extIds = new Set(all.map((p: any) => p._id))
+            const localProps = localData.posts
+              .filter((p: any) => !p.backendId || !extIds.has(p.backendId))
+              .map((p: any) => ({
+                _id: p.id,
+                title: p.title,
+                description: p.description,
+                price: p.price,
+                location: typeof p.location === 'string'
+                  ? { city: p.location, area: '' }
+                  : p.location,
+                bedrooms: p.bedrooms,
+                bathrooms: p.bathrooms,
+                images: (p.images || []).map((img: any) =>
+                  typeof img === 'string' ? { url: img } : img
+                ),
+                propertyType: p.propertyType,
+                type: p.type,
+                createdAt: p.createdAt,
+              }))
+            all = [...all, ...localProps]
+          }
+        }
+
+        setProjects(all)
       } catch (error) {
         console.error('Error fetching properties:', error)
       } finally {
