@@ -385,7 +385,7 @@ export default function CreatePostPage() {
 
       // Validate: need at least 3 images OR 1 video
       if (formData.images.length < 3 && formData.videos.length === 0) {
-        throw new Error(t('post.minImages'))
+        throw new Error(t('post.minMedia'))
       }
       if (formData.images.length > MAX_IMAGES) {
         throw new Error(t('post.maxImagesError'))
@@ -926,7 +926,7 @@ export default function CreatePostPage() {
           {/* Photos or Video — tab toggle */}
           <div className="mb-6">
             <label className="block mb-3 font-semibold text-gray-700">
-              Photos or Video <span className="text-red-500">*</span>
+              {t('post.photosOrVideo')} <span className="text-red-500">*</span>
             </label>
 
             {/* Tab Switcher */}
@@ -947,14 +947,14 @@ export default function CreatePostPage() {
                   mediaTab === 'video' ? 'bg-primary text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                🎥 Video
+                🎥 {t('post.videoTab')}
               </button>
             </div>
 
             {/* ── Images Tab ─────────────────────────────── */}
             {mediaTab === 'images' && (
               <>
-                <p className="text-xs text-gray-500 mb-3">Min 3 photos required · Max {MAX_IMAGES}</p>
+                <p className="text-xs text-gray-500 mb-3">{t('post.minPhotosHint')} {MAX_IMAGES}</p>
                 <div className="mb-4">
                   <input
                     type="file"
@@ -1028,15 +1028,15 @@ export default function CreatePostPage() {
                       }`}
                     >
                       {uploadingMedia
-                        ? (videoProgress < 60 ? `Compressing... ${videoProgress}%` : `Uploading... ${videoProgress}%`)
-                        : 'Upload Video'}
+                        ? (videoProgress < 60 ? `${t('post.compressing')} ${videoProgress}%` : `${t('post.uploading')} ${videoProgress}%`)
+                        : t('post.uploadVideo')}
                     </label>
 
                     {/* Upload progress bar */}
                     {uploadingMedia && videoProgress > 0 && (
                       <div className="mt-4">
                         <div className="flex justify-between text-xs text-gray-600 mb-1">
-                          <span>{videoProgress < 60 ? 'Compressing...' : 'Uploading...'}</span>
+                          <span>{videoProgress < 60 ? t('post.compressing') : t('post.uploading')}</span>
                           <span>{videoProgress}%</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
