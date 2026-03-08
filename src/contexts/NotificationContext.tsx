@@ -45,6 +45,31 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     } catch { /* ignore */ }
   }, [storageKey])
 
+  // Fetch server-side notifications (from approve/reject actions) and merge
+  const fetchServerNotifications = useCallback(async () => {
+    if (!session?.user?.email) return
+    try {
+      const res = await fetch('/api/notifications', { cache: 'no-store' })
+      if (!res.ok) return
+      const data = await res.json()
+      const serverNotifs: Notification[] = data.notifications || []
+      if (serverNotifs.length === 0) return
+      setNotifications(prev => {
+        const existingIds = new Set(prev.map(n => n.id))
+        const newOnes = serverNotifs.filter(n => !existingIds.has(n.id))
+        if (newOnes.length === 0) return prev
+        return [...newOnes, ...prev].slice(0, 50)
+      })
+    } catch { /* ignore */ }
+  }, [session?.user?.email])
+
+  // Fetch on login + poll every 60s
+  useEffect(() => {
+    fetchServerNotifications()
+    const interval = setInterval(fetchServerNotifications, 60_000)
+    return () => clearInterval(interval)
+  }, [fetchServerNotifications])
+
   // Persist to localStorage on change
   useEffect(() => {
     try {
@@ -70,6 +95,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const markAllRead = useCallback(() => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+    // Also mark as read on server
+    fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: 'all' }) }).catch(() => {})
   }, [])
 
   const clearAll = useCallback(() => {

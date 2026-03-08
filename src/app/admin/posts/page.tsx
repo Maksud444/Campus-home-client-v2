@@ -28,10 +28,22 @@ interface LocalPost {
   price: number | null
   location: string | { city?: string; area?: string; address?: string }
   images: any[]
+  videos?: string[]
   status: string
   createdAt: string
   userEmail: string
   userName: string
+  userImage?: string
+  description?: string
+  propertyType?: string
+  furnished?: boolean
+  amenities?: string[]
+  bedrooms?: number | null
+  bathrooms?: number | null
+  area?: number | null
+  whatsapp?: { countryCode: string; number: string }
+  preferences?: string[]
+  targetAudience?: string
   rejectionReason?: string | null
 }
 
@@ -40,21 +52,22 @@ type StatusFilter = 'all' | 'active' | 'pending' | 'rejected'
 export default function AdminPostsPage() {
   const { data: session } = useSession()
 
-  // ── External backend properties ──
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [search, setSearch] = useState('')
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
-  // ── Local pending posts ──
   const [pendingPosts, setPendingPosts] = useState<LocalPost[]>([])
   const [pendingLoading, setPendingLoading] = useState(true)
   const [approveLoading, setApproveLoading] = useState<string | null>(null)
 
-  // ── Rejection modal (for local pending posts) ──
   const [rejectModal, setRejectModal] = useState<{ postId: string; postTitle: string } | null>(null)
   const [rejectReason, setRejectReason] = useState('')
+
+  // Full post view modal
+  const [viewPost, setViewPost] = useState<LocalPost | null>(null)
+  const [viewImageIdx, setViewImageIdx] = useState(0)
 
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
 
@@ -71,7 +84,6 @@ export default function AdminPostsPage() {
     ...(process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY ? { 'X-Admin-Key': process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY } : {}),
   })
 
-  // Fetch all properties from external backend
   const fetchProperties = useCallback(async () => {
     setLoading(true)
     try {
@@ -80,7 +92,6 @@ export default function AdminPostsPage() {
       if (data.success) {
         setProperties(data.data?.properties || data.properties || [])
       } else {
-        // Fallback to public endpoint
         const res2 = await fetch(`${API_URL}/api/properties?limit=500`, { cache: 'no-store' })
         const data2 = await res2.json()
         if (data2.success) setProperties(data2.properties || [])
@@ -92,7 +103,6 @@ export default function AdminPostsPage() {
     }
   }, [token])
 
-  // Fetch local pending posts
   const fetchPendingPosts = useCallback(async () => {
     setPendingLoading(true)
     try {
@@ -111,7 +121,7 @@ export default function AdminPostsPage() {
     fetchPendingPosts()
   }, [fetchProperties, fetchPendingPosts])
 
-  // ── Local pending post actions ──
+  // ── Approve ──
   const handleApproveLocal = async (postId: string) => {
     setApproveLoading(postId + '_approve')
     try {
@@ -123,6 +133,7 @@ export default function AdminPostsPage() {
       const data = await res.json()
       if (data.success) {
         setPendingPosts(prev => prev.filter(p => p.id !== postId))
+        if (viewPost?.id === postId) setViewPost(null)
         showToast('✅ Post approved and published. Approval email sent.', 'success')
         setTimeout(fetchProperties, 2000)
       } else {
@@ -154,6 +165,7 @@ export default function AdminPostsPage() {
       const data = await res.json()
       if (data.success) {
         setPendingPosts(prev => prev.filter(p => p.id !== postId))
+        if (viewPost?.id === postId) setViewPost(null)
         showToast('🗑️ Post rejected. Rejection email sent to user.', 'success')
       } else {
         showToast(data.message || 'Rejection failed', 'error')
@@ -166,7 +178,7 @@ export default function AdminPostsPage() {
     }
   }
 
-  // ── External backend property actions ──
+  // ── External backend actions ──
   const handleApproveProperty = async (id: string) => {
     setActionLoading(id + '_approve')
     try {
@@ -239,6 +251,11 @@ export default function AdminPostsPage() {
     return typeof first === 'string' ? first : first?.url || ''
   }
 
+  const getAllImgUrls = (images: any[]): string[] => {
+    if (!images?.length) return []
+    return images.map(img => (typeof img === 'string' ? img : img?.url || '')).filter(Boolean)
+  }
+
   const getLocation = (loc: any): string => {
     if (!loc) return 'N/A'
     if (typeof loc === 'string') return loc
@@ -283,6 +300,235 @@ export default function AdminPostsPage() {
         </div>
       )}
 
+      {/* ══ Full Post View Modal ══ */}
+      {viewPost && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center overflow-y-auto py-6 px-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setViewPost(null) }}
+        >
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <div>
+                <h2 className="text-lg font-extrabold text-slate-900">Post Review</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Submitted by {viewPost.userName} · {viewPost.userEmail}</p>
+              </div>
+              <button
+                onClick={() => setViewPost(null)}
+                className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-all"
+              >
+                <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Images Gallery */}
+            {getAllImgUrls(viewPost.images).length > 0 && (
+              <div className="relative bg-slate-900">
+                <img
+                  src={getAllImgUrls(viewPost.images)[viewImageIdx]}
+                  alt={`Image ${viewImageIdx + 1}`}
+                  className="w-full h-72 object-cover"
+                />
+                {getAllImgUrls(viewPost.images).length > 1 && (
+                  <>
+                    <button
+                      onClick={() => setViewImageIdx(i => Math.max(0, i - 1))}
+                      disabled={viewImageIdx === 0}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center disabled:opacity-30 transition-all"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      onClick={() => setViewImageIdx(i => Math.min(getAllImgUrls(viewPost.images).length - 1, i + 1))}
+                      disabled={viewImageIdx === getAllImgUrls(viewPost.images).length - 1}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center disabled:opacity-30 transition-all"
+                    >
+                      ›
+                    </button>
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                      {getAllImgUrls(viewPost.images).map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setViewImageIdx(i)}
+                          className={`w-2 h-2 rounded-full transition-all ${i === viewImageIdx ? 'bg-white' : 'bg-white/40'}`}
+                        />
+                      ))}
+                    </div>
+                    <span className="absolute top-3 right-3 bg-black/50 text-white text-xs px-2.5 py-1 rounded-full font-medium">
+                      {viewImageIdx + 1} / {getAllImgUrls(viewPost.images).length}
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Thumbnail strip */}
+            {getAllImgUrls(viewPost.images).length > 1 && (
+              <div className="flex gap-2 px-6 py-3 overflow-x-auto bg-slate-50 border-b border-slate-100">
+                {getAllImgUrls(viewPost.images).map((url, i) => (
+                  <button key={i} onClick={() => setViewImageIdx(i)} className="flex-shrink-0">
+                    <img
+                      src={url}
+                      alt=""
+                      className={`w-14 h-12 rounded-lg object-cover transition-all ${i === viewImageIdx ? 'ring-2 ring-primary' : 'opacity-60 hover:opacity-100'}`}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Videos */}
+            {viewPost.videos && viewPost.videos.length > 0 && (
+              <div className="px-6 py-4 border-b border-slate-100">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Videos ({viewPost.videos.length})</p>
+                <div className="flex flex-col gap-3">
+                  {viewPost.videos.map((url, i) => (
+                    <video key={i} src={url} controls className="w-full rounded-xl border border-slate-200 max-h-56" />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Post Details */}
+            <div className="px-6 py-5 space-y-4">
+              {/* Title + badges */}
+              <div>
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <span className="text-xs font-bold bg-violet-100 text-violet-700 px-2.5 py-0.5 rounded-lg capitalize">{viewPost.type}</span>
+                  {viewPost.propertyType && (
+                    <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded-lg capitalize">{viewPost.propertyType}</span>
+                  )}
+                  {viewPost.furnished && (
+                    <span className="text-xs font-bold bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-lg">Furnished</span>
+                  )}
+                </div>
+                <h3 className="text-xl font-extrabold text-slate-900">{viewPost.title}</h3>
+              </div>
+
+              {/* Key stats */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {viewPost.price !== null && viewPost.price !== undefined && (
+                  <div className="bg-slate-50 rounded-xl p-3 text-center">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Price</p>
+                    <p className="text-sm font-extrabold text-slate-900 mt-0.5">{Number(viewPost.price).toLocaleString()} EGP</p>
+                  </div>
+                )}
+                {viewPost.bedrooms != null && (
+                  <div className="bg-slate-50 rounded-xl p-3 text-center">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Beds</p>
+                    <p className="text-sm font-extrabold text-slate-900 mt-0.5">🛏 {viewPost.bedrooms}</p>
+                  </div>
+                )}
+                {viewPost.bathrooms != null && (
+                  <div className="bg-slate-50 rounded-xl p-3 text-center">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Baths</p>
+                    <p className="text-sm font-extrabold text-slate-900 mt-0.5">🚿 {viewPost.bathrooms}</p>
+                  </div>
+                )}
+                {viewPost.area != null && (
+                  <div className="bg-slate-50 rounded-xl p-3 text-center">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Area</p>
+                    <p className="text-sm font-extrabold text-slate-900 mt-0.5">{viewPost.area} m²</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Location */}
+              <div className="flex items-start gap-2">
+                <svg className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <p className="text-sm text-slate-700">{getLocation(viewPost.location)}</p>
+              </div>
+
+              {/* Description */}
+              {viewPost.description && (
+                <div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Description</p>
+                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{viewPost.description}</p>
+                </div>
+              )}
+
+              {/* Amenities */}
+              {viewPost.amenities && viewPost.amenities.length > 0 && (
+                <div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Amenities</p>
+                  <div className="flex flex-wrap gap-2">
+                    {viewPost.amenities.map(a => (
+                      <span key={a} className="text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-lg font-medium">{a}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Preferences / Target */}
+              {((viewPost.preferences && viewPost.preferences.length > 0) || viewPost.targetAudience) && (
+                <div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Preferences</p>
+                  <div className="flex flex-wrap gap-2">
+                    {viewPost.targetAudience && (
+                      <span className="text-xs bg-orange-100 text-orange-700 px-2.5 py-1 rounded-lg font-medium">{viewPost.targetAudience}</span>
+                    )}
+                    {viewPost.preferences?.map(p => (
+                      <span key={p} className="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg font-medium">{p}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* WhatsApp */}
+              {viewPost.whatsapp?.number && (
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                  </svg>
+                  <span className="text-sm text-slate-700">+{viewPost.whatsapp.countryCode} {viewPost.whatsapp.number}</span>
+                </div>
+              )}
+
+              {/* Submitted date */}
+              <p className="text-xs text-slate-400">
+                Submitted: {new Date(viewPost.createdAt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              </p>
+            </div>
+
+            {/* Modal Footer — Actions */}
+            <div className="flex gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl">
+              <button
+                onClick={() => handleApproveLocal(viewPost.id)}
+                disabled={!!approveLoading}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white text-sm font-bold rounded-xl transition-all"
+              >
+                {approveLoading === viewPost.id + '_approve' ? (
+                  <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+                Approve
+              </button>
+              <button
+                onClick={() => { setViewPost(null); openRejectModal(viewPost.id, viewPost.title) }}
+                disabled={!!approveLoading}
+                className="flex-1 py-2.5 bg-red-50 hover:bg-red-100 disabled:opacity-50 text-red-600 text-sm font-bold rounded-xl border border-red-200 transition-all"
+              >
+                Reject
+              </button>
+              <button
+                onClick={() => setViewPost(null)}
+                className="px-5 py-2.5 bg-white hover:bg-slate-100 text-slate-600 text-sm font-semibold rounded-xl border border-slate-200 transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Rejection Modal */}
       {rejectModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
@@ -298,7 +544,7 @@ export default function AdminPostsPage() {
                 <p className="text-xs text-slate-500 truncate max-w-[260px]">{rejectModal.postTitle}</p>
               </div>
             </div>
-            <p className="text-sm text-slate-600 mb-3">The user will receive an email with this reason.</p>
+            <p className="text-sm text-slate-600 mb-3">The user will receive an email and in-app notification with this reason.</p>
             <textarea
               value={rejectReason}
               onChange={e => setRejectReason(e.target.value)}
@@ -343,7 +589,7 @@ export default function AdminPostsPage() {
         </button>
       </div>
 
-      {/* ══ Pending Posts — Approval Section ══ */}
+      {/* ══ Pending Posts ══ */}
       <div className="bg-white rounded-2xl border border-amber-200 shadow-sm mb-6 overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 bg-amber-50 border-b border-amber-100">
           <div className="flex items-center gap-3">
@@ -354,7 +600,7 @@ export default function AdminPostsPage() {
             </div>
             <div>
               <h2 className="text-base font-extrabold text-slate-900">Pending Approval</h2>
-              <p className="text-xs text-slate-500">New posts awaiting review — user gets email on decision</p>
+              <p className="text-xs text-slate-500">Click a post to review full content — user gets email &amp; notification on decision</p>
             </div>
           </div>
           {!pendingLoading && (
@@ -376,14 +622,20 @@ export default function AdminPostsPage() {
         ) : (
           <div className="divide-y divide-slate-100">
             {pendingPosts.map(post => (
-              <div key={post.id} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50/60 transition-colors">
+              <div
+                key={post.id}
+                className="flex items-center gap-4 px-6 py-4 hover:bg-amber-50/50 transition-colors cursor-pointer group"
+                onClick={() => { setViewImageIdx(0); setViewPost(post) }}
+              >
                 {getImgUrl(post.images) ? (
                   <img src={getImgUrl(post.images)} alt="" className="w-16 h-14 rounded-xl object-cover flex-shrink-0" />
+                ) : post.videos && post.videos.length > 0 ? (
+                  <div className="w-16 h-14 rounded-xl bg-slate-800 flex items-center justify-center flex-shrink-0 text-xl">🎥</div>
                 ) : (
                   <div className="w-16 h-14 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0 text-2xl">🏠</div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-slate-900 text-sm truncate">{post.title}</p>
+                  <p className="font-bold text-slate-900 text-sm truncate group-hover:text-primary transition-colors">{post.title}</p>
                   <p className="text-xs text-slate-500 mt-0.5">
                     by <span className="font-semibold">{post.userName || post.userEmail}</span>
                     {' · '}{getLocation(post.location)}
@@ -393,12 +645,24 @@ export default function AdminPostsPage() {
                     {new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
-                <span className="hidden sm:inline text-xs font-semibold bg-violet-100 text-violet-700 px-2.5 py-1 rounded-lg capitalize flex-shrink-0">
-                  {post.type}
-                </span>
-                <div className="flex gap-2 flex-shrink-0">
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="hidden sm:inline text-xs font-semibold bg-violet-100 text-violet-700 px-2.5 py-1 rounded-lg capitalize">
+                    {post.type}
+                  </span>
+                  {/* Media badges */}
+                  {post.images?.length > 0 && (
+                    <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-lg">📷 {post.images.length}</span>
+                  )}
+                  {post.videos && post.videos.length > 0 && (
+                    <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-lg">🎥 {post.videos.length}</span>
+                  )}
+                  {/* View button */}
+                  <span className="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-lg group-hover:bg-primary group-hover:text-white transition-all">
+                    View →
+                  </span>
+                  {/* Quick actions (stop propagation) */}
                   <button
-                    onClick={() => handleApproveLocal(post.id)}
+                    onClick={(e) => { e.stopPropagation(); handleApproveLocal(post.id) }}
                     disabled={!!approveLoading}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-all"
                   >
@@ -412,7 +676,7 @@ export default function AdminPostsPage() {
                     Approve
                   </button>
                   <button
-                    onClick={() => openRejectModal(post.id, post.title)}
+                    onClick={(e) => { e.stopPropagation(); openRejectModal(post.id, post.title) }}
                     disabled={!!approveLoading}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 disabled:opacity-50 text-red-600 text-xs font-bold rounded-lg border border-red-200 transition-all"
                   >

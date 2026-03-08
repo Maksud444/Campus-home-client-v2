@@ -36,6 +36,26 @@ function getEmailTransporter() {
   })
 }
 
+const NOTIF_FILE = path.join(process.cwd(), 'data', 'notifications.json')
+
+function writeServerNotification(email: string, message: string, type: 'success' | 'error', link?: string) {
+  try {
+    let all: Record<string, any[]> = {}
+    try { all = JSON.parse(fs.readFileSync(NOTIF_FILE, 'utf-8')) } catch { /* empty */ }
+    if (!all[email]) all[email] = []
+    all[email].unshift({
+      id: Date.now().toString() + Math.random().toString(36).slice(2, 7),
+      message,
+      type,
+      read: false,
+      createdAt: new Date().toISOString(),
+      link,
+    })
+    all[email] = all[email].slice(0, 50)
+    fs.writeFileSync(NOTIF_FILE, JSON.stringify(all, null, 2))
+  } catch { /* ignore */ }
+}
+
 function getImageUrl(img: any): string {
   if (!img) return ''
   if (typeof img === 'string') return img
@@ -308,6 +328,16 @@ export async function POST(
         console.error('⚠️ Approval email failed:', emailErr)
       }
 
+      // 4. Write in-app notification for the user
+      if (post.userEmail) {
+        writeServerNotification(
+          post.userEmail,
+          `✅ Your post "${post.title}" has been approved and is now live!`,
+          'success',
+          '/properties'
+        )
+      }
+
       return NextResponse.json({
         success: true,
         message: 'Post approved and published',
@@ -332,6 +362,16 @@ export async function POST(
         console.log('📧 Rejection email sent to:', post.userEmail)
       } catch (emailErr) {
         console.error('⚠️ Rejection email failed:', emailErr)
+      }
+
+      // Write in-app notification for the user
+      if (post.userEmail) {
+        writeServerNotification(
+          post.userEmail,
+          `❌ Your post "${post.title}" was not approved. Reason: ${reason}`,
+          'error',
+          '/post'
+        )
       }
 
       return NextResponse.json({
