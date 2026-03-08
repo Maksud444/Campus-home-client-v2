@@ -14,6 +14,7 @@ interface Property {
   location: { city: string; area: string; address?: string };
   bedrooms?: number; bathrooms?: number; area?: number;
   images: Array<{ url: string; public_id?: string } | string>;
+  videos?: string[];
   propertyType: string; type?: string; featured?: boolean;
 }
 
@@ -67,6 +68,7 @@ export default function PropertiesSection() {
               images: (p.images || []).map((img: any) =>
                 typeof img === 'string' ? { url: img } : img
               ),
+              videos: (p.videos || []).map((v: any) => typeof v === 'string' ? v : v?.url || '').filter(Boolean),
               propertyType: p.propertyType,
               type: p.type,
             }))
@@ -126,14 +128,35 @@ export default function PropertiesSection() {
                 key={property._id}
                 className="group flex flex-col bg-white rounded-2xl border border-slate-100 hover:border-primary/20 hover:shadow-lg transition-all duration-300 overflow-hidden"
               >
-                {/* Image Section */}
+                {/* Image/Video Section */}
                 <div className="relative h-48 w-full overflow-hidden">
-                  <Image
-                    src={getImageUrl(property.images)}
-                    alt={property.title}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-700"
-                  />
+                  {property.images && property.images.length > 0 ? (
+                    <Image
+                      src={getImageUrl(property.images)}
+                      alt={property.title}
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-700"
+                    />
+                  ) : property.videos && property.videos.length > 0 ? (
+                    <>
+                      <video
+                        src={property.videos[0]}
+                        className="w-full h-full object-cover"
+                        muted
+                        playsInline
+                        preload="metadata"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-12 h-12 bg-black/50 rounded-full flex items-center justify-center">
+                          <svg className="w-5 h-5 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-5xl bg-slate-100">🏠</div>
+                  )}
                   
                   {/* Overlay Badges */}
                   <div className="absolute top-6 left-6 flex flex-col gap-2">

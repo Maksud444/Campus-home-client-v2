@@ -12,6 +12,7 @@ interface Property {
   _id: string; title: string; description: string; price: number | null;
   location: { city: string; area: string; address?: string };
   images: Array<{ url: string; public_id?: string } | string>;
+  videos?: string[];
   propertyType: string; bedrooms?: number; bathrooms?: number; type: string; createdAt: string;
 }
 
@@ -64,6 +65,7 @@ export default function NewProjectsSection() {
                 images: (p.images || []).map((img: any) =>
                   typeof img === 'string' ? { url: img } : img
                 ),
+                videos: (p.videos || []).map((v: any) => typeof v === 'string' ? v : v?.url || '').filter(Boolean),
                 propertyType: p.propertyType,
                 type: p.type,
                 createdAt: p.createdAt,
@@ -170,13 +172,34 @@ export default function NewProjectsSection() {
                 href={`/properties/${project._id}`}
                 className="group bg-white rounded-2xl overflow-hidden border border-slate-100 hover:border-primary/20 hover:shadow-lg transition-all duration-300 flex flex-col h-full"
               >
-                {/* Image Container */}
+                {/* Image/Video Container */}
                 <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={getImageUrl(project.images)}
-                    alt={project.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                  />
+                  {project.images && project.images.length > 0 ? (
+                    <img
+                      src={getImageUrl(project.images)}
+                      alt={project.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    />
+                  ) : project.videos && project.videos.length > 0 ? (
+                    <>
+                      <video
+                        src={project.videos[0]}
+                        className="w-full h-full object-cover"
+                        muted
+                        playsInline
+                        preload="metadata"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="w-12 h-12 bg-black/50 rounded-full flex items-center justify-center">
+                          <svg className="w-5 h-5 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-5xl bg-slate-100">🏠</div>
+                  )}
 
                   {/* Floating Badges */}
                   <div className="absolute top-5 left-5 right-5 flex justify-between items-start">

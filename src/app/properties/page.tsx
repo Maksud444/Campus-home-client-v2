@@ -25,6 +25,7 @@ interface Property {
   bathrooms: number
   area: number
   images: Array<{ url: string }>
+  videos?: string[]
   amenities: string[]
   whatsapp: {
     countryCode: string
@@ -173,6 +174,7 @@ function PropertiesPageContent() {
       bathrooms: p.bathrooms || 0,
       area: p.area || 0,
       images: imgs,
+      videos: (p.videos || []).map((v: any) => typeof v === 'string' ? v : v?.url || '').filter(Boolean),
       amenities: p.amenities || [],
       whatsapp: p.whatsapp || { countryCode: '', number: '' },
       status: 'active',
@@ -596,6 +598,23 @@ function PropertiesPageContent() {
                         fill
                         className="object-cover"
                       />
+                    ) : property.videos && property.videos.length > 0 ? (
+                      <>
+                        <video
+                          src={property.videos[0]}
+                          className="w-full h-full object-cover"
+                          muted
+                          playsInline
+                          preload="metadata"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-12 h-12 bg-black/50 rounded-full flex items-center justify-center">
+                            <svg className="w-5 h-5 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z"/>
+                            </svg>
+                          </div>
+                        </div>
+                      </>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-5xl">🏠</div>
                     )}
