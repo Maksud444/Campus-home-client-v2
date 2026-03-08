@@ -27,25 +27,57 @@ export default function PropertiesSection() {
   const fetchProperties = async () => {
     try {
       setLoading(true)
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 8000)
-      const response = await fetch(`${API_URL}/api/properties?limit=6&sort=-createdAt`, {
-        signal: controller.signal,
-        headers: { 'Content-Type': 'application/json' },
-      })
-      clearTimeout(timeoutId)
-      const data = await response.json()
-      if (data.success && data.properties) {
-        // Only show active/approved, sort by newest first
-        const active = data.properties.filter((p: any) => {
-          const s = (p.status || 'active').toLowerCase()
-          return s === 'active' || s === 'approved'
-        })
-        const sorted = [...active].sort((a: any, b: any) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )
-        setProperties(sorted)
+      const [extRes, localRes] = await Promise.all([
+        fetch(`${API_URL}/api/properties?limit=6&sort=-createdAt`, {
+          headers: { 'Content-Type': 'application/json' },
+        }).catch(() => null),
+        fetch('/api/posts', { cache: 'no-store' }).catch(() => null),
+      ])
+
+      let all: Property[] = []
+
+      if (extRes?.ok) {
+        const data = await extRes.json()
+        if (data.success && data.properties) {
+          const active = data.properties.filter((p: any) => {
+            const s = (p.status || 'active').toLowerCase()
+            return s === 'active' || s === 'approved'
+          })
+          all = active
+        }
       }
+
+      if (localRes?.ok) {
+        const localData = await localRes.json()
+        if (localData.success && localData.posts?.length) {
+          const extIds = new Set(all.map((p: any) => p._id))
+          const localProps = localData.posts
+            .filter((p: any) => !p.backendId || !extIds.has(p.backendId))
+            .map((p: any) => ({
+              _id: p.id,
+              title: p.title,
+              description: p.description,
+              price: p.price,
+              location: typeof p.location === 'string'
+                ? { city: p.location, area: '' }
+                : p.location,
+              bedrooms: p.bedrooms,
+              bathrooms: p.bathrooms,
+              area: p.area,
+              images: (p.images || []).map((img: any) =>
+                typeof img === 'string' ? { url: img } : img
+              ),
+              propertyType: p.propertyType,
+              type: p.type,
+            }))
+          all = [...all, ...localProps]
+        }
+      }
+
+      const sorted = [...all].sort((a: any, b: any) =>
+        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+      )
+      setProperties(sorted.slice(0, 6))
     } catch (err: any) {
       console.error('❌ Properties fetch error:', err.message)
     } finally {

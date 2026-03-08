@@ -137,6 +137,52 @@ export default function PropertyDetailClient() {
           body: JSON.stringify({ views: currentViews + 1 }),
         }).catch(() => {})
       } else {
+        // Fallback: try local posts.json (for locally-approved posts)
+        const localRes = await fetch(`/api/posts/${propertyId}`).catch(() => null)
+        if (localRes?.ok) {
+          const localData = await localRes.json()
+          if (localData.success && localData.post) {
+            const p = localData.post
+            const imgs = (p.images || []).map((img: any) =>
+              typeof img === 'string' ? { url: img } : img
+            )
+            const loc = typeof p.location === 'string'
+              ? { city: p.location, area: '', address: '' }
+              : p.location
+            setProperty({
+              _id: p.id,
+              title: p.title || '',
+              description: p.description || '',
+              type: p.type || 'apartment',
+              price: p.price || null,
+              location: loc,
+              propertyType: p.propertyType || '',
+              bedrooms: p.bedrooms,
+              bathrooms: p.bathrooms,
+              area: p.area,
+              furnished: p.furnished || false,
+              images: imgs,
+              videos: p.videos || [],
+              amenities: p.amenities || [],
+              preferences: p.preferences || '',
+              targetAudience: p.targetAudience || '',
+              whatsapp: p.whatsapp || { countryCode: '', number: '' },
+              userId: p.userId,
+              userName: p.userName || '',
+              userEmail: p.userEmail || '',
+              userImage: p.userImage || '',
+              userRole: p.userRole || 'owner',
+              status: p.status,
+              views: p.views || 0,
+              likes: p.likes || [],
+              createdAt: p.createdAt,
+              updatedAt: p.updatedAt || p.createdAt,
+            })
+            setViewsCount((p.views || 0) + 1)
+            setLikesCount((p.likes || []).length)
+            return
+          }
+        }
         router.push('/properties')
       }
     } catch (error) {

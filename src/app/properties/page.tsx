@@ -115,20 +115,36 @@ function PropertiesPageContent() {
       setLoading(true)
       setError('')
 
-      const response = await fetch(`${API_URL}/api/properties`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
+      const [extRes, localRes] = await Promise.all([
+        fetch(`${API_URL}/api/properties`, {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+        }).catch(() => null),
+        fetch('/api/posts', { cache: 'no-store' }).catch(() => null),
+      ])
+
+      let allProperties: Property[] = []
+
+      if (extRes?.ok) {
+        const data = await extRes.json()
+        if (data.success && data.properties) allProperties = data.properties
+      }
+
+      if (localRes?.ok) {
+        const localData = await localRes.json()
+        if (localData.success && localData.posts?.length) {
+          const extIds = new Set(allProperties.map(p => p._id))
+          const localProps: Property[] = localData.posts
+            .filter((p: any) => !p.backendId || !extIds.has(p.backendId))
+            .map((p: any) => normalizeLocalPost(p))
+          allProperties = [...allProperties, ...localProps]
         }
-      })
+      }
 
-      const data = await response.json()
-
-      if (response.ok && data.success) {
-        setProperties(data.properties)
-      } else {
-        throw new Error(data.message || 'Failed to fetch properties')
+      if (allProperties.length > 0) {
+        setProperties(allProperties)
+      } else if (!extRes?.ok) {
+        throw new Error('Failed to load properties')
       }
     } catch (err: any) {
       console.error('Fetch error:', err)
@@ -136,6 +152,36 @@ function PropertiesPageContent() {
     } finally {
       setLoading(false)
     }
+  }
+
+  function normalizeLocalPost(p: any): Property {
+    const imgs = (p.images || [])
+      .map((img: any) => typeof img === 'string' ? { url: img } : img?.url ? { url: img.url } : null)
+      .filter(Boolean)
+    const loc = typeof p.location === 'string'
+      ? { city: p.location, area: '', address: '' }
+      : { city: p.location?.city || '', area: p.location?.area || '', address: p.location?.address || '' }
+    return {
+      _id: p.id || p._id,
+      title: p.title || '',
+      description: p.description || '',
+      type: p.type || 'apartment',
+      price: p.price || 0,
+      location: loc,
+      propertyType: p.propertyType || '',
+      bedrooms: p.bedrooms || 0,
+      bathrooms: p.bathrooms || 0,
+      area: p.area || 0,
+      images: imgs,
+      amenities: p.amenities || [],
+      whatsapp: p.whatsapp || { countryCode: '', number: '' },
+      status: 'active',
+      isDeleted: false,
+      userId: { _id: '', name: p.userName || '', email: p.userEmail || '', avatar: p.userImage || '' },
+      views: p.views || 0,
+      likes: p.likes || [],
+      createdAt: p.createdAt,
+    } as Property
   }
 
   const filteredProperties = properties.filter(property => {
