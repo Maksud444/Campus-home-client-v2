@@ -50,6 +50,19 @@ export default function NewProjectsSection() {
           const localData = await localRes.json()
           if (localData.success && localData.posts?.length) {
             const extIds = new Set(all.map((p: any) => p._id))
+
+            // Merge videos from approved local posts into matching external backend posts
+            const localByBackendId = new Map<string, any>()
+            localData.posts.forEach((p: any) => {
+              if (p.backendId && p.videos?.length > 0) localByBackendId.set(p.backendId, p)
+            })
+            if (localByBackendId.size > 0) {
+              all = all.map((p: any) => {
+                const local = localByBackendId.get(p._id)
+                return local && !p.videos?.length ? { ...p, videos: local.videos } : p
+              })
+            }
+
             const localProps = localData.posts
               .filter((p: any) => !p.backendId || !extIds.has(p.backendId))
               .map((p: any) => ({

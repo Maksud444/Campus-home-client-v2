@@ -118,9 +118,22 @@ export default function PropertyDetailClient() {
       const data = await response.json()
 
       if (data.success && data.property) {
-        setProperty(data.property)
-        const currentViews = data.property.views || 0
-        const backendLikes = (data.property.likes || []) as string[]
+        let prop = data.property
+        // If external backend has no videos, check local posts.json for a matching approved post
+        if (!prop.videos?.length) {
+          try {
+            const localRes = await fetch(`/api/posts/${propertyId}`)
+            if (localRes.ok) {
+              const localData = await localRes.json()
+              if (localData.success && localData.post?.videos?.length) {
+                prop = { ...prop, videos: localData.post.videos }
+              }
+            }
+          } catch { /* ignore */ }
+        }
+        setProperty(prop)
+        const currentViews = prop.views || 0
+        const backendLikes = (prop.likes || []) as string[]
         setViewsCount(currentViews + 1)
         setLikesCount(backendLikes.length)
         fetch(`/api/property-stats/${propertyId}`)

@@ -108,7 +108,8 @@ export async function GET(
 ) {
   try {
     const posts = readPosts()
-    const postIndex = posts.findIndex((p: any) => p.id === params.id)
+    // Match by local id OR by backendId (so detail page can find approved posts by their external ID)
+    const postIndex = posts.findIndex((p: any) => p.id === params.id || p.backendId === params.id)
 
     if (postIndex === -1) {
       return NextResponse.json({ success: false, message: 'Post not found' }, { status: 404 })
