@@ -277,6 +277,7 @@ export default function MyPostsPage() {
                           ✓ Live
                         </span>
                       }
+                      linkHref={`/properties/${post.id}`}
                       showEdit
                       showDelete
                     />
@@ -343,7 +344,8 @@ function PostCard({
   statusBadge,
   showEdit,
   showDelete,
-  rejectionReason
+  rejectionReason,
+  linkHref
 }: {
   post: Post
   onDelete: (id: string) => void
@@ -353,9 +355,10 @@ function PostCard({
   showEdit?: boolean
   showDelete?: boolean
   rejectionReason?: string | null
+  linkHref?: string
 }) {
-  return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow bg-white">
+  const CardTop = () => (
+    <>
       <div className="relative h-48 bg-gray-200">
         {post.images && post.images.length > 0 ? (
           <Image src={post.images[0]} alt={post.title} fill className="object-cover" />
@@ -369,10 +372,24 @@ function PostCard({
         </div>
         {statusBadge}
       </div>
-
-      <div className="p-4">
+      <div className="px-4 pt-4 pb-0">
         <h3 className="font-bold text-lg mb-1 line-clamp-2">{post.title}</h3>
         <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">📍 {post.location}</p>
+      </div>
+    </>
+  )
+
+  return (
+    <div className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow bg-white">
+      {linkHref ? (
+        <Link href={linkHref} className="block hover:opacity-95">
+          <CardTop />
+        </Link>
+      ) : (
+        <CardTop />
+      )}
+
+      <div className="p-4 pt-2">
 
         {post.price && (
           <p className="text-sm font-bold text-primary mb-2">

@@ -541,7 +541,7 @@ export default function AdminPostsPage() {
 
               {/* Submitted date */}
               <p className="text-xs text-slate-400">
-                Submitted: {new Date(viewPost.createdAt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                Submitted: {viewPost.createdAt ? new Date(viewPost.createdAt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
               </p>
             </div>
 
@@ -811,7 +811,7 @@ export default function AdminPostsPage() {
                           )}
                           <div>
                             <p className="font-semibold text-slate-900 text-sm line-clamp-1 max-w-[150px]">{prop.title}</p>
-                            <p className="text-[11px] text-slate-400">{prop._id.slice(-6)}</p>
+                            <p className="text-[11px] text-slate-400">{(prop._id || '').slice(-6)}</p>
                           </div>
                         </div>
                       </td>

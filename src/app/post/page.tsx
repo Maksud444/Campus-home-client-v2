@@ -812,10 +812,11 @@ export default function CreatePostPage() {
                   className="input"
                   disabled={loading}
                 >
-                  <option value="apartment">Apartment</option>
-                  <option value="villa">Villa</option>
-                  <option value="studio">Studio</option>
-                  <option value="house">House</option>
+                  <option value="apartment">{t('propertyType.apartment')}</option>
+                  <option value="villa">{t('propertyType.villa')}</option>
+                  <option value="studio">{t('propertyType.studio')}</option>
+                  <option value="house">{t('propertyType.house')}</option>
+                  <option value="super-looks">{t('propertyType.superLooks')}</option>
                 </select>
               </div>
 
@@ -919,7 +920,7 @@ export default function CreatePostPage() {
                       }`}
                       disabled={loading}
                     >
-                      {amenity}
+                      {t('amenity.' + amenity)}
                     </button>
                   ))}
                 </div>
