@@ -255,6 +255,25 @@ export default function AdminPostsPage() {
     }
   }
 
+  const handleDeleteLocalPost = async (id: string) => {
+    if (!confirm('Are you sure you want to permanently delete this post?')) return
+    setActionLoading(id + '_delete')
+    try {
+      const res = await fetch(`/api/posts/${id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (data.success) {
+        setLocalPosts(prev => prev.filter(p => p.id !== id))
+        showToast('Post deleted successfully', 'success')
+      } else {
+        showToast(data.message || 'Failed to delete', 'error')
+      }
+    } catch {
+      showToast('Network error', 'error')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
   const getImgUrl = (images: any[]): string => {
     if (!images?.length) return ''
     const first = images[0]
@@ -308,6 +327,7 @@ export default function AdminPostsPage() {
       } as Property
     })
 
+  const localPostIds = new Set(localAsProps.map(p => p._id).filter(Boolean))
   const allPosts = [...localAsProps, ...properties]
 
   const filtered = allPosts.filter(p => {
@@ -692,7 +712,7 @@ export default function AdminPostsPage() {
                     {post.price ? ` · ${Number(post.price).toLocaleString()} EGP` : ''}
                   </p>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    {new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    {post.createdAt ? new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
@@ -874,7 +894,7 @@ export default function AdminPostsPage() {
                             </button>
                           )}
                           <button
-                            onClick={() => handleDeleteProperty(prop._id)}
+                            onClick={() => localPostIds.has(prop._id) ? handleDeleteLocalPost(prop._id) : handleDeleteProperty(prop._id)}
                             disabled={actionLoading === prop._id + '_delete'}
                             className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center transition-all disabled:opacity-50"
                             title="Delete"
