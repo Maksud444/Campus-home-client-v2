@@ -1,32 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
-import fs from 'fs'
-import path from 'path'
-
-const POSTS_FILE = path.join(process.cwd(), 'data', 'posts.json')
-
-function readPosts() {
-  try {
-    if (!fs.existsSync(POSTS_FILE)) {
-      const dataDir = path.join(process.cwd(), 'data')
-      if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true })
-      fs.writeFileSync(POSTS_FILE, JSON.stringify([], null, 2))
-      return []
-    }
-    return JSON.parse(fs.readFileSync(POSTS_FILE, 'utf-8'))
-  } catch {
-    return []
-  }
-}
-
-function writePosts(posts: any[]) {
-  try {
-    fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2))
-  } catch (error) {
-    console.error('Error writing posts:', error)
-  }
-}
+import { readPosts, writePosts } from '@/lib/posts-store'
 
 // GET - Get all posts (with optional filters)
 export async function GET(request: NextRequest) {
@@ -39,7 +14,7 @@ export async function GET(request: NextRequest) {
     const isAdmin = searchParams.get('admin') === 'true'
     const statusFilter = searchParams.get('status')
 
-    let posts = readPosts()
+    let posts = await readPosts()
 
     posts.sort((a: any, b: any) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -54,7 +29,6 @@ export async function GET(request: NextRequest) {
         if (limit) posts = posts.slice(0, parseInt(limit))
         return NextResponse.json({ success: true, posts })
       }
-      // Session email doesn't match — return nothing
       return NextResponse.json({ success: true, posts: [] })
     }
 
@@ -93,13 +67,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Please upload at least 3 images or 1 video' }, { status: 400 })
     }
 
-    const posts = readPosts()
+    const posts = await readPosts()
 
     const newPost = {
       id: Date.now().toString(),
-      // Store raw body exactly as it would be sent to external backend
       ...body,
-      // Override / ensure these fields
       userEmail: session.user.email,
       userName: session.user.name || body.userName || 'User',
       userImage: session.user.image || body.userImage || '',
@@ -115,7 +87,7 @@ export async function POST(request: NextRequest) {
     }
 
     posts.push(newPost)
-    writePosts(posts)
+    await writePosts(posts)
 
     console.log('✅ Post queued for approval:', newPost.id)
 

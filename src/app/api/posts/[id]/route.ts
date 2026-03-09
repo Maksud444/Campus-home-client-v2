@@ -1,47 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
-import fs from 'fs'
-import path from 'path'
+import { readPosts, writePosts, readNotifications, writeNotifications } from '@/lib/posts-store'
 import nodemailer from 'nodemailer'
 
-const POSTS_FILE = path.join(process.cwd(), 'data', 'posts.json')
-const NOTIF_FILE = path.join(process.cwd(), 'data', 'notifications.json')
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://baytino.com'
-
-function readPosts() {
-  try {
-    if (!fs.existsSync(POSTS_FILE)) return []
-    return JSON.parse(fs.readFileSync(POSTS_FILE, 'utf-8'))
-  } catch (error) {
-    console.error('Error reading posts:', error)
-    return []
-  }
-}
-
-function writePosts(posts: any[]) {
-  try {
-    fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2))
-  } catch (error) {
-    console.error('Error writing posts:', error)
-  }
-}
-
-function writeServerNotification(email: string, message: string, type: 'success' | 'error' | 'info', link?: string) {
-  try {
-    let all: Record<string, any[]> = {}
-    try { all = JSON.parse(fs.readFileSync(NOTIF_FILE, 'utf-8')) } catch { /* empty */ }
-    if (!all[email]) all[email] = []
-    all[email].unshift({
-      id: Date.now().toString() + Math.random().toString(36).slice(2, 7),
-      message, type, read: false, createdAt: new Date().toISOString(), link,
-    })
-    all[email] = all[email].slice(0, 50)
-    const dir = path.join(process.cwd(), 'data')
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
-    fs.writeFileSync(NOTIF_FILE, JSON.stringify(all, null, 2))
-  } catch { /* ignore */ }
-}
 
 async function sendDeleteEmail(post: any) {
   const emailUser = process.env.EMAIL_USER
@@ -101,14 +64,13 @@ async function sendDeleteEmail(post: any) {
   }
 }
 
-// GET - Get single post and increment view
+// GET - Get single post (by local id OR backendId)
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const posts = readPosts()
-    // Match by local id OR by backendId (so detail page can find approved posts by their external ID)
+    const posts = await readPosts()
     const postIndex = posts.findIndex((p: any) => p.id === params.id || p.backendId === params.id)
 
     if (postIndex === -1) {
@@ -116,7 +78,7 @@ export async function GET(
     }
 
     posts[postIndex].views = (posts[postIndex].views || 0) + 1
-    writePosts(posts)
+    await writePosts(posts)
 
     return NextResponse.json({ success: true, post: posts[postIndex] })
   } catch (error) {
@@ -138,7 +100,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const posts = readPosts()
+    const posts = await readPosts()
     const postIndex = posts.findIndex((p: any) => p.id === params.id)
 
     if (postIndex === -1) {
@@ -150,7 +112,7 @@ export async function PUT(
     }
 
     posts[postIndex] = { ...posts[postIndex], ...body, updatedAt: new Date().toISOString() }
-    writePosts(posts)
+    await writePosts(posts)
 
     return NextResponse.json({ success: true, message: 'Post updated successfully', post: posts[postIndex] })
   } catch (error) {
@@ -171,7 +133,7 @@ export async function DELETE(
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
     }
 
-    const posts = readPosts()
+    const posts = await readPosts()
     const postIndex = posts.findIndex((p: any) => p.id === params.id)
 
     if (postIndex === -1) {
@@ -184,21 +146,27 @@ export async function DELETE(
     }
 
     const deletedPost = posts[postIndex]
-
-    // Delete post
     posts.splice(postIndex, 1)
-    writePosts(posts)
+    await writePosts(posts)
 
     console.log('✅ Post deleted:', params.id)
 
-    // Notify the post owner (only if deleted by admin, not by the owner themselves)
+    // Notify the post owner (only if deleted by admin)
     if (isAdmin && deletedPost.userEmail && deletedPost.userEmail !== session.user.email) {
-      writeServerNotification(
-        deletedPost.userEmail,
-        `🗑️ Your post "${deletedPost.title}" has been deleted by admin.`,
-        'error',
-        '/post'
-      )
+      try {
+        const all = await readNotifications()
+        if (!all[deletedPost.userEmail]) all[deletedPost.userEmail] = []
+        all[deletedPost.userEmail].unshift({
+          id: Date.now().toString() + Math.random().toString(36).slice(2, 7),
+          message: `🗑️ Your post "${deletedPost.title}" has been deleted by admin.`,
+          type: 'error',
+          read: false,
+          createdAt: new Date().toISOString(),
+          link: '/post',
+        })
+        all[deletedPost.userEmail] = all[deletedPost.userEmail].slice(0, 50)
+        await writeNotifications(all)
+      } catch { /* ignore */ }
       sendDeleteEmail(deletedPost).catch(() => {})
     }
 

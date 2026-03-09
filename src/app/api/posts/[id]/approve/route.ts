@@ -2,29 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
 import nodemailer from 'nodemailer'
-import fs from 'fs'
-import path from 'path'
+import { readPosts, writePosts, readNotifications, writeNotifications } from '@/lib/posts-store'
 
-const POSTS_FILE = path.join(process.cwd(), 'data', 'posts.json')
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://student-housing-backend.vercel.app'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://baytino.com'
-
-function readPosts() {
-  try {
-    if (!fs.existsSync(POSTS_FILE)) return []
-    return JSON.parse(fs.readFileSync(POSTS_FILE, 'utf-8'))
-  } catch {
-    return []
-  }
-}
-
-function writePosts(posts: any[]) {
-  try {
-    fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2))
-  } catch (error) {
-    console.error('Error writing posts:', error)
-  }
-}
 
 function getEmailTransporter() {
   const emailUser = process.env.EMAIL_USER
@@ -36,12 +17,9 @@ function getEmailTransporter() {
   })
 }
 
-const NOTIF_FILE = path.join(process.cwd(), 'data', 'notifications.json')
-
-function writeServerNotification(email: string, message: string, type: 'success' | 'error', link?: string) {
+async function writeServerNotification(email: string, message: string, type: 'success' | 'error', link?: string) {
   try {
-    let all: Record<string, any[]> = {}
-    try { all = JSON.parse(fs.readFileSync(NOTIF_FILE, 'utf-8')) } catch { /* empty */ }
+    const all = await readNotifications()
     if (!all[email]) all[email] = []
     all[email].unshift({
       id: Date.now().toString() + Math.random().toString(36).slice(2, 7),
@@ -52,7 +30,7 @@ function writeServerNotification(email: string, message: string, type: 'success'
       link,
     })
     all[email] = all[email].slice(0, 50)
-    fs.writeFileSync(NOTIF_FILE, JSON.stringify(all, null, 2))
+    await writeNotifications(all)
   } catch { /* ignore */ }
 }
 
@@ -261,7 +239,7 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Rejection reason is required' }, { status: 400 })
     }
 
-    const posts = readPosts()
+    const posts = await readPosts()
     const postIndex = posts.findIndex((p: any) => p.id === params.id)
 
     if (postIndex === -1) {
@@ -318,7 +296,7 @@ export async function POST(
         backendId,
         updatedAt: now,
       }
-      writePosts(posts)
+      await writePosts(posts)
 
       // 3. Send approval email (with direct post link)
       const postId = backendId || post.id
@@ -331,7 +309,7 @@ export async function POST(
 
       // 4. Write in-app notification for the user
       if (post.userEmail) {
-        writeServerNotification(
+        await writeServerNotification(
           post.userEmail,
           `✅ Your post "${post.title}" has been approved and is now live!`,
           'success',
@@ -355,7 +333,7 @@ export async function POST(
         approved_at: null,
         updatedAt: now,
       }
-      writePosts(posts)
+      await writePosts(posts)
 
       // Send rejection email
       try {
@@ -367,7 +345,7 @@ export async function POST(
 
       // Write in-app notification for the user
       if (post.userEmail) {
-        writeServerNotification(
+        await writeServerNotification(
           post.userEmail,
           `❌ Your post "${post.title}" was not approved. Reason: ${reason}`,
           'error',
