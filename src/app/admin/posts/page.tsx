@@ -362,72 +362,84 @@ export default function AdminPostsPage() {
             </div>
 
             {/* Images Gallery */}
-            {getAllImgUrls(viewPost.images).length > 0 && (
-              <div className="relative bg-slate-900">
-                <img
-                  src={getAllImgUrls(viewPost.images)[viewImageIdx]}
-                  alt={`Image ${viewImageIdx + 1}`}
-                  className="w-full h-72 object-cover"
-                />
+            {getAllImgUrls(viewPost.images).length > 0 ? (
+              <>
+                <div className="relative bg-slate-900">
+                  <img
+                    src={getAllImgUrls(viewPost.images)[viewImageIdx]}
+                    alt={`Image ${viewImageIdx + 1}`}
+                    className="w-full h-72 object-cover"
+                  />
+                  {getAllImgUrls(viewPost.images).length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setViewImageIdx(i => Math.max(0, i - 1))}
+                        disabled={viewImageIdx === 0}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center disabled:opacity-30 transition-all"
+                      >
+                        ‹
+                      </button>
+                      <button
+                        onClick={() => setViewImageIdx(i => Math.min(getAllImgUrls(viewPost.images).length - 1, i + 1))}
+                        disabled={viewImageIdx === getAllImgUrls(viewPost.images).length - 1}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center disabled:opacity-30 transition-all"
+                      >
+                        ›
+                      </button>
+                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                        {getAllImgUrls(viewPost.images).map((_, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setViewImageIdx(i)}
+                            className={`w-2 h-2 rounded-full transition-all ${i === viewImageIdx ? 'bg-white' : 'bg-white/40'}`}
+                          />
+                        ))}
+                      </div>
+                      <span className="absolute top-3 right-3 bg-black/50 text-white text-xs px-2.5 py-1 rounded-full font-medium">
+                        {viewImageIdx + 1} / {getAllImgUrls(viewPost.images).length}
+                      </span>
+                    </>
+                  )}
+                </div>
+                {/* Thumbnail strip */}
                 {getAllImgUrls(viewPost.images).length > 1 && (
-                  <>
-                    <button
-                      onClick={() => setViewImageIdx(i => Math.max(0, i - 1))}
-                      disabled={viewImageIdx === 0}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center disabled:opacity-30 transition-all"
-                    >
-                      ‹
-                    </button>
-                    <button
-                      onClick={() => setViewImageIdx(i => Math.min(getAllImgUrls(viewPost.images).length - 1, i + 1))}
-                      disabled={viewImageIdx === getAllImgUrls(viewPost.images).length - 1}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center disabled:opacity-30 transition-all"
-                    >
-                      ›
-                    </button>
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                      {getAllImgUrls(viewPost.images).map((_, i) => (
-                        <button
-                          key={i}
-                          onClick={() => setViewImageIdx(i)}
-                          className={`w-2 h-2 rounded-full transition-all ${i === viewImageIdx ? 'bg-white' : 'bg-white/40'}`}
+                  <div className="flex gap-2 px-6 py-3 overflow-x-auto bg-slate-50 border-b border-slate-100">
+                    {getAllImgUrls(viewPost.images).map((url, i) => (
+                      <button key={i} onClick={() => setViewImageIdx(i)} className="flex-shrink-0">
+                        <img
+                          src={url}
+                          alt=""
+                          className={`w-14 h-12 rounded-lg object-cover transition-all ${i === viewImageIdx ? 'ring-2 ring-primary' : 'opacity-60 hover:opacity-100'}`}
                         />
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {/* Videos below images */}
+                {viewPost.videos && viewPost.videos.length > 0 && (
+                  <div className="px-6 py-4 border-b border-slate-100">
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Videos ({viewPost.videos.length})</p>
+                    <div className="flex flex-col gap-3">
+                      {viewPost.videos.map((url, i) => (
+                        <video key={i} src={url} controls className="w-full rounded-xl border border-slate-200 max-h-56" />
                       ))}
                     </div>
-                    <span className="absolute top-3 right-3 bg-black/50 text-white text-xs px-2.5 py-1 rounded-full font-medium">
-                      {viewImageIdx + 1} / {getAllImgUrls(viewPost.images).length}
-                    </span>
-                  </>
+                  </div>
                 )}
-              </div>
-            )}
-
-            {/* Thumbnail strip */}
-            {getAllImgUrls(viewPost.images).length > 1 && (
-              <div className="flex gap-2 px-6 py-3 overflow-x-auto bg-slate-50 border-b border-slate-100">
-                {getAllImgUrls(viewPost.images).map((url, i) => (
-                  <button key={i} onClick={() => setViewImageIdx(i)} className="flex-shrink-0">
-                    <img
-                      src={url}
-                      alt=""
-                      className={`w-14 h-12 rounded-lg object-cover transition-all ${i === viewImageIdx ? 'ring-2 ring-primary' : 'opacity-60 hover:opacity-100'}`}
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Videos */}
-            {viewPost.videos && viewPost.videos.length > 0 && (
-              <div className="px-6 py-4 border-b border-slate-100">
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Videos ({viewPost.videos.length})</p>
-                <div className="flex flex-col gap-3">
+              </>
+            ) : viewPost.videos && viewPost.videos.length > 0 ? (
+              /* Video-only post — show videos prominently at top */
+              <div className="bg-slate-900">
+                <div className="flex flex-col gap-1">
                   {viewPost.videos.map((url, i) => (
-                    <video key={i} src={url} controls className="w-full rounded-xl border border-slate-200 max-h-56" />
+                    <video key={i} src={url} controls className="w-full max-h-72 object-contain" preload="metadata" />
                   ))}
                 </div>
+                <div className="px-4 py-2 text-center">
+                  <span className="text-xs text-slate-400 font-medium">🎥 {viewPost.videos.length} video{viewPost.videos.length > 1 ? 's' : ''}</span>
+                </div>
               </div>
-            )}
+            ) : null}
 
             {/* Post Details */}
             <div className="px-6 py-5 space-y-4">

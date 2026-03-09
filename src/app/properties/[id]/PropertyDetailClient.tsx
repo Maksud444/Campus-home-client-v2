@@ -453,6 +453,20 @@ export default function PropertyDetailClient() {
                 </button>
               )}
             </div>
+          ) : property.videos && property.videos.length > 0 ? (
+            <div className="relative rounded-2xl overflow-hidden bg-black" style={{ height: '400px' }}>
+              <video
+                src={property.videos[0]}
+                controls
+                className="w-full h-full object-contain"
+                preload="metadata"
+              />
+              {property.videos.length > 1 && (
+                <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-3 py-1 rounded-full font-medium">
+                  +{property.videos.length - 1} more video{property.videos.length > 2 ? 's' : ''}
+                </div>
+              )}
+            </div>
           ) : (
             <div className="h-[400px] rounded-2xl flex items-center justify-center bg-gray-100 text-8xl">🏠</div>
           )}

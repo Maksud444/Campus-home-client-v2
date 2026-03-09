@@ -74,6 +74,9 @@ export default function NewProjectsSection() {
           }
         }
 
+        all.sort((a: any, b: any) =>
+          new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+        )
         setProjects(all)
       } catch (error) {
         console.error('Error fetching properties:', error)
