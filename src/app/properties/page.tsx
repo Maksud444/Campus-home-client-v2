@@ -619,7 +619,7 @@ function PropertiesPageContent() {
                       <>
                         <video
                           src={property.videos[0]}
-                          className="w-full h-full object-cover"
+                          className="absolute inset-0 w-full h-full object-cover"
                           muted
                           playsInline
                           preload="metadata"
