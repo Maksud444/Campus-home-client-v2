@@ -64,7 +64,35 @@ export const authOptions: NextAuthOptions = {
               backendToken: '',
             } as any
           }
-          console.log('⚠️ Admin override failed, trying backend...')
+          console.log('⚠️ Admin override failed, checking local admins...')
+
+          // ── Check locally-created admins (stored in Redis/file) ──
+          try {
+            const { readAdmins } = await import('@/lib/admins')
+            const bcryptLib = await import('bcryptjs')
+            const localAdmins = await readAdmins()
+            const localAdmin = localAdmins.find(
+              a => a.isActive && a.email.toLowerCase() === credentials.email.toLowerCase()
+            )
+            if (localAdmin) {
+              const match = await bcryptLib.default.compare(credentials.password, localAdmin.passwordHash)
+              if (match) {
+                console.log('✅ Local admin login:', localAdmin.email)
+                return {
+                  id: localAdmin.id,
+                  email: localAdmin.email,
+                  name: localAdmin.name,
+                  role: 'admin',
+                  image: '',
+                  backendToken: '',
+                } as any
+              }
+            }
+          } catch (err) {
+            console.error('Local admin check error:', err)
+          }
+
+          console.log('⚠️ No local admin match, trying backend...')
 
           const response = await fetch(`${API_URL}/api/auth/login`, {
             method: 'POST',

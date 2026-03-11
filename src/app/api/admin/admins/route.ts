@@ -12,7 +12,7 @@ export async function GET() {
       return NextResponse.json({ success: false, message: 'Admin access required' }, { status: 403 })
     }
 
-    const admins = readAdmins()
+    const admins = await readAdmins()
     const sanitized = admins.map(a => ({
       id: a.id,
       name: a.name,
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Password must be at least 8 characters' }, { status: 400 })
     }
 
-    const admins = readAdmins()
+    const admins = await readAdmins()
 
     // Check if email already exists (also check env var admin email)
     const mainAdminEmail = process.env.ADMIN_EMAIL?.toLowerCase()
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     }
 
     admins.push(newAdmin)
-    writeAdmins(admins)
+    await writeAdmins(admins)
 
     console.log(`✅ New admin created: ${email} by main admin`)
 

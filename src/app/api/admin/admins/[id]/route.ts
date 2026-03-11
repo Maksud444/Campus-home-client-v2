@@ -19,7 +19,7 @@ export async function DELETE(
       return NextResponse.json({ success: false, message: 'Only the main admin can delete admins' }, { status: 403 })
     }
 
-    const admins = readAdmins()
+    const admins = await readAdmins()
     const index = admins.findIndex(a => a.id === params.id)
 
     if (index === -1) {
@@ -27,7 +27,7 @@ export async function DELETE(
     }
 
     const removed = admins.splice(index, 1)[0]
-    writeAdmins(admins)
+    await writeAdmins(admins)
 
     console.log(`🗑️ Admin removed: ${removed.email}`)
 
@@ -74,7 +74,7 @@ export async function PUT(
       }, { status: 400 })
     }
 
-    const admins = readAdmins()
+    const admins = await readAdmins()
     const index = admins.findIndex(a => a.id === params.id)
 
     if (index === -1) {
@@ -82,7 +82,7 @@ export async function PUT(
     }
 
     admins[index].passwordHash = await bcrypt.hash(newPassword, 12)
-    writeAdmins(admins)
+    await writeAdmins(admins)
 
     console.log(`🔑 Password reset for admin: ${admins[index].email}`)
 
