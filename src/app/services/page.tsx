@@ -63,7 +63,7 @@ export default function ServicesPage() {
           {/* Quick Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-12 max-w-3xl mx-auto">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="text-2xl font-extrabold">816+</div>
+              <div className="text-2xl font-extrabold">12+</div>
               <div className="text-xs text-white/70 font-medium mt-1">{t('servicesPage.providers')}</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
@@ -248,13 +248,12 @@ export default function ServicesPage() {
 
                 <div className="flex items-center justify-between pt-3 border-t border-gray-200">
                   <span className="font-bold text-gray-900 text-sm">{provider.price}</span>
-                  <a
-                    href={`tel:${provider.phone}`}
+                  <Link
+                    href={`/services/${provider.service}/${provider.location.toLowerCase().replace(/ /g, '-')}`}
                     className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
                   >
-                    <Phone className="w-4 h-4" />
-                    {t('servicesPage.callNow')}
-                  </a>
+                    View Profile
+                  </Link>
                 </div>
               </div>
             ))}

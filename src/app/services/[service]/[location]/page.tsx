@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { getProvidersByServiceAndLocation } from '@/data/serviceProviders'
-import { ArrowLeft, Phone, Star, MapPin, Award, DollarSign, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Star, MapPin, Award, DollarSign, CheckCircle } from 'lucide-react'
 
 export default function ProvidersPage() {
   const params = useParams()
@@ -37,9 +37,6 @@ export default function ProvidersPage() {
   const providers = getProvidersByServiceAndLocation(service, locationName)
   const info = serviceInfo[service]
 
-  const handleCall = (phone: string) => {
-    window.location.href = `tel:${phone}`
-  }
 
   if (!info) {
     return (
@@ -158,14 +155,13 @@ export default function ProvidersPage() {
                   </div>
                 </div>
 
-                {/* Call Button */}
-                <button
-                  onClick={() => handleCall(provider.phone)}
+                {/* Contact Button */}
+                <Link
+                  href={`/services/${service}`}
                   className="w-full btn btn-primary flex items-center justify-center gap-2"
                 >
-                  <Phone size={20} />
-                  <span>Call {provider.phone}</span>
-                </button>
+                  View More Providers
+                </Link>
               </div>
             ))}
           </div>

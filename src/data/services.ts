@@ -16,8 +16,8 @@ export const services: Service[] = [
     icon: '🔧',
     description: 'Professional plumbers for all your water and pipe needs',
     features: ['Pipe Repair', 'Water Heater', 'Leak Detection', 'Bathroom Fixtures'],
-    providers: 156,
-    priceRange: '100-300 EGP',
+    providers: 3,
+    priceRange: '120–350 EGP',
     rating: 4.8
   },
   {
@@ -26,8 +26,8 @@ export const services: Service[] = [
     icon: '⚡',
     description: 'Licensed electricians for safe and reliable electrical work',
     features: ['Wiring', 'Circuit Breakers', 'Lighting', 'Power Systems'],
-    providers: 142,
-    priceRange: '150-400 EGP',
+    providers: 3,
+    priceRange: '180–450 EGP',
     rating: 4.7
   },
   {
@@ -36,8 +36,8 @@ export const services: Service[] = [
     icon: '🧹',
     description: 'Professional cleaning services for homes and offices',
     features: ['Deep Cleaning', 'Regular Maintenance', 'Move-in/out', 'Sanitization'],
-    providers: 203,
-    priceRange: '80-200 EGP/hour',
+    providers: 2,
+    priceRange: '90–200 EGP/hour',
     rating: 4.9
   },
   {
@@ -46,9 +46,9 @@ export const services: Service[] = [
     icon: '❄️',
     description: 'Expert AC repair and maintenance for all brands',
     features: ['Installation', 'Repair', 'Maintenance', 'Freon Refill'],
-    providers: 128,
-    priceRange: '200-500 EGP',
-    rating: 4.6
+    providers: 2,
+    priceRange: '220–500 EGP',
+    rating: 4.7
   },
   {
     id: 'painting',
@@ -56,8 +56,8 @@ export const services: Service[] = [
     icon: '🎨',
     description: 'Professional painters for interior and exterior work',
     features: ['Interior Painting', 'Exterior Painting', 'Decorative', 'Touch-ups'],
-    providers: 98,
-    priceRange: '50-100 EGP/sqm',
+    providers: 1,
+    priceRange: '50–100 EGP/sqm',
     rating: 4.7
   },
   {
@@ -66,8 +66,8 @@ export const services: Service[] = [
     icon: '🪚',
     description: 'Skilled carpenters for custom furniture and repairs',
     features: ['Custom Furniture', 'Door Repair', 'Cabinets', 'Wood Work'],
-    providers: 89,
-    priceRange: '200-600 EGP',
-    rating: 4.8
+    providers: 1,
+    priceRange: '300–600 EGP',
+    rating: 4.9
   }
 ]
