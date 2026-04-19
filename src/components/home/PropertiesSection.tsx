@@ -121,111 +121,67 @@ export default function PropertiesSection() {
         </div>
 
         {properties.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
             {properties.map((property) => (
               <Link
                 href={`/properties/${property._id}`}
                 key={property._id}
-                className="group flex flex-col bg-white rounded-2xl border border-slate-100 hover:border-primary/20 hover:shadow-lg transition-all duration-300 overflow-hidden"
+                className="group block"
               >
-                {/* Image/Video Section */}
-                <div className="relative h-48 w-full overflow-hidden">
+                {/* Airbnb-style square image */}
+                <div className="relative aspect-square rounded-2xl overflow-hidden mb-3">
                   {property.images && property.images.length > 0 ? (
                     <Image
                       src={getImageUrl(property.images)}
                       alt={property.title}
                       fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-700"
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   ) : property.videos && property.videos.length > 0 ? (
                     <>
-                      <video
-                        src={property.videos[0]}
-                        className="w-full h-full object-cover"
-                        muted
-                        playsInline
-                        preload="metadata"
-                      />
+                      <video src={property.videos[0]} className="w-full h-full object-cover" muted playsInline preload="metadata" />
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-12 h-12 bg-black/50 rounded-full flex items-center justify-center">
-                          <svg className="w-5 h-5 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z"/>
-                          </svg>
+                        <div className="w-10 h-10 bg-black/50 rounded-full flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                         </div>
                       </div>
                     </>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-5xl bg-slate-100">🏠</div>
                   )}
-                  
-                  {/* Overlay Badges */}
-                  <div className="absolute top-6 left-6 flex flex-col gap-2">
-                    {property.featured && (
-                      <div className="bg-primary text-white px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg">
-                        <FaStar size={10} className="text-yellow-300" />
-                        {t('properties.featuredBadge')}
-                      </div>
-                    )}
-                    <div className="bg-white/90 backdrop-blur-md text-slate-900 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm">
-                      {t(`propertyType.${(property.type || property.propertyType || 'property').toLowerCase()}`)}
-                    </div>
-                  </div>
 
-                  {/* Price Tag */}
-                  <div className="absolute bottom-3 left-3">
-                    <div className="bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl shadow-xl">
-                      <span className="text-sm font-black">
-                        {property.price?.toLocaleString()} 
-                        <span className="text-xs font-normal opacity-70 ml-1">{t('properties.egpPerMonth')}</span>
-                      </span>
+                  {/* Heart button */}
+                  <button onClick={(e) => { e.preventDefault(); e.stopPropagation() }} className="absolute top-3 right-3 z-10" aria-label="Save">
+                    <svg className="w-6 h-6 text-white drop-shadow-lg" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                  </button>
+
+                  {property.featured && (
+                    <div className="absolute top-3 left-3 bg-white text-gray-900 px-2.5 py-1 rounded-full text-[10px] font-bold shadow-md">
+                      ★ {t('properties.featuredBadge')}
                     </div>
-                  </div>
+                  )}
                 </div>
 
-                {/* Content Section */}
-                <div className="p-4 flex flex-col flex-grow">
-                  <h3 className="text-base font-bold text-slate-900 mb-1.5 group-hover:text-primary transition-colors line-clamp-1">
-                    {property.title}
-                  </h3>
-
-                  <div className="flex items-center gap-2 text-slate-400 mb-3">
-                    <FaMapMarkerAlt className="text-primary/60 flex-shrink-0" />
-                    <span className="text-sm font-medium line-clamp-1">
-                      {property.location?.area}, {property.location?.city}
-                    </span>
+                {/* Airbnb-style info */}
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 text-sm truncate">{property.title}</h3>
+                      <p className="text-gray-500 text-xs mt-0.5 truncate">
+                        {[property.location?.area, property.location?.city].filter(Boolean).join(', ')}
+                      </p>
+                      <p className="text-gray-400 text-xs">{property.bedrooms || 0} bed · {property.bathrooms || 0} bath</p>
+                    </div>
+                    <div className="flex items-center gap-0.5 text-xs flex-shrink-0 pt-0.5">
+                      <FaStar className="text-gray-900 w-3 h-3" />
+                      <span className="font-semibold text-gray-900">New</span>
+                    </div>
                   </div>
-
-                  {/* Amenities */}
-                  <div className="mt-auto grid grid-cols-3 gap-2 pt-3 border-t border-slate-50 text-slate-600">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors flex-shrink-0">
-                        <FaBed size={13} />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[11px] font-bold text-slate-800 leading-none">{property.bedrooms || 0}</span>
-                        <span className="text-[9px] text-slate-400 uppercase tracking-wide leading-none mt-0.5">Beds</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors flex-shrink-0">
-                        <FaBath size={13} />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[11px] font-bold text-slate-800 leading-none">{property.bathrooms || 0}</span>
-                        <span className="text-[9px] text-slate-400 uppercase tracking-wide leading-none mt-0.5">Baths</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors flex-shrink-0">
-                        <FaRulerCombined size={12} />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[11px] font-bold text-slate-800 leading-none">{property.area || 0}</span>
-                        <span className="text-[9px] text-slate-400 uppercase tracking-wide leading-none mt-0.5">m²</span>
-                      </div>
-                    </div>
+                  <div className="mt-1.5">
+                    <span className="font-semibold text-sm text-gray-900">{property.price?.toLocaleString()} EGP</span>
+                    <span className="text-gray-500 text-xs"> /month</span>
                   </div>
                 </div>
               </Link>

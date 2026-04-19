@@ -131,7 +131,7 @@ export default function RootLayout({
               {/* Mobile bottom nav (includes language) */}
               <MobileBottomNav />
               {/* pb-16 on mobile for bottom nav clearance */}
-              <main className="pt-16 min-h-screen pb-16 md:pb-0">
+              <main className="pt-[112px] md:pt-16 min-h-screen pb-20 md:pb-0">
                 {children}
               </main>
               <Footer />
