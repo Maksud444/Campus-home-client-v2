@@ -231,8 +231,8 @@ export default function Navbar() {
     }`}>
       <div className="container mx-auto px-6">
         <div className="flex items-center">
-          {/* Logo - LEFT */}
-          <Link href="/" className="flex-shrink-0 flex items-center gap-2 group">
+          {/* Logo - centered on mobile, left on desktop */}
+          <Link href="/" className="flex items-center gap-2 group md:flex-shrink-0 flex-1 md:flex-none justify-center md:justify-start">
             <Image src="/logo.svg" alt="Baytino Logo" width={40} height={40} priority />
             <span className="text-2xl font-bold text-primary">Baytino</span>
           </Link>
@@ -340,28 +340,24 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile: Bell icon (next to logo, before hamburger) — only when logged in */}
-          {session && (
-            <div className="md:hidden ml-auto mr-2">
-              <BellMobile />
-            </div>
-          )}
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className={`md:hidden text-gray-800 hover:text-primary transition-colors ${session ? '' : 'ml-auto'}`}
-          >
-            {mobileMenuOpen ? (
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
-          </button>
+          {/* Mobile: Bell + Hamburger group — right side */}
+          <div className="md:hidden flex items-center gap-1 flex-shrink-0">
+            {session && <BellMobile />}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="text-gray-800 hover:text-primary transition-colors p-1"
+            >
+              {mobileMenuOpen ? (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu */}

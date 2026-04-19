@@ -38,7 +38,6 @@ export default function HeroSection() {
   const [selectedBudget, setSelectedBudget] = useState('')
 
   // Mobile-only dropdown state
-  const [showTypeDropdown, setShowTypeDropdown] = useState(false)
   const [showBudgetDropdown, setShowBudgetDropdown] = useState(false)
 
   // Location search: static list + Nominatim
@@ -127,10 +126,10 @@ export default function HeroSection() {
   }
 
   return (
-    <section className="relative rounded-2xl mx-3 mt-3 mb-3">
+    <section className="relative md:rounded-2xl md:mx-3 md:mt-3 md:mb-3">
       {/* Background wrapper — overflow-hidden here keeps bg clipped to rounded corners
           without clipping the dropdown menus that extend beyond the form */}
-      <div className="absolute inset-0 rounded-2xl overflow-hidden z-0 pointer-events-none">
+      <div className="hidden md:block absolute inset-0 rounded-2xl overflow-hidden z-0 pointer-events-none">
         {/* Animated Background */}
         <div
           ref={bgRef}
@@ -301,190 +300,151 @@ export default function HeroSection() {
         </form>
       </div>
 
-      {/* ═══════════════ MOBILE LAYOUT (< md) ═══════════════ */}
-      <div className="md:hidden flex flex-col">
-        {/* Title */}
-        <div className="relative z-10 pt-4 pb-3 px-4 text-center">
-          <h1 className="text-lg font-extrabold text-white leading-tight mb-0.5 drop-shadow-lg whitespace-nowrap">
-            {t('hero.title')}
-          </h1>
-          <p className="text-[11px] text-white font-light drop-shadow whitespace-nowrap">
-            {t('hero.subtitle')}
-          </p>
-        </div>
+      {/* ═══════════════ MOBILE LAYOUT (< md) — Airbnb Style ═══════════════ */}
+      <div className="md:hidden bg-white px-4 pt-3 pb-4">
+        <form onSubmit={handleSearch} className="relative">
 
-        {/* Search Card — directly below title, no gap */}
-        <div className="relative z-10 px-3 pb-5">
-          <form
-            onSubmit={handleSearch}
-            className="bg-white rounded-2xl shadow-2xl overflow-visible"
-          >
-            {/* Row 1: Search text input with autocomplete */}
-            <div className="relative border-b border-gray-100">
-              <div className="flex items-center gap-2 px-4 py-3">
-                <svg className="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                  type="text"
-                  value={searchText}
-                  onChange={(e) => handleSearchInput(e.target.value)}
-                  onFocus={() => setShowSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  placeholder="Search any location..."
-                  className="flex-1 text-sm text-gray-700 placeholder-gray-400 outline-none bg-transparent"
-                />
-                {nominatimLoading && <svg className="animate-spin w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>}
+          {/* Airbnb-style pill search bar */}
+          <div className="flex items-center bg-white rounded-full border border-gray-200 shadow-[0_2px_12px_rgba(0,0,0,0.1)] px-5 py-3.5 gap-3">
+            <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <div className="flex-1 min-w-0">
+              <input
+                type="text"
+                value={searchText}
+                onChange={(e) => handleSearchInput(e.target.value)}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                placeholder="Where to?"
+                className="w-full text-sm font-semibold text-gray-900 placeholder-gray-500 outline-none bg-transparent leading-tight"
+              />
+              <div className="text-xs text-gray-400 mt-0.5">
+                {selectedType ? selectedType.charAt(0).toUpperCase() + selectedType.slice(1) : 'Any type'} · {selectedBudget || 'Any budget'}
               </div>
-              {showDropdown && (
-                <div className="absolute left-0 right-0 top-full z-50 bg-white border border-gray-200 rounded-2xl shadow-2xl max-h-60 overflow-y-auto">
-                  {filteredStatic.map((loc) => (
-                    <button key={loc} type="button" onMouseDown={() => handleSelectSuggestion(loc)}
-                      className="w-full text-left px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 border-b border-gray-50 last:border-0">
-                      <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      <span>{loc}</span>
-                    </button>
-                  ))}
-                  {nominatimResults.length > 0 && (
-                    <>
-                      <div className="px-5 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50 border-t border-gray-100">Search results</div>
-                      {nominatimResults.map((r, i) => (
-                        <button key={`n-${i}`} type="button" onMouseDown={() => handleSelectSuggestion(r.name)}
-                          className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 border-b border-gray-50 last:border-0">
-                          <svg className="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                          </svg>
-                          <div className="min-w-0">
-                            <div className="font-medium truncate">{r.name}</div>
-                            <div className="text-xs text-gray-400 truncate">{r.display}</div>
-                          </div>
-                        </button>
-                      ))}
-                    </>
-                  )}
-                </div>
-              )}
             </div>
+            {nominatimLoading && (
+              <svg className="animate-spin w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+              </svg>
+            )}
+            <button
+              type="submit"
+              className="w-9 h-9 bg-primary rounded-full flex items-center justify-center flex-shrink-0 shadow-md active:scale-95 transition-transform"
+            >
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+          </div>
 
-            {/* Row 2: Selected location (from search above) */}
-            {selectedArea && (
-              <div className="flex items-center justify-between px-4 py-2.5 border-b border-primary/20 bg-primary/5">
-                <div className="flex items-center gap-2">
+          {/* Autocomplete dropdown */}
+          {showDropdown && (
+            <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white border border-gray-100 rounded-2xl shadow-2xl max-h-60 overflow-y-auto">
+              {filteredStatic.map((loc) => (
+                <button key={loc} type="button" onMouseDown={() => handleSelectSuggestion(loc)}
+                  className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 border-b border-gray-50 last:border-0">
                   <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  <span className="text-xs font-semibold text-primary truncate">{selectedArea}</span>
-                </div>
-                <button type="button" onClick={() => { setSelectedArea(''); setSearchText('') }} className="text-gray-400 hover:text-gray-600 text-xs ml-2">✕</button>
-              </div>
-            )}
-
-            {/* Row 3: Property Type + Any Budget */}
-            <div className="grid grid-cols-2 border-b border-gray-100">
-              {/* Property Type */}
-              <div className="relative border-r border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowTypeDropdown(!showTypeDropdown)
-                    setShowBudgetDropdown(false)
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-3"
-                >
-                  <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                  </svg>
-                  <span className="text-xs font-semibold text-gray-800 truncate">
-                    {selectedType
-                      ? selectedType.charAt(0).toUpperCase() + selectedType.slice(1)
-                      : 'Property Type'}
-                  </span>
+                  <span>{loc}</span>
                 </button>
-                {showTypeDropdown && (
-                  <div className="absolute left-0 top-full z-50 w-44 bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => { setSelectedType(''); setShowTypeDropdown(false) }}
-                      className="w-full text-left px-4 py-3 text-sm text-gray-800 hover:bg-gray-50 font-semibold border-b border-gray-100"
-                    >
-                      All Types
+              ))}
+              {nominatimResults.length > 0 && (
+                <>
+                  <div className="px-5 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50 border-t border-gray-100">Search results</div>
+                  {nominatimResults.map((r, i) => (
+                    <button key={`n-${i}`} type="button" onMouseDown={() => handleSelectSuggestion(r.name)}
+                      className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 border-b border-gray-50 last:border-0">
+                      <svg className="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{r.name}</div>
+                        <div className="text-xs text-gray-400 truncate">{r.display}</div>
+                      </div>
                     </button>
-                    {propertyTypes.map((type) => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => { setSelectedType(type.toLowerCase()); setShowTypeDropdown(false) }}
-                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-                      >
-                        {type}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Any Budget */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowBudgetDropdown(!showBudgetDropdown)
-                    setShowTypeDropdown(false)
-                    setShowTypeDropdown(false)
-                  }}
-                  className="w-full flex items-center justify-between px-3 py-3"
-                >
-                  <div className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-xs font-semibold text-gray-800 truncate">
-                      {selectedBudget || 'Any Budget'}
-                    </span>
-                  </div>
-                  <svg className={`w-4 h-4 text-gray-500 flex-shrink-0 transition-transform ${showBudgetDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {showBudgetDropdown && (
-                  <div className="absolute right-0 top-full z-50 w-52 bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => { setSelectedBudget(''); setShowBudgetDropdown(false) }}
-                      className="w-full text-left px-4 py-3 text-sm text-gray-800 hover:bg-gray-50 font-semibold border-b border-gray-100"
-                    >
-                      Any Budget
-                    </button>
-                    {priceRanges.slice(1).map((range) => (
-                      <button
-                        key={range}
-                        type="button"
-                        onClick={() => { setSelectedBudget(range); setShowBudgetDropdown(false) }}
-                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-                      >
-                        {range}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+                  ))}
+                </>
+              )}
             </div>
+          )}
 
-            {/* Row 4: Search Button */}
-            <div className="px-3 py-3">
+          {/* Type filter chips + Budget chip — horizontal scroll */}
+          <div className="flex gap-2 mt-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            {typeTabs.map((tab) => (
               <button
-                type="submit"
-                className="w-full bg-primary hover:bg-primary-dark text-white py-2.5 rounded-xl font-bold text-sm transition-all hover:shadow-lg"
+                key={tab.value}
+                type="button"
+                onClick={() => setSelectedType(tab.value)}
+                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                  selectedType === tab.value
+                    ? 'bg-gray-900 text-white border-gray-900'
+                    : 'bg-white text-gray-600 border-gray-300'
+                }`}
               >
-                {t('hero.search')}
+                {tab.label}
               </button>
+            ))}
+
+            {/* Budget chip */}
+            <div className="relative flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowBudgetDropdown(!showBudgetDropdown)}
+                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                  selectedBudget ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-300'
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {selectedBudget || 'Budget'}
+              </button>
+              {showBudgetDropdown && (
+                <div className="absolute left-0 top-full mt-2 z-50 w-52 bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedBudget(''); setShowBudgetDropdown(false) }}
+                    className="w-full text-left px-4 py-3 text-sm text-gray-800 hover:bg-gray-50 font-semibold border-b border-gray-100"
+                  >
+                    Any Budget
+                  </button>
+                  {priceRanges.slice(1).map((range) => (
+                    <button
+                      key={range}
+                      type="button"
+                      onClick={() => { setSelectedBudget(range); setShowBudgetDropdown(false) }}
+                      className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      {range}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          </form>
-        </div>
+          </div>
+
+          {/* Selected location chip */}
+          {selectedArea && (
+            <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 rounded-full max-w-full">
+                <svg className="w-3.5 h-3.5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span className="text-xs font-semibold text-primary truncate">{selectedArea}</span>
+                <button type="button" onClick={() => { setSelectedArea(''); setSearchText('') }} className="text-primary/60 hover:text-primary ml-1 flex-shrink-0">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+        </form>
       </div>
     </section>
   )
